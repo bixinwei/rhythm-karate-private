@@ -379,7 +379,7 @@ function createImpact(kind) {
   touchFx.push({
     life: 1,
     kind,
-    label: kind === 'perfect' ? 'PERFECT!' : kind === 'normal' ? 'OK!' : 'MISS',
+    label: kind === 'perfect' ? 'PERFECT!' : kind === 'miss' ? 'MISS' : '',
     x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
     y: safeRadius + Math.random() * (touch.height - safeRadius * 2)
   });
@@ -612,15 +612,17 @@ function drawTouchScreen() {
       draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, fx.life), 0);
     }
     // Judgement belongs to the touch display, not over the GBA playfield.
-    touchCtx.save();
-    touchCtx.globalAlpha = Math.max(0, fx.life);
-    // 3DS-style result hierarchy: successful judgements carry colour, while
-    // a miss stays plain white.
-    touchCtx.fillStyle = fx.kind === 'perfect' ? '#ff4cdb' : fx.kind === 'normal' ? '#ffd82b' : '#ffffff';
-    touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
-    touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
-    touchCtx.fillText(fx.label, cx, cy + 96);
-    touchCtx.restore();
+    if (fx.label) {
+      touchCtx.save();
+      touchCtx.globalAlpha = Math.max(0, fx.life);
+      // 3DS-style result hierarchy: a perfect carries colour, while a miss
+      // stays plain white. A normal hit has no text label.
+      touchCtx.fillStyle = fx.kind === 'perfect' ? '#ff4cdb' : '#ffffff';
+      touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
+      touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
+      touchCtx.fillText(fx.label, cx, cy + 96);
+      touchCtx.restore();
+    }
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((fx) => fx.life > 0);
