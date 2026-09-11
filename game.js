@@ -193,9 +193,10 @@ function stopVocalPreview() {
   vocalPreviewNodes = [];
   $('#voicePreviewBtn').textContent = '试听候选 01+02';
   document.querySelectorAll('[data-sample]').forEach((button) => { button.textContent = button.dataset.sample.padStart(2, '0'); });
+  document.querySelectorAll('[data-track]').forEach((button) => { button.textContent = button.dataset.track.replace(',', '/'); });
 }
 
-function previewSamples(sampleNumbers, button) {
+function previewEvents(resolveEvents, button) {
   audio();
   stopVocalPreview();
   const token = ++vocalPreviewToken;
@@ -203,7 +204,7 @@ function previewSamples(sampleNumbers, button) {
   bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
     if (token !== vocalPreviewToken) return;
     const ac = audio();
-    const matching = originalBgmEvents.filter((event) => sampleNumbers.includes(event.sample));
+    const matching = resolveEvents();
     const previewFrom = matching[0]?.beat ?? 0, previewTo = previewFrom + 24;
     const voices = matching.filter((event) => event.beat < previewTo);
     const start = ac.currentTime + .06;
@@ -223,6 +224,14 @@ function previewSamples(sampleNumbers, button) {
     button.textContent = '试听中';
     setTimeout(() => { if (token === vocalPreviewToken) stopVocalPreview(); }, (elapsedForBeat(previewTo) - elapsedForBeat(previewFrom)) + 250);
   });
+}
+
+function previewSamples(sampleNumbers, button) {
+  previewEvents(() => originalBgmEvents.filter((event) => sampleNumbers.includes(event.sample)), button);
+}
+
+function previewTrack(program, channel, button) {
+  previewEvents(() => originalBgmEvents.filter((event) => event.program === program && event.channel === channel), button);
 }
 
 function previewVocals() { previewSamples([1, 2], $('#voicePreviewBtn')); }
@@ -687,6 +696,12 @@ $('#startBtn').onclick = start;
 $('#voicePreviewBtn').onclick = previewVocals;
 document.querySelectorAll('[data-sample]').forEach((button) => {
   button.onclick = () => previewSamples([Number(button.dataset.sample)], button);
+});
+document.querySelectorAll('[data-track]').forEach((button) => {
+  button.onclick = () => {
+    const [program, channel] = button.dataset.track.split(',').map(Number);
+    previewTrack(program, channel, button);
+  };
 });
 $('#quitBtn').onclick = quit;
 $('#tapBtn').onclick = punch;
