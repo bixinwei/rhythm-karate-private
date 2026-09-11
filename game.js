@@ -530,9 +530,9 @@ function drawTouchScreen() {
     fx.life -= .045;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
     if (fx.perfect) {
-      const colours = ['#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a'];
-      for (let i = 0; i < 8; i++) {
-        const angle = i * Math.PI / 4 - Math.PI / 2;
+      const colours = ['#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a'];
+      for (let i = 0; i < 12; i++) {
+        const angle = i * Math.PI / 6 - Math.PI / 2;
         // In the reference the finished ring spans most of the central
         // checkerboard, rather than sitting tightly around the tap point.
         const distance = 18 + Math.min(1, progress * 2.2) * 132;
