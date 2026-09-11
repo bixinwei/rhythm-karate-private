@@ -490,7 +490,7 @@ function drawObjectShadow(position) {
 }
 
 function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
-  // Five-point, black-edged 3DS star sprite silhouette.
+  // Five-point, soft-glowing 3DS star sprite silhouette.
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   context.beginPath();
@@ -500,12 +500,23 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
     if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
   }
   context.closePath();
+  context.shadowColor = color; context.shadowBlur = radius * .72;
   context.fillStyle = color; context.fill();
-  context.strokeStyle = '#17121b'; context.lineWidth = Math.max(2, radius * .15); context.lineJoin = 'round'; context.stroke();
-  context.beginPath(); context.arc(-radius * .15, -radius * .16, radius * .17, 0, Math.PI * 2);
-  context.fillStyle = '#fffad0'; context.fill();
+  context.shadowBlur = 0;
   context.restore();
 }
+
+// Key-frame placement traced from the supplied 3DS captures: twelve coloured
+// stars leave a compact centre cluster and finish across the checkerboard.
+const PERFECT_BURST = [
+  [-.40,-.30,'#63f47a',29,.10], [-.04,-.42,'#c8f32f',30,.28], [.31,-.32,'#f240c8',30,.53],
+  [.48,-.07,'#32e9ea',28,.15], [.40,.24,'#6ef06f',29,.40], [.10,.40,'#a7ef36',27,.67],
+  [-.10,.41,'#ffe62f',30,.10], [-.35,.26,'#f03bc9',29,.43], [-.48,.02,'#ffe52c',28,.69],
+  [-.32,-.19,'#55ef80',30,.23], [.02,-.20,'#ffe52d',27,.55], [.20,.12,'#50e8e8',25,.34]
+];
+const NORMAL_BURST = [
+  [-.47,-.26], [-.12,-.40], [.26,-.31], [.46,-.03], [.36,.26], [.06,.42], [-.28,.30], [-.48,.02]
+];
 
 function drawTouchScreen() {
   const w = touch.width, h = touch.height, size = 68, gap = 4, left = 34, top = 28;
@@ -526,27 +537,34 @@ function drawTouchScreen() {
   touchCtx.closePath(); touchCtx.stroke();
   touchCtx.fillStyle = '#1b42ed'; touchCtx.beginPath(); touchCtx.arc(570, 126, 15, 0, Math.PI * 2); touchCtx.fill();
   touchCtx.strokeStyle = '#11121c'; touchCtx.lineWidth = 3; touchCtx.stroke();
+  touchCtx.fillStyle = '#e4dbff'; touchCtx.beginPath(); touchCtx.arc(564, 110, 5, 0, Math.PI * 2); touchCtx.arc(578, 110, 5, 0, Math.PI * 2); touchCtx.fill();
+  touchCtx.fillStyle = '#17121b'; touchCtx.beginPath(); touchCtx.arc(564, 110, 2, 0, Math.PI * 2); touchCtx.arc(578, 110, 2, 0, Math.PI * 2); touchCtx.fill();
+  const noteCells = [[1,2],[5,2],[2,3],[6,3],[1,5],[5,5]];
+  touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
+  for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (size + gap) + 12, top + row * (size + gap) + 49);
+  touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 31px sans-serif'; touchCtx.fillText('⌁  Simple Tap', 45, 447);
   for (const fx of touchFx) {
-    fx.life -= .045;
+    fx.life -= .036;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
     if (fx.perfect) {
-      // The reference uses only its saturated yellow / lime pair.
-      const colours = ['#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529'];
-      for (let i = 0; i < 12; i++) {
-        const angle = i * Math.PI / 6 - Math.PI / 2;
-        // In the reference the finished ring spans most of the central
-        // checkerboard, rather than sitting tightly around the tap point.
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const distance = 18 + easeOut * 132;
-        // Every star turns clockwise; this is individual self-rotation, not
-        // a counter-rotating particle wheel.
-        const spin = progress * Math.PI * 1.75;
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
-          31 - progress * 8, colours[i], Math.max(0, fx.life), angle + spin);
+      const travel = Math.min(1, progress / .76);
+      const ease = 1 - Math.pow(1 - travel, 3);
+      for (const [dx, dy, color, radius, phase] of PERFECT_BURST) {
+        const targetX = cx + dx * 330, targetY = cy + dy * 330;
+        const startX = cx + dx * 42, startY = cy + dy * 42;
+        const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
+        const spin = phase + progress * Math.PI * 2.1;
+        const scale = 1.2 - travel * .25;
+        draw3dsStar(touchCtx, x, y, radius * scale, color, Math.max(0, fx.life), spin);
       }
     } else {
-      const pop = progress < .2 ? 1 + progress * 2.2 : 1.44 - (progress - .2) * .55;
-      draw3dsStar(touchCtx, cx, cy, 24 * pop, '#ffe156', Math.max(0, fx.life), 0);
+      const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
+      for (let i = 0; i < NORMAL_BURST.length; i++) {
+        const [dx, dy] = NORMAL_BURST[i];
+        const x = cx + dx * 320 * ease, y = cy + dy * 320 * ease;
+        draw3dsStar(touchCtx, x, y, 25 - travel * 5, '#ffe229', Math.max(0, fx.life), progress * Math.PI * 1.2);
+        draw3dsStar(touchCtx, cx + dx * 175 * ease, cy + dy * 175 * ease, 8, '#ffe229', Math.max(0, fx.life * .9), 0);
+      }
     }
   }
   touchCtx.globalAlpha = 1;
