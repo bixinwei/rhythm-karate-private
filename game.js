@@ -95,6 +95,7 @@ let sampleLoadPromise = null;
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let vocalPreviewNodes = [];
+let vocalPreviewToken = 0;
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -187,21 +188,24 @@ function scheduleOriginalBgm() {
 }
 
 function stopVocalPreview() {
+  vocalPreviewToken += 1;
   for (const node of vocalPreviewNodes) { try { node.stop(); } catch {} }
   vocalPreviewNodes = [];
-  $('#voicePreviewBtn').textContent = '试听人声';
+  $('#voicePreviewBtn').textContent = '试听候选 01+02';
+  document.querySelectorAll('[data-sample]').forEach((button) => { button.textContent = button.dataset.sample.padStart(2, '0'); });
 }
 
-function previewVocals() {
+function previewSamples(sampleNumbers, button) {
   audio();
-  if (vocalPreviewNodes.length) return stopVocalPreview();
-  $('#voicePreviewBtn').textContent = '加载人声…';
+  stopVocalPreview();
+  const token = ++vocalPreviewToken;
+  button.textContent = '加载…';
   bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
+    if (token !== vocalPreviewToken) return;
     const ac = audio();
-    const previewFrom = 16, previewTo = 40;
-    const voices = originalBgmEvents.filter((event) =>
-      (event.sample === 1 || event.sample === 2) && event.beat >= previewFrom && event.beat < previewTo
-    );
+    const matching = originalBgmEvents.filter((event) => sampleNumbers.includes(event.sample));
+    const previewFrom = matching[0]?.beat ?? 0, previewTo = previewFrom + 24;
+    const voices = matching.filter((event) => event.beat < previewTo);
     const start = ac.currentTime + .06;
     for (const event of voices) {
       const sample = originalSamples[event.sample];
@@ -216,10 +220,12 @@ function previewVocals() {
       source.start(start + offset); source.stop(start + offset + duration);
       vocalPreviewNodes.push(source);
     }
-    $('#voicePreviewBtn').textContent = '停止试听';
-    setTimeout(() => { if (vocalPreviewNodes.length) stopVocalPreview(); }, (elapsedForBeat(previewTo) - elapsedForBeat(previewFrom)) + 250);
+    button.textContent = '试听中';
+    setTimeout(() => { if (token === vocalPreviewToken) stopVocalPreview(); }, (elapsedForBeat(previewTo) - elapsedForBeat(previewFrom)) + 250);
   });
 }
+
+function previewVocals() { previewSamples([1, 2], $('#voicePreviewBtn')); }
 
 function playOriginalSfx(name) {
   const events = originalSfx[name];
@@ -679,6 +685,9 @@ function finish() {
 
 $('#startBtn').onclick = start;
 $('#voicePreviewBtn').onclick = previewVocals;
+document.querySelectorAll('[data-sample]').forEach((button) => {
+  button.onclick = () => previewSamples([Number(button.dataset.sample)], button);
+});
 $('#quitBtn').onclick = quit;
 $('#tapBtn').onclick = punch;
 stage.addEventListener('pointerdown', punch);
