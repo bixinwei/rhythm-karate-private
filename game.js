@@ -156,8 +156,10 @@ function scheduleOriginalMusic(events, startBeat = 0) {
     const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
     const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
     const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    const voiceBoost = event.sample === 2 ? 1.55 : 1;
-    const volume = Math.min(.046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
+    // Sample 002 is the song's vocal layer.  Keep it clearly ahead of the
+    // accompaniment, matching the deliberately foregrounded GBA mix.
+    const voiceBoost = event.sample === 2 ? 3.1 : 1;
+    const volume = Math.min(event.sample === 2 ? .092 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
     const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
@@ -368,7 +370,7 @@ function punch() {
 
 function createImpact(kind) {
   // The 3DS lower screen has three distinct result animations.
-  touchFx.push({ life: 1, kind });
+  touchFx.push({ life: 1, kind, label: kind === 'perfect' ? 'PERFECT!' : kind === 'normal' ? 'OK!' : 'MISS' });
 }
 
 function render(beat) {
@@ -389,10 +391,6 @@ function drawTop(beat) {
   drawItems(beat);
   drawOriginalHitEffects(beat);
   drawCueWarning(beat);
-  ctx.fillStyle = judgement === 'PERFECT!' ? '#fff0a1' : judgement === 'MISS' ? '#ff9189' : '#ffffff';
-  ctx.font = '700 26px DM Mono';
-  ctx.textAlign = 'left';
-  ctx.fillText(judgement, 48, 58);
 }
 
 function drawCueWarning(beat) {
@@ -542,7 +540,7 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 }
 
 // The captures show a single ten-star circle for a perfect hit.
-const PERFECT_COLORS = ['#c9f531', '#f13bca', '#3de9ed', '#78f078', '#aaf03b', '#ffe42b', '#ef42c8', '#ffe42b', '#61f283', '#ffa34e'];
+const PERFECT_COLORS = ['#d8ff20', '#ff20d4', '#14f5ff', '#4dff7e', '#b6ff18', '#fff000', '#ff32d7', '#ffd91a', '#2dff8d', '#ff8a25'];
 
 function drawTouchScreen() {
   const w = touch.width, h = touch.height, size = 68, gap = 4, left = 34, top = 28;
@@ -593,14 +591,22 @@ function drawTouchScreen() {
       for (let i = 0; i < 8; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / 4;
         const x = cx + Math.cos(angle) * 150 * ease, y = cy + Math.sin(angle) * 150 * ease;
-        draw3dsStar(touchCtx, x, y, 9.68 + travel * 14.96, '#ffe229', Math.max(0, fx.life), 0);
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.64 + travel * 4.4, '#ffe229', Math.max(0, fx.life * .9), 0);
+        draw3dsStar(touchCtx, x, y, 8.712 + travel * 13.464, '#ffe229', Math.max(0, fx.life), 0);
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.376 + travel * 3.96, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
     } else {
       // A miss produces only the single yellow centre star.
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
-      draw3dsStar(touchCtx, cx, cy, 21.12 * pop, '#ffe229', Math.max(0, fx.life), 0);
+      draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, fx.life), 0);
     }
+    // Judgement belongs to the touch display, not over the GBA playfield.
+    touchCtx.save();
+    touchCtx.globalAlpha = Math.max(0, fx.life);
+    touchCtx.fillStyle = '#ffffff';
+    touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
+    touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
+    touchCtx.fillText(fx.label, cx, cy + 96);
+    touchCtx.restore();
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((fx) => fx.life > 0);
