@@ -506,17 +506,8 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.restore();
 }
 
-// Key-frame placement traced from the supplied 3DS captures: twelve coloured
-// stars leave a compact centre cluster and finish across the checkerboard.
-const PERFECT_BURST = [
-  [-.40,-.30,'#63f47a',29,.10], [-.04,-.42,'#c8f32f',30,.28], [.31,-.32,'#f240c8',30,.53],
-  [.48,-.07,'#32e9ea',28,.15], [.40,.24,'#6ef06f',29,.40], [.10,.40,'#a7ef36',27,.67],
-  [-.10,.41,'#ffe62f',30,.10], [-.35,.26,'#f03bc9',29,.43], [-.48,.02,'#ffe52c',28,.69],
-  [-.32,-.19,'#55ef80',30,.23], [.02,-.20,'#ffe52d',27,.55], [.20,.12,'#50e8e8',25,.34]
-];
-const NORMAL_BURST = [
-  [-.47,-.26], [-.12,-.40], [.26,-.31], [.46,-.03], [.36,.26], [.06,.42], [-.28,.30], [-.48,.02]
-];
+// The captures show a single ten-star circle for a perfect hit.
+const PERFECT_COLORS = ['#c9f531', '#f13bca', '#3de9ed', '#78f078', '#aaf03b', '#ffe42b', '#ef42c8', '#ffe42b', '#61f283', '#ffa34e'];
 
 function drawTouchScreen() {
   const w = touch.width, h = touch.height, size = 68, gap = 4, left = 34, top = 28;
@@ -549,21 +540,22 @@ function drawTouchScreen() {
     if (fx.perfect) {
       const travel = Math.min(1, progress / .76);
       const ease = 1 - Math.pow(1 - travel, 3);
-      for (const [dx, dy, color, radius, phase] of PERFECT_BURST) {
-        const targetX = cx + dx * 330, targetY = cy + dy * 330;
-        const startX = cx + dx * 42, startY = cy + dy * 42;
+      for (let i = 0; i < PERFECT_COLORS.length; i++) {
+        const angle = -Math.PI / 2 + i * Math.PI * 2 / PERFECT_COLORS.length;
+        const targetX = cx + Math.cos(angle) * 150, targetY = cy + Math.sin(angle) * 150;
+        const startX = cx + Math.cos(angle) * 34, startY = cy + Math.sin(angle) * 34;
         const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
-        const spin = phase;
+        const spin = i * .19;
         const scale = 1.2 - travel * .25;
-        draw3dsStar(touchCtx, x, y, radius * scale, color, Math.max(0, fx.life), spin);
+        draw3dsStar(touchCtx, x, y, 29 * scale, PERFECT_COLORS[i], Math.max(0, fx.life), spin);
       }
     } else {
       const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
-      for (let i = 0; i < NORMAL_BURST.length; i++) {
-        const [dx, dy] = NORMAL_BURST[i];
-        const x = cx + dx * 320 * ease, y = cy + dy * 320 * ease;
+      for (let i = 0; i < 8; i++) {
+        const angle = -Math.PI / 2 + i * Math.PI / 4;
+        const x = cx + Math.cos(angle) * 150 * ease, y = cy + Math.sin(angle) * 150 * ease;
         draw3dsStar(touchCtx, x, y, 25 - travel * 5, '#ffe229', Math.max(0, fx.life), 0);
-        draw3dsStar(touchCtx, cx + dx * 175 * ease, cy + dy * 175 * ease, 8, '#ffe229', Math.max(0, fx.life * .9), 0);
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 8, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
     }
   }
