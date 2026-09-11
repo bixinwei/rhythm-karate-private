@@ -533,9 +533,11 @@ function drawTouchScreen() {
       const colours = ['#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a'];
       for (let i = 0; i < 8; i++) {
         const angle = i * Math.PI / 4 - Math.PI / 2;
-        const distance = 16 + Math.min(1, progress * 2.2) * 70;
+        // In the reference the finished ring spans most of the central
+        // checkerboard, rather than sitting tightly around the tap point.
+        const distance = 18 + Math.min(1, progress * 2.2) * 132;
         draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
-          19 - progress * 5, colours[i], Math.max(0, fx.life), angle + .25);
+          31 - progress * 8, colours[i], Math.max(0, fx.life), angle + .25);
       }
     } else {
       const pop = progress < .2 ? 1 + progress * 2.2 : 1.44 - (progress - .2) * .55;
