@@ -158,12 +158,12 @@ function scheduleOriginalMusic(events, startBeat = 0) {
     const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
     const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
     const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    // The song's sung call-and-response is carried by samples 001 and 002.
-    // Keep both vocal layers at the foreground level; drums and accompaniment
-    // retain their original relative gain.
-    const isVocal = event.sample === 1 || event.sample === 2;
-    const voiceBoost = isVocal ? 3.1 : 1;
-    const volume = Math.min(isVocal ? .092 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
+    // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
+    // is Karate Man's background vocal/call-and-response track.  Keep only
+    // this track in the foreground; all prior guessed sample boosts are gone.
+    const isVocal = event.program === 125 && event.channel === 0;
+    const voiceBoost = isVocal ? 2.5 : 1;
+    const volume = Math.min(isVocal ? .085 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
     const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
