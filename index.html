@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>空手道节拍 · Rhythm Tengoku Web</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="console">
+      <section id="menu" class="menu screen">
+        <div class="logo-mark">KARATE<br /><i>BEAT</i></div>
+        <p class="kicker">GBA ORIGINAL ASSETS · TOUCH REACTION</p>
+        <h1>空手道节拍</h1>
+        <p class="lede">听见鼓点。看准时机。出拳。</p>
+        <button id="startBtn" class="start">开始训练 <b>SPACE</b></button>
+        <p class="controls">空格 / 点击上屏出拳　·　F2 完美模式　·　F1 重开</p>
+      </section>
+      <section id="game" class="screen hidden">
+        <header class="bar">
+          <span class="brand">KARATE BEAT</span
+          ><span class="phase" id="phase">准备</span>
+          <div class="stats">
+            <span>得分 <b id="score">0</b></span
+            ><span>连击 <b id="combo">0</b></span
+            ><span>最高 <b id="best">0</b></span>
+          </div>
+          <button id="quitBtn" class="close" title="返回主菜单">×</button>
+        </header>
+        <div class="screens">
+          <div class="upper">
+          <canvas id="stage" width="960" height="640"></canvas>
+            <div id="upperFlash"></div>
+          </div>
+          <div class="hinge"><span></span><span></span><span></span></div>
+          <aside class="lower">
+          <canvas id="lower" width="640" height="480"></canvas>
+            <div class="lower-label">TOUCH SCREEN</div>
+          </aside>
+        </div>
+        <div class="progress"><i id="progress"></i></div>
+        <button id="tapBtn" class="tap">出拳 <small>●</small></button>
+        <p class="tip">跟着声音出拳。金色闪光 = 完美。</p>
+        <div id="result" class="result"></div>
+      </section>
+    </main>
+  <script src="game.js?v=gba-local-20"></script>
+  </body>
+</html>

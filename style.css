@@ -1,0 +1,309 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;600;700&display=swap");
+:root {
+  font-family: "Space Grotesk", sans-serif;
+  color: #f8f5e9;
+  background: #090b0f;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #090b0f;
+}
+.console {
+  min-height: 100vh;
+  padding: 22px;
+  display: grid;
+  place-items: center;
+}
+.screen {
+  width: min(1280px, 100%);
+  background: #15181e;
+  border: 1px solid #343a44;
+  box-shadow: 0 22px 80px #000b;
+}
+#game.screen {
+  width: min(1120px, 100%);
+}
+.hidden {
+  display: none !important;
+}
+.menu {
+  min-height: min(760px, calc(100vh - 44px));
+  position: relative;
+  padding: clamp(40px, 8vw, 110px);
+  overflow: hidden;
+  background:
+    linear-gradient(110deg, #13171eef 0%, #13171ed9 46%, #13171e55),
+    url("assets/background.png") center/cover;
+}
+.menu:after {
+  content: "";
+  position: absolute;
+  width: 45%;
+  height: 2px;
+  background: #e6c85e;
+  left: 0;
+  bottom: 18%;
+  box-shadow: 0 0 26px #e6c85e;
+}
+.logo-mark {
+  position: absolute;
+  right: 8%;
+  top: 12%;
+  font: 700 17px "DM Mono";
+  line-height: 1.05;
+  text-align: right;
+  color: #e6c85e;
+  letter-spacing: 3px;
+}
+.logo-mark i {
+  color: #a8d8cb;
+  font-style: normal;
+}
+.kicker {
+  font: 500 12px "DM Mono";
+  letter-spacing: 2px;
+  color: #a8d8cb;
+  margin: 0 0 22px;
+}
+.menu h1 {
+  font-size: clamp(54px, 9vw, 108px);
+  line-height: 0.95;
+  margin: 0 0 18px;
+}
+.lede {
+  font-size: 22px;
+  color: #c9ced8;
+  margin: 0 0 42px;
+}
+.start {
+  cursor: pointer;
+  border: 0;
+  background: #e6c85e;
+  color: #141821;
+  padding: 16px 25px;
+  font: 700 17px inherit;
+}
+.start b {
+  font: 500 11px "DM Mono";
+  margin-left: 20px;
+  opacity: 0.65;
+}
+.controls {
+  font: 12px "DM Mono";
+  color: #8b94a3;
+  margin-top: 25px;
+}
+.bar {
+  height: 56px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #313743;
+  gap: 26px;
+}
+.brand {
+  font: 700 13px "DM Mono";
+  letter-spacing: 1px;
+  color: #e6c85e;
+}
+.phase {
+  font-size: 13px;
+  color: #b4bac5;
+}
+.stats {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+  font: 12px "DM Mono";
+  color: #8d96a4;
+}
+.stats b {
+  color: #f8f5e9;
+  font-size: 16px;
+  margin-left: 4px;
+}
+.close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #434a57;
+  background: transparent;
+  color: #c5cbd4;
+  font-size: 22px;
+  cursor: pointer;
+}
+.screens {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+  gap: 14px;
+  background: #0d1015;
+  align-items: center;
+}
+.upper,
+.lower {
+  position: relative;
+  border: 1px solid #3f4652;
+  background: #1a1e26;
+  overflow: hidden;
+}
+.upper {
+  aspect-ratio: 3/2;
+}
+.lower {
+  aspect-ratio: 4/3;
+  background: #10141a;
+}
+.upper canvas,
+.lower canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.upper #upperFlash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.upper #upperFlash.good {
+  background: #f7dc78;
+  animation: hitflash 0.26s ease-out;
+}
+.upper #upperFlash.bad {
+  background: #d95f52;
+  animation: hitflash 0.3s ease-out;
+}
+@keyframes hitflash {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.hinge {
+  display: none;
+}
+.lower-label {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  color: #697382;
+  font: 10px "DM Mono";
+  letter-spacing: 1px;
+}
+.progress {
+  height: 6px;
+  background: #2a3039;
+  margin: 0 18px;
+}
+.progress i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #a8d8cb;
+  transition: width 0.1s linear;
+}
+.tap {
+  display: block;
+  margin: 18px auto 0;
+  width: 170px;
+  height: 50px;
+  border: 1px solid #f2da75;
+  background: #e6c85e;
+  color: #161b22;
+  font: 700 16px "DM Mono";
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.tap:active {
+  transform: translateY(1px) scale(0.98);
+}
+.tap small {
+  font-size: 13px;
+  margin-left: 8px;
+}
+.tip {
+  text-align: center;
+  color: #7f8998;
+  font: 11px "DM Mono";
+  margin: 12px 0 22px;
+}
+.result {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  font-size: clamp(42px, 8vw, 92px);
+  font-weight: 700;
+  text-shadow: 0 4px 30px #000;
+  opacity: 0;
+}
+.result.show {
+  opacity: 1;
+}
+.result.good {
+  color: #f7dc78;
+}
+.result.ok {
+  color: #a8d8cb;
+}
+@media (max-width: 760px) {
+  .console {
+    padding: 0;
+  }
+  .screen {
+    min-height: 100vh;
+    border: 0;
+  }
+  .menu {
+    padding: 38px 24px;
+  }
+  .logo-mark {
+    top: 7%;
+    right: 7%;
+  }
+  .menu h1 {
+    font-size: 59px;
+  }
+  .lede {
+    font-size: 18px;
+  }
+  .bar {
+    padding: 0 12px;
+    gap: 12px;
+  }
+  .brand {
+    font-size: 11px;
+  }
+  .stats {
+    gap: 8px;
+    font-size: 10px;
+  }
+  .screens {
+    display: block;
+    padding: 12px 10px 0;
+  }
+  .upper {
+    aspect-ratio: 3/2;
+  }
+  .lower {
+    aspect-ratio: 4/3;
+    margin-top: 12px;
+    min-height: auto;
+  }
+  .tap {
+    width: calc(100% - 24px);
+    height: 56px;
+  }
+  .tip {
+    font-size: 10px;
+  }
+}
