@@ -11,7 +11,7 @@ const sprites = {};
 // Local exports composed from the GBA decomp's original 4bpp tiles, palette
 // banks and animation cells.  These replace the temporary hand-drawn sheet.
 const gba = {};
-for (const cell of [0, 1, 2, 15, 16, 17, 18, 19, 20, 21, 22, 23, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]) {
+for (const cell of [0, 1, 2, 15, 16, 17, 18, 19, 20, 21, 22, 23, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 64, 65, 66, 67]) {
   const image = new Image();
   image.src = `assets/gba/cel${String(cell).padStart(3, '0')}.png?v=obj2d`;
   gba[cell] = image;
@@ -36,6 +36,14 @@ const spawnChart = [
   [128,'pot'], [130,'rock'], [133,'bulb'], [133,'bomb']
 ];
 const chart = spawnChart.map(([spawnBeat, type]) => [spawnBeat + 1, type]);
+// These are the original `print_text_f` commands in karate_man.bs.  They are
+// not web-font text: IDs 1–4 select the corresponding GBA warning cels.
+const cueWarnings = [
+  { beat: 78, id: 1, duration: 1 },
+  { beat: 107, id: 3, duration: 1 },
+  { beat: 132, id: 2, duration: 1.5 },
+  { beat: 147, id: 4, duration: 3 }
+];
 const SONG_END = 151;
 const tempoSegments = [{ from: 0, bpm: 120 }, { from: 134, bpm: 150 }, { from: 143, bpm: 140 }];
 function elapsedForBeat(target) {
@@ -118,7 +126,8 @@ const karateSfxSamples = {
 function loadOriginalSamples() {
   if (sampleLoadPromise) return sampleLoadPromise;
   const ac = audio();
-  const numbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples)])];
+  const bgmNumbers = originalBgmEvents.map((event) => event.sample).filter(Number.isFinite);
+  const numbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
   sampleLoadPromise = Promise.allSettled(numbers.map(async (number) => {
     const name = String(number).padStart(3, '0');
     const response = await fetch(`assets/gba/samples/sample_${name}.wav`);
@@ -141,24 +150,19 @@ function scheduleOriginalBgm() {
   const ac = audio();
   for (const event of originalBgmEvents) {
     if (event.beat >= SONG_END) continue;
-    const freq = 440 * Math.pow(2, (event.note - 69) / 12);
     const endBeat = Math.min(SONG_END, event.beat + event.length);
     const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(event.beat)) / 1000);
     const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    const type = percussion ? 'square' : event.program === 39 ? 'triangle' : event.channel === 1 ? 'sine' : 'triangle';
     const volume = Math.min(.028, .004 + event.velocity / 127 * (percussion ? .015 : .02));
-    const sampleMap = { 0: 1, 1: 2, 2: 3, 3: 4, 5: 5, 7: 6, 8: 7, 10: 8, 11: 9, 12: 10, 39: 12, 41: 11, 119: 13 };
-    const sample = originalSamples[sampleMap[event.program]];
+    const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(event.beat) / 1000);
     if (sample) {
       const source = ac.createBufferSource(); const gain = ac.createGain();
-      source.buffer = sample; source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
+      source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
       gain.gain.value = volume * 1.8;
       source.connect(gain).connect(ac.destination);
       scheduledMusicNodes.push(source);
       source.start(when); source.stop(when + Math.min(.48, duration));
-    } else {
-      tone(percussion ? Math.min(880, freq) : freq, Math.min(.48, duration), type, volume, when - ac.currentTime);
     }
   }
 }
@@ -220,12 +224,12 @@ function start() {
   scheduledMusicNodes = [];
   menu.classList.add('hidden');
   game.classList.remove('hidden');
-  startAt = performance.now() + elapsedForBeat(3);
-  audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
-  Promise.all([bgmLoadPromise, loadOriginalSamples()]).then(() => { if (running && run === songRun) scheduleOriginalBgm(); });
+  // Do not let the countdown run ahead of asynchronous PCM decoding.  Starting
+  // only after all original instruments are ready prevents a thin oscillator
+  // fallback or a burst of late notes on a first visit / iPad refresh.
+  running = false;
   chartIndex = score = combo = 0;
   flowLevel = 0;
-  running = true;
   perfectRun = true;
   active = [];
   touchFx = [];
@@ -234,10 +238,17 @@ function start() {
   lastMusicBeat = -99;
   $('#score').textContent = '0';
   $('#combo').textContent = '0';
-  $('#phase').textContent = '3';
+  $('#phase').textContent = '加载原版音轨…';
   $('#result').className = 'result';
-  cancelAnimationFrame(frame);
-  frame = requestAnimationFrame(loop);
+  bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
+    if (run !== songRun) return;
+    startAt = performance.now() + elapsedForBeat(3);
+    audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
+    running = true;
+    scheduleOriginalBgm();
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(loop);
+  });
 }
 
 function quit() {
@@ -367,10 +378,25 @@ function drawTop(beat) {
   drawFighter(320, 352, performance.now() - lastPunchAt < 150, beat);
   drawItems(beat);
   drawOriginalHitEffects(beat);
+  drawCueWarning(beat);
   ctx.fillStyle = judgement === 'PERFECT!' ? '#fff0a1' : judgement === 'MISS' ? '#ff9189' : '#ffffff';
   ctx.font = '700 26px DM Mono';
   ctx.textAlign = 'left';
   ctx.fillText(judgement, 48, 58);
+}
+
+function drawCueWarning(beat) {
+  const warning = cueWarnings.find((entry) => beat >= entry.beat && beat < entry.beat + entry.duration);
+  if (!warning) return;
+  const cell = warning.id === 4 ? 64 : 64 + warning.id;
+  const image = gba[cell];
+  if (!image?.complete) return;
+  // sprite_create(... anim_karate_cue_warning, 0, 120, 24, ...) in the ROM.
+  // Exported cels preserve their GBA footprint, so they are drawn at native 4×.
+  const originX = { 64: 16, 65: 12, 66: 16, 67: 16 }[cell];
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(image, (120 - originX) * 4, (24 - 10) * 4, image.naturalWidth * 4, image.naturalHeight * 4);
+  ctx.restore();
 }
 
 function drawFlowMeter() {
