@@ -33,7 +33,7 @@ const spawnChart = [
   [58,'pot'], [62,'pot'], [66,'pot'], [70,'pot'], [74,'football'], [79,'bulb'], [86,'pot'], [90,'rock'],
   [96,'pot'], [98,'pot'], [100,'pot'], [102,'pot'], [104,'football'], [108,'bulb'], [109,'bulb'], [110,'rock'],
   [112,'pot'], [114,'pot'], [116,'pot'], [118,'pot'], [120,'pot'], [122,'pot'], [124,'pot'], [126,'pot'],
-  [128,'pot'], [130,'rock'], [133,'bulb'], [133,'bomb']
+  [128,'pot'], [130,'rock'], [132,'bulb'], [133,'bomb'], [153,'rock']
 ];
 const chart = spawnChart.map(([spawnBeat, type]) => [spawnBeat + 1, type]);
 // These are the original `print_text_f` commands in karate_man.bs.  They are
@@ -41,11 +41,11 @@ const chart = spawnChart.map(([spawnBeat, type]) => [spawnBeat + 1, type]);
 const cueWarnings = [
   { beat: 78, id: 1, duration: 1 },
   { beat: 107, id: 3, duration: 1 },
-  { beat: 132, id: 2, duration: 1.5 },
+  { beat: 131, id: 2, duration: 1.5 },
   { beat: 147, id: 4, duration: 3 }
 ];
-const SONG_END = 151;
-const tempoSegments = [{ from: 0, bpm: 120 }, { from: 134, bpm: 150 }, { from: 143, bpm: 140 }];
+const SONG_END = 158;
+const tempoSegments = [{ from: 0, bpm: 120 }, { from: 135, bpm: 150 }, { from: 147, bpm: 140 }];
 function elapsedForBeat(target) {
   let ms = 0;
   for (let i = 0; i < tempoSegments.length; i++) {
@@ -89,12 +89,14 @@ let frame = 0;
 let audioCtx;
 let lastMusicBeat = -99;
 let originalBgmEvents = [];
+let originalFanEvents = [];
 let originalSamples = {};
 let sampleLoadPromise = null;
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
+const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
 const originalSfx = {};
 for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
   fetch(`assets/gba/boxing_${name}_events.json`).then((response) => response.json()).then((events) => { originalSfx[name] = events; }).catch(() => {});
@@ -126,7 +128,7 @@ const karateSfxSamples = {
 function loadOriginalSamples() {
   if (sampleLoadPromise) return sampleLoadPromise;
   const ac = audio();
-  const bgmNumbers = originalBgmEvents.map((event) => event.sample).filter(Number.isFinite);
+  const bgmNumbers = [...originalBgmEvents, ...originalFanEvents].map((event) => event.sample).filter(Number.isFinite);
   const numbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
   sampleLoadPromise = Promise.allSettled(numbers.map(async (number) => {
     const name = String(number).padStart(3, '0');
@@ -145,17 +147,19 @@ function playMusic(wholeBeat) {
   if (!originalBgmEvents.length) tone(wholeBeat % 4 === 0 ? 92 : 116, .1, 'triangle', .035);
 }
 
-function scheduleOriginalBgm() {
-  if (!originalBgmEvents.length) return;
+function scheduleOriginalMusic(events, startBeat = 0) {
+  if (!events.length) return;
   const ac = audio();
-  for (const event of originalBgmEvents) {
-    if (event.beat >= SONG_END) continue;
-    const endBeat = Math.min(SONG_END, event.beat + event.length);
-    const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(event.beat)) / 1000);
+  for (const event of events) {
+    const absoluteBeat = startBeat + event.beat;
+    if (absoluteBeat >= SONG_END) continue;
+    const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
+    const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
     const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    const volume = Math.min(.028, .004 + event.velocity / 127 * (percussion ? .015 : .02));
+    const voiceBoost = event.sample === 2 ? 1.55 : 1;
+    const volume = Math.min(.046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
     const sample = originalSamples[event.sample];
-    const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(event.beat) / 1000);
+    const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
       const source = ac.createBufferSource(); const gain = ac.createGain();
       source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
@@ -165,6 +169,12 @@ function scheduleOriginalBgm() {
       source.start(when); source.stop(when + Math.min(.48, duration));
     }
   }
+}
+
+function scheduleOriginalBgm() {
+  scheduleOriginalMusic(originalBgmEvents);
+  // The original script switches to s_karate_fan exactly after the `4` cue.
+  scheduleOriginalMusic(originalFanEvents, 151);
 }
 
 function playOriginalSfx(name) {
@@ -240,7 +250,7 @@ function start() {
   $('#combo').textContent = '0';
   $('#phase').textContent = '加载原版音轨…';
   $('#result').className = 'result';
-  bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
+  Promise.all([bgmLoadPromise, fanLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
     audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
