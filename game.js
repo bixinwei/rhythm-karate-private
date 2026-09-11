@@ -544,13 +544,16 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 const PERFECT_COLORS = ['#d8ff20', '#ff20d4', '#14f5ff', '#4dff7e', '#b6ff18', '#fff000', '#ff32d7', '#ffd91a', '#2dff8d', '#ff8a25'];
 
 function drawTouchScreen() {
-  const w = touch.width, h = touch.height, size = 68, gap = 4, left = 34, top = 28;
+  const w = touch.width, h = touch.height, gap = 4, cols = 8, rows = 6;
+  // The 8 × 6 board uses the full 4:3 touch display; only the intentional
+  // dark grid seams remain, with no outer black matte.
+  const left = 0, top = 0, cellW = (w - gap * (cols - 1)) / cols, cellH = (h - gap * (rows - 1)) / rows;
   touchCtx.fillStyle = '#070709'; touchCtx.fillRect(0, 0, w, h);
-  for (let row = 0; row < 6; row++) {
-    for (let col = 0; col < 8; col++) {
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
       touchCtx.fillStyle = (row + col) % 2 ? '#24242b' : '#111116';
-      touchCtx.fillRect(left + col * (size + gap), top + row * (size + gap), size, size);
-      touchCtx.fillStyle = '#34343d'; touchCtx.fillRect(left + col * (size + gap) + 3, top + row * (size + gap) + 3, 2, 2);
+      touchCtx.fillRect(left + col * (cellW + gap), top + row * (cellH + gap), cellW, cellH);
+      touchCtx.fillStyle = '#34343d'; touchCtx.fillRect(left + col * (cellW + gap) + 3, top + row * (cellH + gap) + 3, 2, 2);
     }
   }
   // Permanent markings visible in the reference lower display.
@@ -566,7 +569,7 @@ function drawTouchScreen() {
   touchCtx.fillStyle = '#17121b'; touchCtx.beginPath(); touchCtx.arc(564, 110, 2, 0, Math.PI * 2); touchCtx.arc(578, 110, 2, 0, Math.PI * 2); touchCtx.fill();
   const noteCells = [[1,2],[5,2],[2,3],[6,3],[1,5],[5,5]];
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
-  for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (size + gap) + 12, top + row * (size + gap) + 49);
+  for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (cellW + gap) + 12, top + row * (cellH + gap) + 54);
   touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.textAlign = 'right'; touchCtx.fillText('TOUCH', w - 26, h - 25); touchCtx.textAlign = 'left';
   for (const fx of touchFx) {
     fx.life -= .036;
