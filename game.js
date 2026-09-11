@@ -490,25 +490,20 @@ function drawObjectShadow(position) {
 }
 
 function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
-  // Four-point sparkle with the heavy outline / pale inner gleam visible on
-  // the 3DS touch-screen effect.  It intentionally avoids generic polygons.
+  // Five-point, black-edged 3DS star sprite silhouette.
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   context.beginPath();
-  const points = [[0,-1], [.27,-.27], [1,0], [.27,.27], [0,1],[-.27,.27],[-1,0],[-.27,-.27]];
-  points.forEach(([px, py], index) => {
-    if (index) context.lineTo(px * radius, py * radius); else context.moveTo(px * radius, py * radius);
-  });
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    const r = i % 2 ? radius * .47 : radius;
+    if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
   context.closePath();
-  context.shadowColor = color; context.shadowBlur = radius * .42;
   context.fillStyle = color; context.fill();
-  context.shadowBlur = 0; context.strokeStyle = '#17131f'; context.lineWidth = Math.max(2, radius * .14); context.stroke();
-  context.beginPath();
-  points.forEach(([px, py], index) => {
-    const r = .43;
-    if (index) context.lineTo(px * radius * r, py * radius * r); else context.moveTo(px * radius * r, py * radius * r);
-  });
-  context.closePath(); context.fillStyle = '#fffbd2'; context.fill();
+  context.strokeStyle = '#17121b'; context.lineWidth = Math.max(2, radius * .15); context.lineJoin = 'round'; context.stroke();
+  context.beginPath(); context.arc(-radius * .15, -radius * .16, radius * .17, 0, Math.PI * 2);
+  context.fillStyle = '#fffad0'; context.fill();
   context.restore();
 }
 
@@ -522,24 +517,29 @@ function drawTouchScreen() {
       touchCtx.fillStyle = '#34343d'; touchCtx.fillRect(left + col * (size + gap) + 3, top + row * (size + gap) + 3, 2, 2);
     }
   }
+  // Permanent markings visible in the reference lower display.
+  touchCtx.strokeStyle = '#d8d6dc'; touchCtx.lineWidth = 3; touchCtx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 7 : 14;
+    if (i) touchCtx.lineTo(57 + Math.cos(a) * r, 56 + Math.sin(a) * r); else touchCtx.moveTo(57 + Math.cos(a) * r, 56 + Math.sin(a) * r);
+  }
+  touchCtx.closePath(); touchCtx.stroke();
+  touchCtx.fillStyle = '#1b42ed'; touchCtx.beginPath(); touchCtx.arc(570, 126, 15, 0, Math.PI * 2); touchCtx.fill();
+  touchCtx.strokeStyle = '#11121c'; touchCtx.lineWidth = 3; touchCtx.stroke();
   for (const fx of touchFx) {
     fx.life -= .045;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
     if (fx.perfect) {
-      const colours = ['#fff05d', '#ff82bf', '#6fe5fb', '#a8f45b', '#ffe36d', '#fb92ca', '#77e8ff', '#c5f96a'];
+      const colours = ['#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a'];
       for (let i = 0; i < 8; i++) {
-        const angle = i * Math.PI / 4 - Math.PI / 2 + Math.sin(progress * 4 + i) * .1;
-        const distance = 20 + progress * progress * (158 + (i % 3) * 36);
-        const trail = distance * .62;
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * trail, cy + Math.sin(angle) * trail,
-          7 - progress * 3, colours[i], Math.max(0, fx.life * .45), -angle);
+        const angle = i * Math.PI / 4 - Math.PI / 2;
+        const distance = 16 + Math.min(1, progress * 2.2) * 70;
         draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
-          22 - progress * 11, colours[i], Math.max(0, fx.life), angle + progress * 1.5);
+          19 - progress * 5, colours[i], Math.max(0, fx.life), angle + .25);
       }
-      draw3dsStar(touchCtx, cx, cy, 30 - progress * 11, '#fff08a', Math.max(0, fx.life), progress * .25);
     } else {
-      const pop = progress < .22 ? 1 + progress * 2.4 : 1.53 - (progress - .22) * .66;
-      draw3dsStar(touchCtx, cx, cy, 25 * pop, '#ffe156', Math.max(0, fx.life), progress * .18);
+      const pop = progress < .2 ? 1 + progress * 2.2 : 1.44 - (progress - .2) * .55;
+      draw3dsStar(touchCtx, cx, cy, 24 * pop, '#ffe156', Math.max(0, fx.life), 0);
     }
   }
   touchCtx.globalAlpha = 1;
