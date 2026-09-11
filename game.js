@@ -530,15 +530,17 @@ function drawTouchScreen() {
     fx.life -= .045;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
     if (fx.perfect) {
-      const colours = ['#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a', '#ffe955', '#8ced49', '#ffdb48', '#70de4a'];
+      // The reference uses only its saturated yellow / lime pair.
+      const colours = ['#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529', '#fff200', '#70e529'];
       for (let i = 0; i < 12; i++) {
         const angle = i * Math.PI / 6 - Math.PI / 2;
         // In the reference the finished ring spans most of the central
         // checkerboard, rather than sitting tightly around the tap point.
-        const distance = 18 + Math.min(1, progress * 2.2) * 132;
-        // Each 3DS star visibly spins as it leaves the centre.  Alternate
-        // direction so the ring does not look like a single rigid wheel.
-        const spin = (i % 2 ? 1 : -1) * progress * Math.PI * 2.35;
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const distance = 18 + easeOut * 132;
+        // Every star turns clockwise; this is individual self-rotation, not
+        // a counter-rotating particle wheel.
+        const spin = progress * Math.PI * 1.75;
         draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
           31 - progress * 8, colours[i], Math.max(0, fx.life), angle + spin);
       }
