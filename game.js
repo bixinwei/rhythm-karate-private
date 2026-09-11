@@ -536,8 +536,11 @@ function drawTouchScreen() {
         // In the reference the finished ring spans most of the central
         // checkerboard, rather than sitting tightly around the tap point.
         const distance = 18 + Math.min(1, progress * 2.2) * 132;
+        // Each 3DS star visibly spins as it leaves the centre.  Alternate
+        // direction so the ring does not look like a single rigid wheel.
+        const spin = (i % 2 ? 1 : -1) * progress * Math.PI * 2.35;
         draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
-          31 - progress * 8, colours[i], Math.max(0, fx.life), angle + .25);
+          31 - progress * 8, colours[i], Math.max(0, fx.life), angle + spin);
       }
     } else {
       const pop = progress < .2 ? 1 + progress * 2.2 : 1.44 - (progress - .2) * .55;
