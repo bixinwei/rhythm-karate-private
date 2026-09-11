@@ -77,6 +77,7 @@ let lastBeat = -1;
 let judgement = '';
 let active = [];
 let touchFx = [];
+let lowerHitIndex = 0;
 let frame = 0;
 let audioCtx;
 let lastMusicBeat = -99;
@@ -229,6 +230,7 @@ function start() {
   perfectRun = true;
   active = [];
   touchFx = [];
+  lowerHitIndex = 0;
   judgement = '';
   lastBeat = -1;
   lastMusicBeat = -99;
@@ -346,8 +348,9 @@ function punch() {
 }
 
 function createImpact(perfect, strength) {
-  const color = perfect ? '#ffe171' : '#e76463';
-  touchFx.push({ life: 1, x: 320, y: 240, color, strength, perfect });
+  // The 3DS reference uses a checkerboard of coloured star tiles.  A hit
+  // briefly lights one tile; it does not use a target reticle or ring wave.
+  touchFx.push({ life: 1, slot: lowerHitIndex++ % lowerStarSlots.length, perfect, strength });
 }
 
 function render(beat) {
@@ -488,46 +491,55 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
+const lowerStarSlots = [
+  [0, 0, '#ffc93f'], [3, 0, '#82db4d'], [6, 0, '#ffd948'],
+  [1, 1, '#ff6ca7'], [4, 1, '#56d5ff'], [7, 1, '#75df64'],
+  [0, 3, '#71de57'], [2, 3, '#ffcf4c'], [5, 3, '#f0609e'],
+  [1, 4, '#55cfff'], [4, 4, '#ffcf4c'], [7, 4, '#75df64'],
+  [2, 5, '#ff6ca7'], [5, 5, '#55cfff']
+];
+
+function lowerTileCenter(slot) {
+  const size = 68, gap = 4, left = 34, top = 28;
+  return { x: left + slot[0] * (size + gap) + size / 2, y: top + slot[1] * (size + gap) + size / 2 };
+}
+
+function draw3dsStar(context, x, y, radius, color, alpha = 1) {
+  context.save(); context.globalAlpha = alpha; context.fillStyle = color;
+  context.beginPath();
+  for (let i = 0; i < 16; i++) {
+    const angle = -Math.PI / 2 + i * Math.PI / 8;
+    const r = i % 2 ? radius * .42 : radius;
+    const px = x + Math.cos(angle) * r, py = y + Math.sin(angle) * r;
+    if (i) context.lineTo(px, py); else context.moveTo(px, py);
+  }
+  context.closePath(); context.fill();
+  context.fillStyle = '#fff7b7'; context.globalAlpha = alpha * .82;
+  context.beginPath(); context.arc(x - radius * .16, y - radius * .18, radius * .22, 0, Math.PI * 2); context.fill();
+  context.restore();
+}
+
 function drawTouchScreen() {
-  const w = touch.width; const h = touch.height;
-  touchCtx.clearRect(0, 0, w, h);
-  const bg = touchCtx.createLinearGradient(0, 0, w, h);
-  bg.addColorStop(0, '#0b3441'); bg.addColorStop(.58, '#155464'); bg.addColorStop(1, '#0a2b36');
-  touchCtx.fillStyle = bg; touchCtx.fillRect(0, 0, w, h);
-  touchCtx.globalAlpha = .22; touchCtx.strokeStyle = '#9be8e7'; touchCtx.lineWidth = 1;
-  for (let x = 0; x < w; x += 30) { touchCtx.beginPath(); touchCtx.moveTo(x, 0); touchCtx.lineTo(x - 70, h); touchCtx.stroke(); }
-  for (let y = 0; y < h; y += 22) { touchCtx.beginPath(); touchCtx.moveTo(0, y); touchCtx.lineTo(w, y); touchCtx.stroke(); }
-  touchCtx.globalAlpha = 1;
-  const cx = 320, cy = 240;
-  touchCtx.fillStyle = '#071d27'; touchCtx.beginPath(); touchCtx.arc(cx, cy, 111, 0, Math.PI * 2); touchCtx.fill();
-  touchCtx.strokeStyle = '#d5efe9'; touchCtx.lineWidth = 6; touchCtx.beginPath(); touchCtx.arc(cx, cy, 99, 0, Math.PI * 2); touchCtx.stroke();
-  touchCtx.strokeStyle = '#6bd4d0'; touchCtx.lineWidth = 2; touchCtx.beginPath(); touchCtx.arc(cx, cy, 83, 0, Math.PI * 2); touchCtx.stroke();
-  touchCtx.fillStyle = '#21c8d2'; touchCtx.beginPath(); touchCtx.arc(cx, cy, 54, 0, Math.PI * 2); touchCtx.fill();
-  touchCtx.fillStyle = '#a9ffed'; touchCtx.beginPath(); touchCtx.arc(cx - 13, cy - 15, 20, 0, Math.PI * 2); touchCtx.fill();
-  touchCtx.fillStyle = '#eafffa'; touchCtx.beginPath(); touchCtx.arc(cx - 19, cy - 22, 7, 0, Math.PI * 2); touchCtx.fill();
-  for (const fx of touchFx) {
-    fx.life -= 0.027;
-    const progress = 1 - fx.life;
-    const radius = progress * (fx.perfect ? 235 : 145);
-    touchCtx.globalAlpha = Math.max(0, fx.life);
-    touchCtx.strokeStyle = fx.color; touchCtx.lineWidth = fx.perfect ? 10 : 6;
-    touchCtx.beginPath(); touchCtx.arc(fx.x, fx.y, radius, 0, Math.PI * 2); touchCtx.stroke();
-    if (fx.perfect) {
-      touchCtx.beginPath(); touchCtx.arc(fx.x, fx.y, radius * .56, 0, Math.PI * 2); touchCtx.stroke();
-      for (let i = 0; i < 12; i++) {
-        const angle = i / 12 * Math.PI * 2 + progress * .7;
-        const inner = 58 + progress * 30, outer = inner + 30 * fx.life;
-        touchCtx.lineWidth = i % 2 ? 5 : 2; touchCtx.beginPath();
-        touchCtx.moveTo(fx.x + Math.cos(angle) * inner, fx.y + Math.sin(angle) * inner);
-        touchCtx.lineTo(fx.x + Math.cos(angle) * outer, fx.y + Math.sin(angle) * outer); touchCtx.stroke();
-      }
-      touchCtx.fillStyle = '#fff6a5'; touchCtx.beginPath(); touchCtx.arc(fx.x, fx.y, 24 + progress * 10, 0, Math.PI * 2); touchCtx.fill();
-      touchCtx.fillStyle = '#173f49'; touchCtx.font = '900 20px DM Mono'; touchCtx.textAlign = 'center'; touchCtx.fillText('!', fx.x, fx.y + 7);
+  const w = touch.width, h = touch.height, size = 68, gap = 4, left = 34, top = 28;
+  touchCtx.fillStyle = '#070709'; touchCtx.fillRect(0, 0, w, h);
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < 8; col++) {
+      touchCtx.fillStyle = (row + col) % 2 ? '#24242b' : '#111116';
+      touchCtx.fillRect(left + col * (size + gap), top + row * (size + gap), size, size);
+      touchCtx.fillStyle = '#34343d'; touchCtx.fillRect(left + col * (size + gap) + 3, top + row * (size + gap) + 3, 2, 2);
     }
   }
+  for (const slot of lowerStarSlots) {
+    const point = lowerTileCenter(slot); draw3dsStar(touchCtx, point.x, point.y, 18, slot[2]);
+  }
+  for (const fx of touchFx) {
+    fx.life -= .055;
+    const slot = lowerStarSlots[fx.slot], point = lowerTileCenter(slot), progress = 1 - fx.life;
+    touchCtx.fillStyle = fx.perfect ? '#fff0a6' : '#9d9da8'; touchCtx.globalAlpha = Math.max(0, fx.life * .7);
+    touchCtx.fillRect(point.x - 30, point.y - 30, 60, 60);
+    draw3dsStar(touchCtx, point.x, point.y, 18 + progress * 25, fx.perfect ? '#ffe459' : '#cbcbcf', Math.max(0, fx.life));
+  }
   touchCtx.globalAlpha = 1;
-  touchCtx.fillStyle = '#eafffa'; touchCtx.font = '700 32px DM Mono'; touchCtx.textAlign = 'left'; touchCtx.fillText(String(combo).padStart(2, '0'), 42, 84);
-  touchCtx.globalAlpha = .78; touchCtx.font = '700 13px DM Mono'; touchCtx.fillText('COMBO / FLOW', 42, 110); touchCtx.fillText('TAP ZONE', 250, 420); touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((fx) => fx.life > 0);
 }
 
