@@ -40,9 +40,8 @@ body {
   justify-content: center;
   align-items: flex-start;
   gap: 24px;
-  background:
-    linear-gradient(110deg, #13171eef 0%, #13171ed9 46%, #13171e55),
-    url("assets/background.png") center/cover;
+  background: #e67921 url("assets/gba/karate_man_stage.png") center/cover no-repeat;
+  image-rendering: pixelated;
 }
 .menu:after {
   content: none;
