@@ -543,7 +543,7 @@ function drawTouchScreen() {
       const ease = travel;
       for (let i = 0; i < PERFECT_COLORS.length; i++) {
         const angle = -Math.PI / 2 + i * Math.PI * 2 / PERFECT_COLORS.length;
-        const targetX = cx + Math.cos(angle) * 620, targetY = cy + Math.sin(angle) * 620;
+        const targetX = cx + Math.cos(angle) * 150, targetY = cy + Math.sin(angle) * 150;
         const startX = cx + Math.cos(angle) * 34, startY = cy + Math.sin(angle) * 34;
         const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
         const spin = i * .19;
