@@ -11,6 +11,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background: #090b0f;
+  touch-action: manipulation;
+  overscroll-behavior: none;
 }
 .console {
   min-height: 100vh;
@@ -195,6 +197,7 @@ body {
   height: 100%;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  touch-action: manipulation;
 }
 .upper #upperFlash {
   position: absolute;
@@ -320,14 +323,15 @@ body {
   }
   .screens {
     display: block;
-    padding: 12px 10px 0;
+    padding: 0;
+    gap: 0;
   }
   .upper {
     aspect-ratio: 3/2;
   }
   .lower {
     aspect-ratio: 4/3;
-    margin-top: 12px;
+    margin-top: 10px;
     min-height: auto;
   }
   .tap {

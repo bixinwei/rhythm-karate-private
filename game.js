@@ -567,7 +567,7 @@ function drawTouchScreen() {
   const noteCells = [[1,2],[5,2],[2,3],[6,3],[1,5],[5,5]];
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (size + gap) + 12, top + row * (size + gap) + 49);
-  touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.fillText('TOUCH', 45, 447);
+  touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.textAlign = 'right'; touchCtx.fillText('TOUCH', w - 26, h - 25); touchCtx.textAlign = 'left';
   for (const fx of touchFx) {
     fx.life -= .036;
     const progress = 1 - fx.life, cx = fx.x, cy = fx.y;
@@ -625,6 +625,10 @@ function finish() {
 $('#startBtn').onclick = start;
 stage.addEventListener('pointerdown', punch);
 touch.addEventListener('pointerdown', punch);
+// iOS Safari still recognises a double-tap zoom gesture on some canvas builds
+// even with viewport constraints.  The game owns touch-end on both screens.
+for (const canvas of [stage, touch]) canvas.addEventListener('touchend', (event) => event.preventDefault(), { passive: false });
+document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); game.classList.contains('hidden') ? start() : punch(); }
   if (event.code === 'F1' && !game.classList.contains('hidden')) { event.preventDefault(); start(); }
