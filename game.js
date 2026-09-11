@@ -156,10 +156,12 @@ function scheduleOriginalMusic(events, startBeat = 0) {
     const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
     const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
     const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    // Sample 002 is the song's vocal layer.  Keep it clearly ahead of the
-    // accompaniment, matching the deliberately foregrounded GBA mix.
-    const voiceBoost = event.sample === 2 ? 3.1 : 1;
-    const volume = Math.min(event.sample === 2 ? .092 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
+    // The song's sung call-and-response is carried by samples 001 and 002.
+    // Keep both vocal layers at the foreground level; drums and accompaniment
+    // retain their original relative gain.
+    const isVocal = event.sample === 1 || event.sample === 2;
+    const voiceBoost = isVocal ? 3.1 : 1;
+    const volume = Math.min(isVocal ? .092 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
     const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
@@ -370,7 +372,17 @@ function punch() {
 
 function createImpact(kind) {
   // The 3DS lower screen has three distinct result animations.
-  touchFx.push({ life: 1, kind, label: kind === 'perfect' ? 'PERFECT!' : kind === 'normal' ? 'OK!' : 'MISS' });
+  // At their largest, the outer stars reach about 181px from the origin.
+  // Constrain the random origin by that radius so the completed ring remains
+  // entirely inside the 640 × 480 lower screen.
+  const safeRadius = 181;
+  touchFx.push({
+    life: 1,
+    kind,
+    label: kind === 'perfect' ? 'PERFECT!' : kind === 'normal' ? 'OK!' : 'MISS',
+    x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
+    y: safeRadius + Math.random() * (touch.height - safeRadius * 2)
+  });
 }
 
 function render(beat) {
@@ -569,7 +581,7 @@ function drawTouchScreen() {
   touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 31px sans-serif'; touchCtx.fillText('⌁  Simple Tap', 45, 447);
   for (const fx of touchFx) {
     fx.life -= .036;
-    const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
+    const progress = 1 - fx.life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
       // Unlike the normal yellow ring, perfect stars keep travelling past
       // the checkerboard and finally leave the lower screen.
