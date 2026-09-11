@@ -602,7 +602,9 @@ function drawTouchScreen() {
     // Judgement belongs to the touch display, not over the GBA playfield.
     touchCtx.save();
     touchCtx.globalAlpha = Math.max(0, fx.life);
-    touchCtx.fillStyle = '#ffffff';
+    // 3DS-style result hierarchy: successful judgements carry colour, while
+    // a miss stays plain white.
+    touchCtx.fillStyle = fx.kind === 'perfect' ? '#ff4cdb' : fx.kind === 'normal' ? '#ffd82b' : '#ffffff';
     touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
     touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
     touchCtx.fillText(fx.label, cx, cy + 96);
