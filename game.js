@@ -77,7 +77,6 @@ let lastBeat = -1;
 let judgement = '';
 let active = [];
 let touchFx = [];
-let lowerHitIndex = 0;
 let frame = 0;
 let audioCtx;
 let lastMusicBeat = -99;
@@ -230,7 +229,6 @@ function start() {
   perfectRun = true;
   active = [];
   touchFx = [];
-  lowerHitIndex = 0;
   judgement = '';
   lastBeat = -1;
   lastMusicBeat = -99;
@@ -348,9 +346,9 @@ function punch() {
 }
 
 function createImpact(perfect, strength) {
-  // The 3DS reference uses a checkerboard of coloured star tiles.  A hit
-  // briefly lights one tile; it does not use a target reticle or ring wave.
-  touchFx.push({ life: 1, slot: lowerHitIndex++ % lowerStarSlots.length, perfect, strength });
+  // 3DS lower screen: idle is only the checkerboard.  A perfect hit releases
+  // stars from the centre; an ordinary hit releases one yellow circle.
+  touchFx.push({ life: 1, perfect, strength });
 }
 
 function render(beat) {
@@ -491,19 +489,6 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-const lowerStarSlots = [
-  [0, 0, '#ffc93f'], [3, 0, '#82db4d'], [6, 0, '#ffd948'],
-  [1, 1, '#ff6ca7'], [4, 1, '#56d5ff'], [7, 1, '#75df64'],
-  [0, 3, '#71de57'], [2, 3, '#ffcf4c'], [5, 3, '#f0609e'],
-  [1, 4, '#55cfff'], [4, 4, '#ffcf4c'], [7, 4, '#75df64'],
-  [2, 5, '#ff6ca7'], [5, 5, '#55cfff']
-];
-
-function lowerTileCenter(slot) {
-  const size = 68, gap = 4, left = 34, top = 28;
-  return { x: left + slot[0] * (size + gap) + size / 2, y: top + slot[1] * (size + gap) + size / 2 };
-}
-
 function draw3dsStar(context, x, y, radius, color, alpha = 1) {
   context.save(); context.globalAlpha = alpha; context.fillStyle = color;
   context.beginPath();
@@ -529,15 +514,23 @@ function drawTouchScreen() {
       touchCtx.fillStyle = '#34343d'; touchCtx.fillRect(left + col * (size + gap) + 3, top + row * (size + gap) + 3, 2, 2);
     }
   }
-  for (const slot of lowerStarSlots) {
-    const point = lowerTileCenter(slot); draw3dsStar(touchCtx, point.x, point.y, 18, slot[2]);
-  }
   for (const fx of touchFx) {
-    fx.life -= .055;
-    const slot = lowerStarSlots[fx.slot], point = lowerTileCenter(slot), progress = 1 - fx.life;
-    touchCtx.fillStyle = fx.perfect ? '#fff0a6' : '#9d9da8'; touchCtx.globalAlpha = Math.max(0, fx.life * .7);
-    touchCtx.fillRect(point.x - 30, point.y - 30, 60, 60);
-    draw3dsStar(touchCtx, point.x, point.y, 18 + progress * 25, fx.perfect ? '#ffe459' : '#cbcbcf', Math.max(0, fx.life));
+    fx.life -= .045;
+    const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
+    if (fx.perfect) {
+      const colours = ['#fff05d', '#ff82bf', '#6fe5fb', '#a8f45b', '#ffe36d', '#fb92ca', '#77e8ff', '#c5f96a'];
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4 - Math.PI / 2;
+        const distance = 24 + progress * 245;
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
+          19 - progress * 10, colours[i], Math.max(0, fx.life));
+      }
+      draw3dsStar(touchCtx, cx, cy, 23 + progress * 6, '#fff08a', Math.max(0, fx.life));
+    } else {
+      touchCtx.globalAlpha = Math.max(0, fx.life);
+      touchCtx.strokeStyle = '#ffe356'; touchCtx.lineWidth = 10;
+      touchCtx.beginPath(); touchCtx.arc(cx, cy, 20 + progress * 230, 0, Math.PI * 2); touchCtx.stroke();
+    }
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((fx) => fx.life > 0);
