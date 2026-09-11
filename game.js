@@ -357,7 +357,7 @@ function punch() {
   // The original Flow Meter has six cels: empty plus five fill levels.
   flowLevel = Math.min(5, flowLevel + 1);
   best = Math.max(best, combo);
-  judgement = perfect ? 'PERFECT!' : 'OK!';
+  judgement = perfect ? 'PERFECT' : 'OK!';
   if (!perfect) perfectRun = false;
   $('#score').textContent = score;
   $('#combo').textContent = combo;
@@ -379,7 +379,7 @@ function createImpact(kind) {
   touchFx.push({
     life: 1,
     kind,
-    label: kind === 'perfect' ? 'PERFECT!' : kind === 'miss' ? 'MISS' : '',
+    label: kind === 'perfect' ? 'PERFECT' : kind === 'miss' ? 'MISS' : '',
     x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
     y: safeRadius + Math.random() * (touch.height - safeRadius * 2)
   });
@@ -631,7 +631,7 @@ function drawTouchScreen() {
 function finish() {
   running = false;
   const result = $('#result');
-  result.textContent = perfectRun ? 'PERFECT!' : 'STAGE CLEAR';
+  result.textContent = perfectRun ? 'PERFECT' : 'STAGE CLEAR';
   result.className = `result show ${perfectRun ? 'good' : 'ok'}`;
   setTimeout(quit, 2800);
 }
