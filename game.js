@@ -550,20 +550,20 @@ function drawTouchScreen() {
         // Stars begin small in the centre cluster, growing continuously as
         // the ring expands to its final diameter.
         const scale = .55 + travel * .68;
-        draw3dsStar(touchCtx, x, y, 26 * scale, PERFECT_COLORS[i], Math.max(0, fx.life), spin);
+        draw3dsStar(touchCtx, x, y, 20.8 * scale, PERFECT_COLORS[i], Math.max(0, fx.life), spin);
       }
     } else if (fx.kind === 'normal') {
       const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
       for (let i = 0; i < 8; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / 4;
         const x = cx + Math.cos(angle) * 150 * ease, y = cy + Math.sin(angle) * 150 * ease;
-        draw3dsStar(touchCtx, x, y, 11 + travel * 17, '#ffe229', Math.max(0, fx.life), 0);
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 3 + travel * 5, '#ffe229', Math.max(0, fx.life * .9), 0);
+        draw3dsStar(touchCtx, x, y, 8.8 + travel * 13.6, '#ffe229', Math.max(0, fx.life), 0);
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.4 + travel * 4, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
     } else {
       // A miss produces only the single yellow centre star.
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
-      draw3dsStar(touchCtx, cx, cy, 24 * pop, '#ffe229', Math.max(0, fx.life), 0);
+      draw3dsStar(touchCtx, cx, cy, 19.2 * pop, '#ffe229', Math.max(0, fx.life), 0);
     }
   }
   touchCtx.globalAlpha = 1;
