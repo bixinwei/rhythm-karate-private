@@ -537,11 +537,13 @@ function drawTouchScreen() {
     fx.life -= .036;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
     if (fx.kind === 'perfect') {
-      const travel = Math.min(1, progress / .76);
-      const ease = 1 - Math.pow(1 - travel, 3);
+      // Unlike the normal yellow ring, perfect stars keep travelling past
+      // the checkerboard and finally leave the lower screen.
+      const travel = Math.min(1, progress);
+      const ease = travel;
       for (let i = 0; i < PERFECT_COLORS.length; i++) {
         const angle = -Math.PI / 2 + i * Math.PI * 2 / PERFECT_COLORS.length;
-        const targetX = cx + Math.cos(angle) * 150, targetY = cy + Math.sin(angle) * 150;
+        const targetX = cx + Math.cos(angle) * 430, targetY = cy + Math.sin(angle) * 430;
         const startX = cx + Math.cos(angle) * 34, startY = cy + Math.sin(angle) * 34;
         const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
         const spin = i * .19;
