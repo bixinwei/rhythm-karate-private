@@ -553,7 +553,7 @@ function drawTouchScreen() {
         const targetX = cx + dx * 330, targetY = cy + dy * 330;
         const startX = cx + dx * 42, startY = cy + dy * 42;
         const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
-        const spin = phase + progress * Math.PI * 2.1;
+        const spin = phase;
         const scale = 1.2 - travel * .25;
         draw3dsStar(touchCtx, x, y, radius * scale, color, Math.max(0, fx.life), spin);
       }
@@ -562,7 +562,7 @@ function drawTouchScreen() {
       for (let i = 0; i < NORMAL_BURST.length; i++) {
         const [dx, dy] = NORMAL_BURST[i];
         const x = cx + dx * 320 * ease, y = cy + dy * 320 * ease;
-        draw3dsStar(touchCtx, x, y, 25 - travel * 5, '#ffe229', Math.max(0, fx.life), progress * Math.PI * 1.2);
+        draw3dsStar(touchCtx, x, y, 25 - travel * 5, '#ffe229', Math.max(0, fx.life), 0);
         draw3dsStar(touchCtx, cx + dx * 175 * ease, cy + dy * 175 * ease, 8, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
     }
