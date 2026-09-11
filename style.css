@@ -92,6 +92,21 @@ body {
   margin-left: 20px;
   opacity: 0.65;
 }
+.menu-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.voice-preview {
+  cursor: pointer;
+  border: 1px solid #697486;
+  background: #202733;
+  color: #eef1f7;
+  padding: 16px 19px;
+  font: 600 15px inherit;
+}
+.voice-preview:hover { border-color: #a8d8cb; color: #a8d8cb; }
 .controls {
   font: 12px "DM Mono";
   color: #8b94a3;

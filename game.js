@@ -94,6 +94,7 @@ let originalSamples = {};
 let sampleLoadPromise = null;
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
+let vocalPreviewNodes = [];
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -185,6 +186,41 @@ function scheduleOriginalBgm() {
   scheduleOriginalMusic(originalFanEvents, 151);
 }
 
+function stopVocalPreview() {
+  for (const node of vocalPreviewNodes) { try { node.stop(); } catch {} }
+  vocalPreviewNodes = [];
+  $('#voicePreviewBtn').textContent = '试听人声';
+}
+
+function previewVocals() {
+  audio();
+  if (vocalPreviewNodes.length) return stopVocalPreview();
+  $('#voicePreviewBtn').textContent = '加载人声…';
+  bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
+    const ac = audio();
+    const previewFrom = 16, previewTo = 40;
+    const voices = originalBgmEvents.filter((event) =>
+      (event.sample === 1 || event.sample === 2) && event.beat >= previewFrom && event.beat < previewTo
+    );
+    const start = ac.currentTime + .06;
+    for (const event of voices) {
+      const sample = originalSamples[event.sample];
+      if (!sample) continue;
+      const offset = (elapsedForBeat(event.beat) - elapsedForBeat(previewFrom)) / 1000;
+      const duration = Math.max(.025, (elapsedForBeat(event.beat + event.length) - elapsedForBeat(event.beat)) / 1000);
+      const source = ac.createBufferSource(); const gain = ac.createGain();
+      source.buffer = sample;
+      source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
+      gain.gain.value = .17 * (event.velocity / 127);
+      source.connect(gain).connect(ac.destination);
+      source.start(start + offset); source.stop(start + offset + duration);
+      vocalPreviewNodes.push(source);
+    }
+    $('#voicePreviewBtn').textContent = '停止试听';
+    setTimeout(() => { if (vocalPreviewNodes.length) stopVocalPreview(); }, (elapsedForBeat(previewTo) - elapsedForBeat(previewFrom)) + 250);
+  });
+}
+
 function playOriginalSfx(name) {
   const events = originalSfx[name];
   if (!events?.length) return false;
@@ -237,6 +273,7 @@ $('#best').textContent = best;
 
 function start() {
   audio();
+  stopVocalPreview();
   const run = ++songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
@@ -641,6 +678,7 @@ function finish() {
 }
 
 $('#startBtn').onclick = start;
+$('#voicePreviewBtn').onclick = previewVocals;
 $('#quitBtn').onclick = quit;
 $('#tapBtn').onclick = punch;
 stage.addEventListener('pointerdown', punch);
