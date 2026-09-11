@@ -489,18 +489,26 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-function draw3dsStar(context, x, y, radius, color, alpha = 1) {
-  context.save(); context.globalAlpha = alpha; context.fillStyle = color;
+function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
+  // Four-point sparkle with the heavy outline / pale inner gleam visible on
+  // the 3DS touch-screen effect.  It intentionally avoids generic polygons.
+  context.save(); context.translate(x, y); context.rotate(rotation);
+  context.globalAlpha = alpha;
   context.beginPath();
-  for (let i = 0; i < 16; i++) {
-    const angle = -Math.PI / 2 + i * Math.PI / 8;
-    const r = i % 2 ? radius * .42 : radius;
-    const px = x + Math.cos(angle) * r, py = y + Math.sin(angle) * r;
-    if (i) context.lineTo(px, py); else context.moveTo(px, py);
-  }
-  context.closePath(); context.fill();
-  context.fillStyle = '#fff7b7'; context.globalAlpha = alpha * .82;
-  context.beginPath(); context.arc(x - radius * .16, y - radius * .18, radius * .22, 0, Math.PI * 2); context.fill();
+  const points = [[0,-1], [.27,-.27], [1,0], [.27,.27], [0,1],[-.27,.27],[-1,0],[-.27,-.27]];
+  points.forEach(([px, py], index) => {
+    if (index) context.lineTo(px * radius, py * radius); else context.moveTo(px * radius, py * radius);
+  });
+  context.closePath();
+  context.shadowColor = color; context.shadowBlur = radius * .42;
+  context.fillStyle = color; context.fill();
+  context.shadowBlur = 0; context.strokeStyle = '#17131f'; context.lineWidth = Math.max(2, radius * .14); context.stroke();
+  context.beginPath();
+  points.forEach(([px, py], index) => {
+    const r = .43;
+    if (index) context.lineTo(px * radius * r, py * radius * r); else context.moveTo(px * radius * r, py * radius * r);
+  });
+  context.closePath(); context.fillStyle = '#fffbd2'; context.fill();
   context.restore();
 }
 
@@ -520,14 +528,18 @@ function drawTouchScreen() {
     if (fx.perfect) {
       const colours = ['#fff05d', '#ff82bf', '#6fe5fb', '#a8f45b', '#ffe36d', '#fb92ca', '#77e8ff', '#c5f96a'];
       for (let i = 0; i < 8; i++) {
-        const angle = i * Math.PI / 4 - Math.PI / 2;
-        const distance = 24 + progress * 245;
+        const angle = i * Math.PI / 4 - Math.PI / 2 + Math.sin(progress * 4 + i) * .1;
+        const distance = 20 + progress * progress * (158 + (i % 3) * 36);
+        const trail = distance * .62;
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * trail, cy + Math.sin(angle) * trail,
+          7 - progress * 3, colours[i], Math.max(0, fx.life * .45), -angle);
         draw3dsStar(touchCtx, cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance,
-          19 - progress * 10, colours[i], Math.max(0, fx.life));
+          22 - progress * 11, colours[i], Math.max(0, fx.life), angle + progress * 1.5);
       }
-      draw3dsStar(touchCtx, cx, cy, 23 + progress * 6, '#fff08a', Math.max(0, fx.life));
+      draw3dsStar(touchCtx, cx, cy, 30 - progress * 11, '#fff08a', Math.max(0, fx.life), progress * .25);
     } else {
-      draw3dsStar(touchCtx, cx, cy, 22 + progress * 28, '#ffe156', Math.max(0, fx.life));
+      const pop = progress < .22 ? 1 + progress * 2.4 : 1.53 - (progress - .22) * .66;
+      draw3dsStar(touchCtx, cx, cy, 25 * pop, '#ffe156', Math.max(0, fx.life), progress * .18);
     }
   }
   touchCtx.globalAlpha = 1;
