@@ -94,8 +94,6 @@ let originalSamples = {};
 let sampleLoadPromise = null;
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
-let vocalPreviewNodes = [];
-let vocalPreviewToken = 0;
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -187,55 +185,6 @@ function scheduleOriginalBgm() {
   scheduleOriginalMusic(originalFanEvents, 151);
 }
 
-function stopVocalPreview() {
-  vocalPreviewToken += 1;
-  for (const node of vocalPreviewNodes) { try { node.stop(); } catch {} }
-  vocalPreviewNodes = [];
-  $('#voicePreviewBtn').textContent = '试听候选 01+02';
-  document.querySelectorAll('[data-sample]').forEach((button) => { button.textContent = button.dataset.sample.padStart(2, '0'); });
-  document.querySelectorAll('[data-track]').forEach((button) => { button.textContent = button.dataset.track.replace(',', '/'); });
-}
-
-function previewEvents(resolveEvents, button) {
-  audio();
-  stopVocalPreview();
-  const token = ++vocalPreviewToken;
-  button.textContent = '加载…';
-  bgmLoadPromise.then(() => loadOriginalSamples()).then(() => {
-    if (token !== vocalPreviewToken) return;
-    const ac = audio();
-    const matching = resolveEvents();
-    const previewFrom = matching[0]?.beat ?? 0, previewTo = previewFrom + 24;
-    const voices = matching.filter((event) => event.beat < previewTo);
-    const start = ac.currentTime + .06;
-    for (const event of voices) {
-      const sample = originalSamples[event.sample];
-      if (!sample) continue;
-      const offset = (elapsedForBeat(event.beat) - elapsedForBeat(previewFrom)) / 1000;
-      const duration = Math.max(.025, (elapsedForBeat(event.beat + event.length) - elapsedForBeat(event.beat)) / 1000);
-      const source = ac.createBufferSource(); const gain = ac.createGain();
-      source.buffer = sample;
-      source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
-      gain.gain.value = .17 * (event.velocity / 127);
-      source.connect(gain).connect(ac.destination);
-      source.start(start + offset); source.stop(start + offset + duration);
-      vocalPreviewNodes.push(source);
-    }
-    button.textContent = '试听中';
-    setTimeout(() => { if (token === vocalPreviewToken) stopVocalPreview(); }, (elapsedForBeat(previewTo) - elapsedForBeat(previewFrom)) + 250);
-  });
-}
-
-function previewSamples(sampleNumbers, button) {
-  previewEvents(() => originalBgmEvents.filter((event) => sampleNumbers.includes(event.sample)), button);
-}
-
-function previewTrack(program, channel, button) {
-  previewEvents(() => originalBgmEvents.filter((event) => event.program === program && event.channel === channel), button);
-}
-
-function previewVocals() { previewSamples([1, 2], $('#voicePreviewBtn')); }
-
 function playOriginalSfx(name) {
   const events = originalSfx[name];
   if (!events?.length) return false;
@@ -282,13 +231,8 @@ function hitAccent(type) {
   tone(root * 2, .11, 'triangle', .035, .025);
 }
 
-const chartBeats = new Set(chart.map(([beat]) => beat));
-
-$('#best').textContent = best;
-
 function start() {
   audio();
-  stopVocalPreview();
   const run = ++songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
@@ -306,10 +250,6 @@ function start() {
   judgement = '';
   lastBeat = -1;
   lastMusicBeat = -99;
-  $('#score').textContent = '0';
-  $('#combo').textContent = '0';
-  $('#phase').textContent = '加载原版音轨…';
-  $('#result').className = 'result';
   Promise.all([bgmLoadPromise, fanLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
@@ -340,7 +280,6 @@ function loop() {
   if (beat > SONG_END) return finish();
   update(beat);
   render(beat);
-  $('#progress').style.width = `${Math.max(0, Math.min(100, beat / SONG_END * 100))}%`;
   frame = requestAnimationFrame(loop);
 }
 
@@ -348,7 +287,6 @@ function update(beat) {
   const currentWholeBeat = Math.floor(beat);
   if (currentWholeBeat !== lastBeat) {
     lastBeat = currentWholeBeat;
-    $('#phase').textContent = currentWholeBeat < 0 ? String(-currentWholeBeat) : 'GO!';
     playMusic(currentWholeBeat);
   }
   while (chartIndex < chart.length && chart[chartIndex][0] - beat <= TRAVEL_BEATS) {
@@ -372,7 +310,6 @@ function update(beat) {
       flowLevel = 0;
       perfectRun = false;
       judgement = 'MISS';
-      $('#combo').textContent = '0';
       createImpact('miss');
       missSound();
     }
@@ -397,7 +334,6 @@ function punch() {
     flowLevel = 0;
     perfectRun = false;
     judgement = 'MISS';
-    $('#combo').textContent = '0';
     createImpact('miss');
     missSound();
     return;
@@ -415,9 +351,6 @@ function punch() {
   best = Math.max(best, combo);
   judgement = perfect ? 'PERFECT' : 'OK!';
   if (!perfect) perfectRun = false;
-  $('#score').textContent = score;
-  $('#combo').textContent = combo;
-  $('#best').textContent = best;
   localStorage.karateBest = best;
   if (!playOriginalSfx(candidate?.type === 'football' ? 'ball' : candidate?.type ?? 'normal')) hitSound(perfect);
   createImpact(perfect ? 'perfect' : 'normal');
@@ -634,7 +567,7 @@ function drawTouchScreen() {
   const noteCells = [[1,2],[5,2],[2,3],[6,3],[1,5],[5,5]];
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (size + gap) + 12, top + row * (size + gap) + 49);
-  touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 31px sans-serif'; touchCtx.fillText('⌁  Simple Tap', 45, 447);
+  touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.fillText('TOUCH', 45, 447);
   for (const fx of touchFx) {
     fx.life -= .036;
     const progress = 1 - fx.life, cx = fx.x, cy = fx.y;
@@ -686,25 +619,10 @@ function drawTouchScreen() {
 
 function finish() {
   running = false;
-  const result = $('#result');
-  result.textContent = perfectRun ? 'PERFECT' : 'STAGE CLEAR';
-  result.className = `result show ${perfectRun ? 'good' : 'ok'}`;
-  setTimeout(quit, 2800);
+  setTimeout(quit, 120);
 }
 
 $('#startBtn').onclick = start;
-$('#voicePreviewBtn').onclick = previewVocals;
-document.querySelectorAll('[data-sample]').forEach((button) => {
-  button.onclick = () => previewSamples([Number(button.dataset.sample)], button);
-});
-document.querySelectorAll('[data-track]').forEach((button) => {
-  button.onclick = () => {
-    const [program, channel] = button.dataset.track.split(',').map(Number);
-    previewTrack(program, channel, button);
-  };
-});
-$('#quitBtn').onclick = quit;
-$('#tapBtn').onclick = punch;
 stage.addEventListener('pointerdown', punch);
 touch.addEventListener('pointerdown', punch);
 window.addEventListener('keydown', (event) => {

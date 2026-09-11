@@ -35,19 +35,17 @@ body {
   position: relative;
   padding: clamp(40px, 8vw, 110px);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
   background:
     linear-gradient(110deg, #13171eef 0%, #13171ed9 46%, #13171e55),
     url("assets/background.png") center/cover;
 }
 .menu:after {
-  content: "";
-  position: absolute;
-  width: 45%;
-  height: 2px;
-  background: #e6c85e;
-  left: 0;
-  bottom: 18%;
-  box-shadow: 0 0 26px #e6c85e;
+  content: none;
 }
 .logo-mark {
   position: absolute;
@@ -72,7 +70,7 @@ body {
 .menu h1 {
   font-size: clamp(54px, 9vw, 108px);
   line-height: 0.95;
-  margin: 0 0 18px;
+  margin: 0;
 }
 .lede {
   font-size: 22px;
