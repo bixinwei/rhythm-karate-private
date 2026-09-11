@@ -170,7 +170,11 @@ function scheduleOriginalMusic(events, startBeat = 0) {
       gain.gain.value = volume * 1.8;
       source.connect(gain).connect(ac.destination);
       scheduledMusicNodes.push(source);
-      source.start(when); source.stop(when + Math.min(.48, duration));
+      // The old universal 0.48 s cap was cutting the original call-and-
+      // response samples far before their MIDI note-off (many vocals sustain
+      // for 1.5–3.75 beats).  Respect the score duration; the buffer still
+      // naturally ends at its own sample boundary.
+      source.start(when); source.stop(when + duration);
     }
   }
 }
