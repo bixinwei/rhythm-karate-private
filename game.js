@@ -346,8 +346,8 @@ function punch() {
 }
 
 function createImpact(perfect, strength) {
-  // 3DS lower screen: idle is only the checkerboard.  A perfect hit releases
-  // stars from the centre; an ordinary hit releases one yellow circle.
+  // 3DS lower screen: idle is only the checkerboard. A normal hit pops one
+  // yellow star at centre; a perfect hit releases coloured stars outward.
   touchFx.push({ life: 1, perfect, strength });
 }
 
@@ -527,9 +527,7 @@ function drawTouchScreen() {
       }
       draw3dsStar(touchCtx, cx, cy, 23 + progress * 6, '#fff08a', Math.max(0, fx.life));
     } else {
-      touchCtx.globalAlpha = Math.max(0, fx.life);
-      touchCtx.strokeStyle = '#ffe356'; touchCtx.lineWidth = 10;
-      touchCtx.beginPath(); touchCtx.arc(cx, cy, 20 + progress * 230, 0, Math.PI * 2); touchCtx.stroke();
+      draw3dsStar(touchCtx, cx, cy, 22 + progress * 28, '#ffe156', Math.max(0, fx.life));
     }
   }
   touchCtx.globalAlpha = 1;
