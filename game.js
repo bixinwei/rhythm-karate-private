@@ -292,7 +292,7 @@ function update(beat) {
       perfectRun = false;
       judgement = 'MISS';
       $('#combo').textContent = '0';
-      createImpact(false, 0.75);
+      createImpact('miss');
       missSound();
     }
     if (item.state === 'flying' && cueTime > 2) {
@@ -317,7 +317,7 @@ function punch() {
     perfectRun = false;
     judgement = 'MISS';
     $('#combo').textContent = '0';
-    createImpact(false, 0.35);
+    createImpact('miss');
     missSound();
     return;
   }
@@ -339,16 +339,15 @@ function punch() {
   $('#best').textContent = best;
   localStorage.karateBest = best;
   if (!playOriginalSfx(candidate?.type === 'football' ? 'ball' : candidate?.type ?? 'normal')) hitSound(perfect);
-  createImpact(perfect, 1);
+  createImpact(perfect ? 'perfect' : 'normal');
   const flash = $('#upperFlash');
   flash.className = perfect ? 'good' : 'ok';
   setTimeout(() => { flash.className = ''; }, 180);
 }
 
-function createImpact(perfect, strength) {
-  // 3DS lower screen: idle is only the checkerboard. A normal hit pops one
-  // yellow star at centre; a perfect hit releases coloured stars outward.
-  touchFx.push({ life: 1, perfect, strength });
+function createImpact(kind) {
+  // The 3DS lower screen has three distinct result animations.
+  touchFx.push({ life: 1, kind });
 }
 
 function render(beat) {
@@ -537,7 +536,7 @@ function drawTouchScreen() {
   for (const fx of touchFx) {
     fx.life -= .036;
     const progress = 1 - fx.life, cx = w / 2, cy = h / 2;
-    if (fx.perfect) {
+    if (fx.kind === 'perfect') {
       const travel = Math.min(1, progress / .76);
       const ease = 1 - Math.pow(1 - travel, 3);
       for (let i = 0; i < PERFECT_COLORS.length; i++) {
@@ -551,7 +550,7 @@ function drawTouchScreen() {
         const scale = .55 + travel * .68;
         draw3dsStar(touchCtx, x, y, 29 * scale, PERFECT_COLORS[i], Math.max(0, fx.life), spin);
       }
-    } else {
+    } else if (fx.kind === 'normal') {
       const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
       for (let i = 0; i < 8; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / 4;
@@ -559,6 +558,10 @@ function drawTouchScreen() {
         draw3dsStar(touchCtx, x, y, 12 + travel * 20, '#ffe229', Math.max(0, fx.life), 0);
         draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 3 + travel * 6, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
+    } else {
+      // A miss produces only the single yellow centre star.
+      const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
+      draw3dsStar(touchCtx, cx, cy, 24 * pop, '#ffe229', Math.max(0, fx.life), 0);
     }
   }
   touchCtx.globalAlpha = 1;
