@@ -520,7 +520,16 @@ const tweezersManifestLoadPromise = fetch('assets/gba/tweezers/frames.json').the
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
-  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; }
+  if (tweezers.scrollStart >= 0 && !scrolling) {
+    // rhythm_tweezers_update_scroll() calls gameplay_reset_cues() at the
+    // destination. Every new vegetable starts with an empty face; old hair
+    // sprites must not survive the transition into the next phrase.
+    tweezers.active = [];
+    tweezers.falling = [];
+    tweezers.tweezerAction = null;
+    tweezers.veg = tweezers.nextVeg;
+    tweezers.scrollStart = -1;
+  }
   const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
   const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width * tweezers.scrollDirection : 0;
   ctx.save();
