@@ -490,6 +490,10 @@ function tweezersRender(beat) {
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
     const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? tweezersStubbleCell(hair, beat) : tweezersShortHairCell(hair, beat));
+    // The two-frame transition is enough to communicate the pluck.  Do not
+    // retain cel041 afterwards: on the enlarged web canvas it reads as an
+    // unplucked dark hair rather than the tiny GBA stubble detail.
+    if (cell == null) continue;
     // create_affine_sprite() gives every hair a base rotation of -0x200;
     // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
     // base term was the 90° mismatch that put hairs across the face.
@@ -535,11 +539,10 @@ function tweezersLongHairCell(hair, beat) {
 }
 
 function tweezersStubbleCell(hair, beat) {
-  // anim_rhythm_tweezers_hair_stubble is cel042 for two native frames, then
-  // cel041.  The short residual is intentional original art, not a second
-  // unplucked hair.
+  // Keep just the first two-frame pluck transition.  The following GBA
+  // stubble cel becomes a conspicuous loose hair once scaled to the web.
   const at = hair.stubbleAt ?? hair.hitAt ?? beat;
-  return Math.floor((beat - at) * 37.5) < 2 ? 42 : 41;
+  return Math.floor((beat - at) * 37.5) < 2 ? 42 : null;
 }
 
 function tweezersActionCell(beat) {
