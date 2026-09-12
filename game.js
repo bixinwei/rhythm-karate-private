@@ -419,8 +419,10 @@ function tweezersUpdate(beat) {
       tweezers.tweezerAction = { kind: 'hit', at: hair.pullAt + hair.pullDuration };
     }
     // The engine releases a short hair at the penultimate pluck cel, not at
-    // the instant of input.  After the hand-off, a perfect pluck is clean;
-    // only a non-perfect pluck retains its anchored stubble animation.
+    // the instant of input.  Once that hand-off has happened, the original
+    // final composition is clean: the falling-hair sprite owns the visible
+    // strand and the anchored cue sprite must no longer be painted as a
+    // persistent dark "stubble" mark.
     if (hair.type === 'short' && hair.state === 'hit' && !hair.fallingSpawned && beat - hair.hitAt >= 13 / 37.5) {
       hair.fallingSpawned = true;
       const pos = tweezersOrbitAt(beat);
@@ -428,9 +430,7 @@ function tweezersUpdate(beat) {
       // base -0x200 affine rotation as the GBA engine.
       tweezers.falling.push({ x: pos.x, y: pos.y, spawnedAt: beat, orbitRotation: pos.rotation,
         rotationSpeed: Math.floor(Math.random() * 31) - 15 });
-      // Perfect short plucks leave a clean face.  A non-perfect pluck keeps
-      // the source stubble animation until that cue naturally despawns.
-      if (hair.perfect) hair.state = 'done';
+      hair.state = 'done';
     }
     if (hair.type === 'long' && hair.pullComplete) hair.state = 'done';
     if ((hair.state === 'hit' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
@@ -448,7 +448,7 @@ function tweezersPunch() {
   const beat = songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.hitBeat - beat) <= (h.fast ? 6 / 24 : h.type === 'long' ? 4 / 24 : 5 / 24));
   if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; missSound(); createImpact('empty'); return; }
   const perfectWindow = hair.fast || hair.type === 'long' ? 4 / 24 : 3 / 24;
-  const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat;
   if (hair.type === 'long') {
     const hitOffsetFrames = (beat - hair.hitBeat) * 37.5;
     hair.pull = true; hair.pullAt = beat; hair.pullRotation = tweezersOrbitAt(beat).rotation;
@@ -494,7 +494,7 @@ function tweezersRender(beat) {
     if (hair.state === 'done') continue;
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
-    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' && !hair.perfect ? tweezersStubbleCell(hair, beat) : tweezersShortHairCell(hair, beat));
+    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : tweezersShortHairCell(hair, beat);
     // create_affine_sprite() gives every hair a base rotation of -0x200;
     // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
     // base term was the 90° mismatch that put hairs across the face.
@@ -536,13 +536,6 @@ function tweezersLongHairCell(hair, beat) {
   let at = Math.max(0, (beat - hair.beat) * 37.5);
   for (const [cell, duration] of frames) { if (at < duration) return cell; at -= duration; }
   return 43;
-}
-
-function tweezersStubbleCell(hair, beat) {
-  // The original stubble animation alternates a tiny clean/short-root cel.
-  // It belongs only to a non-perfect short-hair result, never a clean pluck.
-  const at = hair.stubbleAt ?? hair.hitAt ?? beat;
-  return Math.floor((beat - at) * 37.5) < 2 ? 42 : 41;
 }
 
 function tweezersActionCell(beat) {
