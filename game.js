@@ -378,7 +378,9 @@ const tweezersOpeningVisualsReady = Promise.all([0, 35, 36, 37, 38, 39, 40].map(
 const tweezersBeatMs = 60000 / 96;
 const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 8, 125: 1, 127: 11 };
 function tweezersStart() {
-  audio(); mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
+  const context = audio();
+  const audioContextReady = context.state === 'suspended' ? context.resume() : Promise.resolve();
+  mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
@@ -387,7 +389,7 @@ function tweezersStart() {
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
-  Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady]).then(() => {
+  Promise.all([audioContextReady, tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     // Match the ROM's deterministic startup: decode every sample referenced
     // by this level before opening the lead-in. No late/cold-cache audio
