@@ -214,7 +214,7 @@ function scheduleTweezersMusic() {
       source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
       // The ROM samples are intentionally kept intact.  A modest shelf only
       // compensates for the duller Web Audio/browser speaker path.
-      gain.gain.value = Math.min(.16, .009 + event.velocity / 127 * (event.program === 125 ? .06 : .039));
+      gain.gain.value = Math.min(.32, (.009 + event.velocity / 127 * (event.program === 125 ? .06 : .039)) * 2);
       // Keeping every original PCM voice in a direct path was allowing their
       // low ends to build up on phone speakers.  This is a playback-only
       // correction: no samples, notes, lengths, or beat positions are changed.
