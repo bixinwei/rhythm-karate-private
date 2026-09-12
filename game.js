@@ -97,6 +97,7 @@ let originalSamples = {};
 const sampleLoads = new Map();
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
+let scheduledTweezersEvents = new Set();
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -199,11 +200,11 @@ function scheduleOriginalBgm() {
 function scheduleTweezersMusic() {
   const ac = audio();
   const nowBeat = Math.max(0, (ac.currentTime - audioSongStart) * 96 / 60);
-  for (const event of tweezersBgmEvents) {
+  for (const [index, event] of tweezersBgmEvents.entries()) {
     // Samples may finish decoding after gameplay has begun.  Never attempt
     // to schedule a note already in the past; future notes are added as soon
     // as their shared sample bank is ready.
-    if (event.beat > 116 || event.beat < nowBeat - .04) continue;
+    if (event.beat > 116 || event.beat < nowBeat - .04 || scheduledTweezersEvents.has(index)) continue;
     const sample = originalSamples[event.sample];
     const when = audioSongStart + event.beat * 60 / 96;
     const duration = Math.max(.025, event.length * 60 / 96);
@@ -219,6 +220,7 @@ function scheduleTweezersMusic() {
       cleanup.type = 'highpass'; cleanup.frequency.value = 92; cleanup.Q.value = .45;
       clarity.type = 'highshelf'; clarity.frequency.value = 2200; clarity.gain.value = 5.5;
       source.connect(gain).connect(cleanup).connect(clarity).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
+      scheduledTweezersEvents.add(index);
     }
   }
 }
@@ -351,7 +353,7 @@ function tweezersStart() {
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
   // The beat event starts its orbit; it does not create or reveal it.
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = [];
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
@@ -362,7 +364,15 @@ function tweezersStart() {
     // Do not hold the first game frame behind every music sample.  The first
     // few actions can use the existing oscillator fallback; decoded original
     // PCM is scheduled into all still-future beats once it arrives.
-    const needed = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
+    const allEvents = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()];
+    const needed = allEvents.map((event) => event.sample).filter(Number.isFinite);
+    // The opening eight beats use only four samples.  Decode them first so
+    // the actual GBA backing track begins during the three-beat lead-in,
+    // rather than waiting for every sample used in the whole level.
+    const opening = [...new Set(tweezersBgmEvents.filter((event) => event.beat < 8).map((event) => event.sample))];
+    loadOriginalSamples(opening).then(() => {
+      if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
+    });
     loadOriginalSamples([...new Set(needed)]).then(() => {
       if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
     });
