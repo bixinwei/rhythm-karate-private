@@ -356,7 +356,15 @@ function loop() {
 const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
-fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
+const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
+// The opening cue uses cells 35–40.  Do not start its clock until those
+// source frames and the first vegetable are decoded; otherwise a cold iPad
+// cache can reveal only the final, already-grown hair cel.
+function waitForImage(image) {
+  if (image.complete && image.naturalWidth) return Promise.resolve();
+  return new Promise((resolve) => { image.addEventListener('load', resolve, { once: true }); image.addEventListener('error', resolve, { once: true }); });
+}
+const tweezersOpeningVisualsReady = Promise.all([0, 35, 36, 37, 38, 39, 40].map((cell) => waitForImage(tweezers.cells[cell])).concat([waitForImage(tweezersBg.onion)]));
 const tweezersBeatMs = 60000 / 96;
 const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 8, 125: 1, 127: 11 };
 function tweezersStart() {
@@ -369,7 +377,7 @@ function tweezersStart() {
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
-  Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise]).then(() => {
+  Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     // The first hair cue must use the original PCM (s_hanabi_pon / long
     // hair-appear), never the oscillator fallback. Decode all tweezers SFX
