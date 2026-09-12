@@ -369,7 +369,7 @@ function loop() {
 
 // Rhythm Tweezers runtime. The timeline, cell art, and sprite layout are
 // taken from the decomp's rhythm_tweezers engine and main beatscript.
-const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
+const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1, faceState: 0, verticalOffset: 0 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
 const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r) => { if (!r.ok) throw new Error(`Failed to load tweezers chart (${r.status})`); return r.json(); }).then((v) => { tweezers.events = v; });
@@ -395,7 +395,7 @@ function tweezersStart() {
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
   // The beat event starts its orbit; it does not create or reveal it.
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.scrollDirection = 1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.scrollDirection = 1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.faceState = 0; tweezers.verticalOffset = 0; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
@@ -425,6 +425,7 @@ function tweezersLoop(beat) {
   tweezersUpdate(beat); tweezersRender(beat); frame = requestAnimationFrame(loop);
 }
 function tweezersUpdate(beat) {
+  if (tweezers.verticalOffset > 0) tweezers.verticalOffset = Math.max(0, tweezers.verticalOffset - 1 / 37.5);
   while (tweezers.events.length && tweezers.events[tweezers.lastEvent + 1]?.beat <= beat) {
     const event = tweezers.events[++tweezers.lastEvent];
     if (event.kind === 'cycle') tweezers.cycleAt = event.beat;
@@ -494,6 +495,11 @@ function tweezersPunch() {
     tweezers.tweezerAction = { kind: 'hidden', at: beat };
   }
   else tweezers.tweezerAction = { kind: perfect ? 'hit' : 'barely', at: beat };
+  if (hair.type === 'short') {
+    tweezers.faceState = 1;
+    tweezers.verticalOffset = 2;
+    if (!tweezers.active.some((item) => item !== hair && item.state === 'fresh')) tweezers.faceState = 2;
+  }
   if (hair.type === 'long') { playTweezersSfx('long_hit'); playTweezersSfx('long_pull'); }
   else playTweezersSfx(perfect ? 'hit' : 'barely');
   createImpact(perfect ? 'perfect' : 'normal');
@@ -527,12 +533,15 @@ function tweezersRender(beat) {
     tweezers.active = [];
     tweezers.falling = [];
     tweezers.tweezerAction = null;
+    tweezers.faceState = 0;
+    tweezers.verticalOffset = 0;
     tweezers.veg = tweezers.nextVeg;
     tweezers.scrollStart = -1;
   }
   const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
   const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width * tweezers.scrollDirection : 0;
   ctx.save();
+  ctx.translate(0, tweezers.verticalOffset * 4);
   ctx.translate(-slide, 0);
   const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
   // The engine's affine angle unit is one turn per 0x800, and the orbit
@@ -540,7 +549,7 @@ function tweezersRender(beat) {
   // Keeping both values intact puts the tweezers around the vegetable face
   // instead of collapsed in the centre.
   const orbit = tweezersOrbitAt(beat); const orbitX = orbit.x, orbitY = orbit.y;
-  const vegCell = tweezers.veg === 'turnip' ? 3 : tweezers.veg === 'potato' ? 6 : 0;
+  const vegCell = (tweezers.veg === 'turnip' ? 3 : tweezers.veg === 'potato' ? 6 : 0) + tweezers.faceState;
   drawTweezersCell(vegCell,120,16,4,1); // vegetable face, native sprite origin
   for (const hair of tweezers.active) {
     if (hair.state === 'done') continue;
