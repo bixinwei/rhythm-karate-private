@@ -106,6 +106,7 @@ const tweezersSfxLoadPromise = Promise.all(['appear', 'long_appear', 'hit', 'bar
   fetch(`assets/gba/tweezers_${name}_events.json`).then((response) => response.json()).then((events) => { tweezersSfx[name] = events; }).catch(() => {})
 ));
 const originalSfx = {};
+let previewAudios = [];
 for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
   fetch(`assets/gba/boxing_${name}_events.json`).then((response) => response.json()).then((events) => { originalSfx[name] = events; }).catch(() => {});
 }
@@ -946,7 +947,19 @@ for (const button of document.querySelectorAll('[data-tw-sfx]')) {
     // gesture. Wait for the resume promise before starting the audition node.
     const ac = audio();
     if (ac.state === 'suspended') await ac.resume();
-    playTweezersSfx(name);
+    // Keep the WebAudio audition, but also use native WAV playback as a
+    // reliable fallback on Safari builds that decode these GBA PCM headers
+    // yet produce no audible BufferSource output.
+    previewAudios.forEach((player) => { player.pause(); player.currentTime = 0; });
+    previewAudios = [];
+    const sequence = tweezersSfx[name] || [];
+    for (const eventData of sequence) {
+      const player = new Audio(`assets/gba/samples/sample_${String(eventData.sample).padStart(3, '0')}.wav`);
+      player.volume = Math.max(.2, eventData.velocity / 127);
+      player.playbackRate = eventData.fixed ? 1 : Math.pow(2, (eventData.note - 60) / 12);
+      previewAudios.push(player);
+      window.setTimeout(() => player.play().catch(() => {}), eventData.beat * 60000 / 96);
+    }
   });
 }
 stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
