@@ -347,7 +347,7 @@ function loop() {
 
 // Rhythm Tweezers runtime. The timeline, cell art, and sprite layout are
 // taken from the decomp's rhythm_tweezers engine and main beatscript.
-const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
+const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
 fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
@@ -359,7 +359,7 @@ function tweezersStart() {
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
   // The beat event starts its orbit; it does not create or reveal it.
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.scrollDirection = 1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
@@ -486,9 +486,9 @@ fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { twe
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
-  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; }
+  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; tweezers.scrollDirection *= -1; }
   const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
-  const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width : 0;
+  const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width * tweezers.scrollDirection : 0;
   ctx.save();
   ctx.translate(-slide, 0);
   const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
@@ -527,7 +527,7 @@ function tweezersRender(beat) {
       (-0x200 + frames * hair.rotationSpeed + hair.orbitRotation) * Math.PI * 2 / 0x800);
   }
   if (scrolling) {
-    ctx.save(); ctx.translate(stage.width, 0);
+    ctx.save(); ctx.translate(tweezers.scrollDirection * stage.width, 0);
     const nextBg = tweezersBg[tweezers.nextVeg];
     if (nextBg?.complete) ctx.drawImage(nextBg, 0, 0, stage.width, stage.height);
     const nextCell = tweezers.nextVeg === 'turnip' ? 3 : tweezers.nextVeg === 'potato' ? 6 : 0;
