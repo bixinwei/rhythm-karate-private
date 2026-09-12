@@ -368,8 +368,14 @@ function tweezersStart() {
   tweezersRender(-3);
   Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
-    startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
-    running = true;
+    // The first hair cue must use the original PCM (s_hanabi_pon / long
+    // hair-appear), never the oscillator fallback. Decode all tweezers SFX
+    // before opening the three-beat lead-in; the canvas is already visible.
+    const sfxNumbers = [...new Set(Object.values(tweezersSfx).flat().map((event) => event.sample).filter(Number.isFinite))];
+    return loadOriginalSamples(sfxNumbers).then(() => {
+      if (run !== songRun || mode !== 'tweezers') return;
+      startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
+      running = true;
     // Do not hold the first game frame behind every music sample.  The first
     // few actions can use the existing oscillator fallback; decoded original
     // PCM is scheduled into all still-future beats once it arrives.
@@ -385,7 +391,8 @@ function tweezersStart() {
     loadOriginalSamples([...new Set(needed)]).then(() => {
       if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
     });
-    cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+      cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+    });
   });
 }
 function tweezersLoop(beat) {
