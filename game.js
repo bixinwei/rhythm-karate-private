@@ -252,6 +252,7 @@ function hitAccent(type) {
 
 function start() {
   audio();
+  game.classList.remove('tweezers-mode');
   const run = ++songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
@@ -314,7 +315,7 @@ const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 
 function tweezersStart() {
   audio(); mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
-  menu.classList.add('hidden'); game.classList.remove('hidden');
+  menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.add('tweezers-mode');
   tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = 0; tweezers.lastEvent = -1;
   Promise.all([tweezersBgmLoadPromise, loadOriginalSamples()]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
@@ -366,14 +367,20 @@ fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { twe
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
+  // The engine's affine angle unit is one turn per 0x400, and the orbit
+  // distance in rhythm_tweezers.c is 0x4c — 76 native screen pixels.
+  // Keeping both values intact puts the tweezers around the vegetable face
+  // instead of collapsed in the centre.
   const cycleAge = tweezers.cycleAt < 0 ? 0 : Math.min(1, Math.max(0, (beat - tweezers.cycleAt) / 1.5));
-  const angle = -0.52 - cycleAge * 2.3; const orbitX = 120 + Math.cos(angle) * 30; const orbitY = 16 + Math.sin(angle) * 30;
+  const angle = (0x4ea - 0x5d5 * cycleAge) * Math.PI * 2 / 0x400;
+  const orbitX = 120 + Math.cos(angle) * 76, orbitY = 16 + Math.sin(angle) * 76;
   const vegCell = tweezers.veg === 'turnip' ? 3 : tweezers.veg === 'potato' ? 6 : 0;
   drawTweezersCell(vegCell,120,16,4,1); // vegetable face, native sprite origin
   for (const hair of tweezers.active) {
     if (hair.state === 'done') continue;
-    const hAngle = -0.52 - ((beat - (tweezers.cycleAt < 0 ? hair.beat : tweezers.cycleAt)) * 1.15);
-    const x = 120 + Math.cos(hAngle) * 30, y = 16 + Math.sin(hAngle) * 30;
+    const hairCycle = Math.min(1, Math.max(0, (hair.beat - (tweezers.cycleAt < 0 ? hair.beat : tweezers.cycleAt)) / 1.5));
+    const hAngle = (0x340 - 0x280 * hairCycle) * Math.PI * 2 / 0x400;
+    const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
     const cell = hair.type === 'long' ? (hair.pull ? 47 + Math.min(8, Math.floor((beat-hair.hitAt)*16)) : 52) : (hair.state === 'hit' ? 41 : 39);
     drawTweezersCell(cell,x,y,4,hair.state === 'miss' ? .45 : 1);
     if (hair.state === 'miss') drawTweezersCell(9,orbitX,orbitY,4,.8);
@@ -383,9 +390,6 @@ function tweezersRender(beat) {
     drawTweezersCell(cell, orbitX, orbitY, 4, 1);
   }
   for (const hair of tweezers.falling) drawTweezersCell(18,hair.x,hair.y,4,.85,hair.angle);
-  touchCtx.clearRect(0,0,touch.width,touch.height); touchCtx.fillStyle='#16161b'; touchCtx.fillRect(0,0,touch.width,touch.height);
-  if (bg?.complete) touchCtx.drawImage(bg, 0, 0, touch.width, touch.height);
-  touchCtx.fillStyle='#f4f3f4'; touchCtx.font='700 26px DM Mono'; touchCtx.fillText('TOUCH', touch.width-112, touch.height-22);
 }
 
 function update(beat) {
