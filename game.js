@@ -98,6 +98,7 @@ const sampleLoads = new Map();
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let scheduledTweezersEvents = new Set();
+let scheduledTweezersCueEvents = new Set();
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -254,10 +255,13 @@ function playTweezersSfx(name, eventBeat = null) {
 // The GBA beat-script invokes cue_spawn and the vegetable transition event
 // from its tick scheduler. Pre-schedule those same events against the audio
 // clock so a dropped render frame cannot make a sound disappear or drift.
-function scheduleTweezersEventAudio() {
-  for (const event of tweezers.events) {
+function scheduleTweezersEventAudio(currentBeat) {
+  const lookAhead = 4;
+  for (const [index, event] of tweezers.events.entries()) {
+    if (scheduledTweezersCueEvents.has(index) || event.beat < currentBeat - .25 || event.beat > currentBeat + lookAhead) continue;
     if (event.kind === 'cue') playTweezersSfx(event.cue === 'long' ? 'long_appear' : 'appear', event.beat);
     else if (event.kind === 'veg') playTweezersSfx('next', event.beat);
+    scheduledTweezersCueEvents.add(index);
   }
 }
 
@@ -400,7 +404,7 @@ function tweezersStart() {
       if (run !== songRun || mode !== 'tweezers') return;
       startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
       running = true;
-      scheduleTweezersEventAudio();
+      scheduledTweezersCueEvents = new Set();
       scheduleTweezersMusic();
       cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
     });
@@ -408,6 +412,7 @@ function tweezersStart() {
 }
 function tweezersLoop(beat) {
   if (beat > 120) return finish();
+  scheduleTweezersEventAudio(beat);
   tweezersUpdate(beat); tweezersRender(beat); frame = requestAnimationFrame(loop);
 }
 function tweezersUpdate(beat) {
