@@ -99,6 +99,7 @@ let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let scheduledTweezersEvents = new Set();
 let scheduledTweezersCueEvents = new Set();
+let previewTimer = 0;
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -250,6 +251,25 @@ function playTweezersSfx(name, eventBeat = null) {
       tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, delay);
     }
   }
+}
+
+function previewTweezersBgm() {
+  const context = audio();
+  for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
+  scheduledMusicNodes = [];
+  scheduledTweezersEvents = new Set();
+  clearTimeout(previewTimer);
+  Promise.all([tweezersBgmLoadPromise]).then(() => {
+    const needed = [...new Set(tweezersBgmEvents.map((event) => event.sample).filter(Number.isFinite))];
+    return loadOriginalSamples(needed);
+  }).then(() => {
+    audioSongStart = context.currentTime + .05;
+    scheduleTweezersMusic();
+    previewTimer = setTimeout(() => {
+      for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
+      scheduledMusicNodes = [];
+    }, 20000);
+  }).catch((error) => console.error('Tweezers BGM preview failed:', error));
 }
 
 // The GBA beat-script invokes cue_spawn and the vegetable transition event
@@ -988,6 +1008,7 @@ function finish() {
 
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
 $('#tweezersBtn').onclick = tweezersStart;
+$('#tweezersBgmPreview').onclick = previewTweezersBgm;
 stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 touch.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds
