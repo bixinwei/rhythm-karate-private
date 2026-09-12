@@ -102,9 +102,9 @@ let scheduledTweezersCueEvents = new Set();
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
-const tweezersBgmLoadPromise = fetch('assets/gba/tweezers_bgm_events.json').then((response) => response.json()).then((events) => { tweezersBgmEvents = events; }).catch(() => []);
+const tweezersBgmLoadPromise = fetch('assets/gba/tweezers_bgm_events.json').then((response) => { if (!response.ok) throw new Error(`Failed to load tweezers BGM (${response.status})`); return response.json(); }).then((events) => { tweezersBgmEvents = events; });
 const tweezersSfxLoadPromise = Promise.all(['appear', 'long_appear', 'hit', 'barely', 'long_hit', 'long_pull', 'next'].map((name) =>
-  fetch(`assets/gba/tweezers_${name}_events.json`).then((response) => response.json()).then((events) => { tweezersSfx[name] = events; }).catch(() => {})
+  fetch(`assets/gba/tweezers_${name}_events.json`).then((response) => { if (!response.ok) throw new Error(`Failed to load tweezers SFX ${name} (${response.status})`); return response.json(); }).then((events) => { tweezersSfx[name] = events; })
 ));
 const originalSfx = {};
 for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
@@ -139,7 +139,7 @@ function loadOriginalSamples(neededNumbers) {
   const bgmNumbers = [...originalBgmEvents, ...originalFanEvents, ...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
   const allNumbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
   const numbers = neededNumbers ?? allNumbers;
-  return Promise.allSettled(numbers.map((number) => {
+  return Promise.all(numbers.map((number) => {
     if (originalSamples[number]) return Promise.resolve();
     if (sampleLoads.has(number)) return sampleLoads.get(number);
     const name = String(number).padStart(3, '0');
@@ -372,7 +372,7 @@ function loop() {
 const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
-const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
+const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r) => { if (!r.ok) throw new Error(`Failed to load tweezers chart (${r.status})`); return r.json(); }).then((v) => { tweezers.events = v; });
 // The opening cue uses cells 35–40.  Do not start its clock until those
 // source frames and the first vegetable are decoded; otherwise a cold iPad
 // cache can reveal only the final, already-grown hair cel.
@@ -516,7 +516,7 @@ function tweezersOrbitAt(beat) {
   return { rotation, angle, x: 120 + Math.cos(angle) * 76, y: 16 + Math.sin(angle) * 76 };
 }
 let tweezersManifest = {};
-const tweezersManifestLoadPromise = fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); });
+const tweezersManifestLoadPromise = fetch('assets/gba/tweezers/frames.json').then((r) => { if (!r.ok) throw new Error(`Failed to load tweezers frame manifest (${r.status})`); return r.json(); }).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); });
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
