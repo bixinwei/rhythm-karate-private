@@ -933,6 +933,18 @@ function finish() {
 
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
 $('#tweezersBtn').onclick = tweezersStart;
+// Original GBA Rhythm Tweezers SFX audition. Each button plays the exported
+// sequence once, using the same PCM, pitch and timing as in-game playback.
+for (const button of document.querySelectorAll('[data-tw-sfx]')) {
+  button.addEventListener('click', async (event) => {
+    event.stopPropagation();
+    const name = button.dataset.twSfx;
+    await tweezersSfxLoadPromise;
+    const numbers = [...new Set((tweezersSfx[name] || []).map((e) => e.sample).filter(Number.isFinite))];
+    await loadOriginalSamples(numbers);
+    playTweezersSfx(name);
+  });
+}
 stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 touch.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds

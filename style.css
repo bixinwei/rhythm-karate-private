@@ -119,6 +119,7 @@ body {
   color: #aeb7c4;
   font: 12px "DM Mono";
 }
+#tweezersPreview { max-width: 680px; }
 .voice-candidates button {
   cursor: pointer;
   min-width: 31px;
