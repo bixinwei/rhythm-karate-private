@@ -241,7 +241,10 @@ function playTweezersSfx(name, eventBeat = null) {
       gain.gain.value = .13 * (event.velocity / 127); source.connect(gain).connect(ac.destination);
       const when = Math.max(ac.currentTime + .005, baseWhen + offset);
       source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
-    } else tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, offset);
+    } else {
+      const delay = Math.max(0, baseWhen + offset - ac.currentTime);
+      tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, delay);
+    }
   }
 }
 
