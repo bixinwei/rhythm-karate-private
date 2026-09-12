@@ -22,6 +22,9 @@ sprites.stage.src = 'assets/gba/karate_man_stage.png?v=stage3';
 
 const BPM = 120;
 const BEAT_MS = 60000 / BPM;
+// GBA mixer values are 0..256 fixed-point. Web Audio needs one neutral
+// calibration factor to map those ratios to a safe browser output level.
+const GBA_MIX_SCALE = 0.48;
 // CueDefinition uses hit ±3 ticks and barely ±5 ticks; a beat is 24 ticks.
 const PERFECT_WINDOW = 3 / 24;
 const HIT_WINDOW = 5 / 24;
@@ -173,15 +176,13 @@ function scheduleOriginalMusic(events, startBeat = 0) {
     // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
     // is Karate Man's background vocal/call-and-response track.  Keep only
     // this track in the foreground; all prior guessed sample boosts are gone.
-    const isVocal = event.program === 125 && event.channel === 0;
-    const voiceBoost = isVocal ? 2.5 : 1;
-    const volume = Math.min(isVocal ? .085 : .046, (.004 + event.velocity / 127 * (percussion ? .015 : .02)) * voiceBoost);
+    const volume = GBA_MIX_SCALE * (event.velocity / 127) * (90 / 256) * (150 / 256);
     const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
       const source = ac.createBufferSource(); const gain = ac.createGain();
       source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
-      gain.gain.value = volume * 1.8;
+      gain.gain.value = volume;
       source.connect(gain).connect(ac.destination);
       scheduledMusicNodes.push(source);
       // The old universal 0.48 s cap was cutting the original call-and-
@@ -218,7 +219,7 @@ function scheduleTweezersMusic() {
       // The exported GBA PCM samples have a low peak level. Apply the
       // requested boost at the music bus while retaining the original note
       // velocities and playback rates.
-      gain.gain.value = Math.min(.55, (.009 + event.velocity / 127 * (event.program === 125 ? .06 : .039)) * 4);
+      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * (127 / 256) * (220 / 256);
       // Keeping every original PCM voice in a direct path was allowing their
       // low ends to build up on phone speakers.  This is a playback-only
       // correction: no samples, notes, lengths, or beat positions are changed.
@@ -232,6 +233,7 @@ function scheduleTweezersMusic() {
 
 function playTweezersSfx(name, eventBeat = null) {
   const events = tweezersSfx[name]; if (!events?.length) return;
+  const sfxVolumes = { appear: 208, long_appear: 80, hit: 115, barely: 110, long_hit: 40, long_pull: 80, next: 60 };
   const ac = audio();
   // In the GBA engine the sound command is emitted on the beat-script
   // tick.  Schedule from the song clock instead of the JS frame that happens
@@ -245,7 +247,7 @@ function playTweezersSfx(name, eventBeat = null) {
       // rhythm_tweezers.c calls play_sound_w_pitch_volume(..., 0xD0, 0):
       // 0xD0 is the volume parameter, while pitch remains neutral.
       source.playbackRate.value = event.rate ?? (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12));
-      gain.gain.value = .13 * (event.velocity / 127) * (name === 'appear' ? 0xd0 / 0x100 : 1); source.connect(gain).connect(ac.destination);
+      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * (sfxVolumes[name] / 256); source.connect(gain).connect(ac.destination);
       const when = Math.max(ac.currentTime + .005, baseWhen + offset);
       source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
       scheduledMusicNodes.push(source);
@@ -302,7 +304,8 @@ function playOriginalSfx(name) {
       const source = ac.createBufferSource(); const gain = ac.createGain();
       source.buffer = sample;
       source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
-      gain.gain.value = .16 * (event.velocity / 127);
+      const sfxVolumes = { fly: 80, pot: 110, rock: 110, ball: 110, bulb: 110, bomb: 110, normal: 95, punch: 80 };
+      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * ((sfxVolumes[name] ?? 80) / 256);
       source.connect(gain).connect(ac.destination);
       source.start(ac.currentTime + offset);
       source.stop(ac.currentTime + offset + Math.min(1.35, Math.max(.12, event.length * .5 + .28)));
