@@ -560,16 +560,21 @@ function drawTouchScreen() {
     }
   }
   // Permanent markings visible in the reference lower display.
+  // These are positioned within their board cells, rather than against the
+  // canvas, so the decoration stays aligned when the grid fills the screen.
+  const badgeX = left + cellW * .34, badgeY = top + cellH * .41;
+  const mascotX = left + 7 * (cellW + gap) + cellW * .42;
+  const mascotY = top + (cellH + gap) + cellH * .34;
   touchCtx.strokeStyle = '#d8d6dc'; touchCtx.lineWidth = 3; touchCtx.beginPath();
   for (let i = 0; i < 10; i++) {
     const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 7 : 14;
-    if (i) touchCtx.lineTo(57 + Math.cos(a) * r, 56 + Math.sin(a) * r); else touchCtx.moveTo(57 + Math.cos(a) * r, 56 + Math.sin(a) * r);
+    if (i) touchCtx.lineTo(badgeX + Math.cos(a) * r, badgeY + Math.sin(a) * r); else touchCtx.moveTo(badgeX + Math.cos(a) * r, badgeY + Math.sin(a) * r);
   }
   touchCtx.closePath(); touchCtx.stroke();
-  touchCtx.fillStyle = '#1b42ed'; touchCtx.beginPath(); touchCtx.arc(570, 126, 15, 0, Math.PI * 2); touchCtx.fill();
+  touchCtx.fillStyle = '#1b42ed'; touchCtx.beginPath(); touchCtx.arc(mascotX, mascotY, 15, 0, Math.PI * 2); touchCtx.fill();
   touchCtx.strokeStyle = '#11121c'; touchCtx.lineWidth = 3; touchCtx.stroke();
-  touchCtx.fillStyle = '#e4dbff'; touchCtx.beginPath(); touchCtx.arc(564, 110, 5, 0, Math.PI * 2); touchCtx.arc(578, 110, 5, 0, Math.PI * 2); touchCtx.fill();
-  touchCtx.fillStyle = '#17121b'; touchCtx.beginPath(); touchCtx.arc(564, 110, 2, 0, Math.PI * 2); touchCtx.arc(578, 110, 2, 0, Math.PI * 2); touchCtx.fill();
+  touchCtx.fillStyle = '#e4dbff'; touchCtx.beginPath(); touchCtx.arc(mascotX - 6, mascotY - 16, 5, 0, Math.PI * 2); touchCtx.arc(mascotX + 8, mascotY - 16, 5, 0, Math.PI * 2); touchCtx.fill();
+  touchCtx.fillStyle = '#17121b'; touchCtx.beginPath(); touchCtx.arc(mascotX - 6, mascotY - 16, 2, 0, Math.PI * 2); touchCtx.arc(mascotX + 8, mascotY - 16, 2, 0, Math.PI * 2); touchCtx.fill();
   const noteCells = [[1,2],[5,2],[2,3],[6,3],[1,5],[5,5]];
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (cellW + gap) + 12, top + row * (cellH + gap) + 54);
