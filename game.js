@@ -582,8 +582,12 @@ function tweezersRender(beat) {
 }
 
 function tweezersShortHairCell(hair, beat) {
-  const cells = [35, 36, 37, 38, 39, 40, 39];
-  return cells[Math.min(cells.length - 1, Math.max(0, Math.floor((beat - hair.beat) * 60 / 96 * 60)))];
+  // anim_rhythm_tweezers_short_hair: 35×1, 36×1, 37×1, 38×1,
+  // 39×1, 40×3, then 39×40 frames.
+  const frame = Math.max(0, Math.floor((beat - hair.beat) * 37.5));
+  if (frame < 5) return 35 + frame;
+  if (frame < 8) return 40;
+  return 39;
 }
 
 function tweezersLongHairCell(hair, beat) {
