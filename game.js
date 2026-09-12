@@ -952,7 +952,9 @@ for (const button of document.querySelectorAll('[data-tw-sfx]')) {
     // yet produce no audible BufferSource output.
     previewAudios.forEach((player) => { player.pause(); player.currentTime = 0; });
     previewAudios = [];
-    const sequence = tweezersSfx[name] || [];
+    const sequence = name === 'appear_loop'
+      ? [0, 1, 2, 3].map((beat) => ({ ...(tweezersSfx.appear?.[0] || {}), beat }))
+      : (tweezersSfx[name] || []);
     for (const eventData of sequence) {
       const player = new Audio(`assets/gba/samples/sample_${String(eventData.sample).padStart(3, '0')}.wav`);
       player.volume = Math.max(.2, eventData.velocity / 127);
