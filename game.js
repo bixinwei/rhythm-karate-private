@@ -94,7 +94,7 @@ let originalFanEvents = [];
 let tweezersBgmEvents = [];
 const tweezersSfx = {};
 let originalSamples = {};
-let sampleLoadPromise = null;
+const sampleLoads = new Map();
 let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let songRun = 0;
@@ -132,18 +132,22 @@ const karateSfxSamples = {
   53: 848, 54: 849, 55: 429
 };
 
-function loadOriginalSamples() {
-  if (sampleLoadPromise) return sampleLoadPromise;
+function loadOriginalSamples(neededNumbers) {
   const ac = audio();
   const bgmNumbers = [...originalBgmEvents, ...originalFanEvents, ...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
-  const numbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
-  sampleLoadPromise = Promise.allSettled(numbers.map(async (number) => {
+  const allNumbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
+  const numbers = neededNumbers ?? allNumbers;
+  return Promise.allSettled(numbers.map((number) => {
+    if (originalSamples[number]) return Promise.resolve();
+    if (sampleLoads.has(number)) return sampleLoads.get(number);
     const name = String(number).padStart(3, '0');
-    const response = await fetch(`assets/gba/samples/sample_${name}.wav`);
-    if (!response.ok) throw new Error(`Missing original sample ${name}`);
-    originalSamples[number] = await ac.decodeAudioData(await response.arrayBuffer());
+    const load = fetch(`assets/gba/samples/sample_${name}.wav`).then(async (response) => {
+      if (!response.ok) throw new Error(`Missing original sample ${name}`);
+      originalSamples[number] = await ac.decodeAudioData(await response.arrayBuffer());
+    });
+    sampleLoads.set(number, load);
+    return load;
   }));
-  return sampleLoadPromise;
 }
 
 function playMusic(wholeBeat) {
@@ -200,10 +204,13 @@ function scheduleTweezersMusic() {
     const when = audioSongStart + event.beat * 60 / 96;
     const duration = Math.max(.025, event.length * 60 / 96);
     if (sample) {
-      const source = ac.createBufferSource(); const gain = ac.createGain(); source.buffer = sample;
+      const source = ac.createBufferSource(); const gain = ac.createGain(); const clarity = ac.createBiquadFilter(); source.buffer = sample;
       source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
-      gain.gain.value = Math.min(.12, .006 + event.velocity / 127 * (event.program === 125 ? .045 : .028));
-      source.connect(gain).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
+      // The ROM samples are intentionally kept intact.  A modest shelf only
+      // compensates for the duller Web Audio/browser speaker path.
+      gain.gain.value = Math.min(.15, .008 + event.velocity / 127 * (event.program === 125 ? .056 : .035));
+      clarity.type = 'highshelf'; clarity.frequency.value = 1900; clarity.gain.value = 3;
+      source.connect(gain).connect(clarity).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
     }
   }
 }
@@ -335,7 +342,13 @@ function tweezersStart() {
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = 0; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = [];
-  Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise]).then(() => loadOriginalSamples()).then(() => {
+  // Show the game immediately.  Audio decoding must not leave the player on
+  // an empty black screen, and this mode only needs its own small sample set.
+  tweezersRender(-3);
+  Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise]).then(() => {
+    const needed = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
+    return loadOriginalSamples([...new Set(needed)]);
+  }).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
     running = true; scheduleTweezersMusic(); cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
@@ -363,7 +376,20 @@ function tweezersUpdate(beat) {
     const missWindow = hair.fast ? 6 / 24 : hair.type === 'long' ? 4 / 24 : 5 / 24;
     if (hair.state === 'fresh' && beat - hair.hitBeat > missWindow) { hair.state = 'miss'; hair.missAt = beat; const pos = tweezersOrbitAt(beat); tweezers.falling.push({ x: pos.x, y: pos.y, vx: -0.15, vy: .1, angle: 0, spin: .04 }); }
     if (hair.state === 'miss' && beat - hair.missAt > 1.5) hair.state = 'done';
-    if (hair.state === 'hit' && beat - hair.hitAt > (hair.type === 'long' ? .68 : .75)) hair.state = 'done';
+    // The source retains long-hair cues for two cue lengths.  Its half-beat
+    // pull then changes to a stubble cel and starts the normal recovery.
+    if (hair.type === 'long' && hair.pull && !hair.pullComplete && beat - hair.pullAt >= .5) {
+      hair.pullComplete = true;
+      tweezers.tweezerAction = { kind: 'hit', at: hair.pullAt + .5 };
+    }
+    // The engine releases a short hair at the penultimate pluck cel, not at
+    // the instant of input.  A long hair never becomes a falling-hair sprite.
+    if (hair.type === 'short' && hair.state === 'hit' && !hair.fallingSpawned && beat - hair.hitAt >= 13 / 37.5) {
+      hair.fallingSpawned = true;
+      const pos = tweezersOrbitAt(beat);
+      tweezers.falling.push({ x: pos.x, y: pos.y, vx: -.1, vy: .05, angle: 0, spin: .03 });
+    }
+    if (hair.state === 'hit' && beat - hair.hitAt > (hair.type === 'long' ? 4 : .75)) hair.state = 'done';
   }
   tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
   for (const hair of tweezers.falling) { hair.vy += .012; hair.y += hair.vy; hair.x += hair.vx; hair.angle += hair.spin; }
@@ -377,8 +403,6 @@ function tweezersPunch() {
   const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat;
   if (hair.type === 'long') { hair.pull = true; hair.pullAt = beat; tweezers.tweezerAction = { kind: 'hidden', at: beat }; }
   else tweezers.tweezerAction = { kind: perfect ? 'hit' : 'barely', at: beat };
-  const pluckPosition = tweezersOrbitAt(beat);
-  tweezers.falling.push({ x: pluckPosition.x, y: pluckPosition.y, vx: -.1, vy: .05, angle: 0, spin: .03 });
   if (hair.type === 'long') { playTweezersSfx('long_hit'); playTweezersSfx('long_pull'); }
   else playTweezersSfx(perfect ? 'hit' : 'barely');
   createImpact(perfect ? 'perfect' : 'normal');
@@ -430,10 +454,14 @@ function tweezersShortHairCell(hair, beat) {
 }
 
 function tweezersLongHairCell(hair, beat) {
-  // Long-hair success replaces the hair with the ROM's 32-frame pull cels.
-  // The cells themselves contain the corkscrew-like shake; mapping them over
-  // the source's 12-tick pull interval preserves that rapid tremble.
-  if (hair.pull) return 59 + Math.min(31, Math.floor((beat - hair.pullAt) / .5 * 31));
+  // `rhythm_tweezers_cue_update_long` explicitly maps all 32 pull cels over
+  // ticks_to_frames(0x0C): half a beat at 96 BPM.  The animation metadata is
+  // bypassed by the original cue updater, so its idle cel durations do not
+  // determine this motion.
+  if (hair.pull) {
+    if (hair.pullComplete) return 41;
+    return 59 + Math.min(31, Math.floor((beat - hair.pullAt) / .5 * 31));
+  }
   const frames = [[35,1],[36,1],[37,1],[38,1],[39,1],[40,1],[52,1],[50,1],[48,2],[46,3],[43,6],[44,5],[45,5],[46,5],[48,10],[47,10],[46,10],[45,10],[44,10],[43,40]];
   let at = Math.max(0, (beat - hair.beat) * 37.5);
   for (const [cell, duration] of frames) { if (at < duration) return cell; at -= duration; }
