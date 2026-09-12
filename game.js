@@ -377,7 +377,10 @@ const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r
 // source frames and the first vegetable are decoded; otherwise a cold iPad
 // cache can reveal only the final, already-grown hair cel.
 function waitForImage(image) {
-  if (image.complete && image.naturalWidth) return Promise.resolve();
+  // `complete` also covers a cached 404. Never leave the game clock blocked
+  // forever because a single optional cel failed; drawTweezersCell has its
+  // own missing-image fallback.
+  if (image.complete) return Promise.resolve();
   return new Promise((resolve) => { image.addEventListener('load', resolve, { once: true }); image.addEventListener('error', resolve, { once: true }); });
 }
 const tweezersOpeningVisualsReady = Promise.all([0, 35, 36, 37, 38, 39, 40].map((cell) => waitForImage(tweezers.cells[cell])).concat([waitForImage(tweezersBg.onion)]));
