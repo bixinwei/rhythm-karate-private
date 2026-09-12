@@ -240,7 +240,7 @@ function playTweezersSfx(name, eventBeat = null) {
       const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
       // rhythm_tweezers.c calls play_sound_w_pitch_volume(..., 0xD0, 0):
       // 0xD0 is the volume parameter, while pitch remains neutral.
-      source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
+      source.playbackRate.value = event.rate ?? (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12));
       gain.gain.value = .13 * (event.velocity / 127) * (name === 'appear' ? 0xd0 / 0x100 : 1); source.connect(gain).connect(ac.destination);
       const when = Math.max(ac.currentTime + .005, baseWhen + offset);
       source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
@@ -960,7 +960,7 @@ for (const button of document.querySelectorAll('[data-tw-sfx]')) {
     for (const eventData of sequence) {
       const player = new Audio(`assets/gba/samples/sample_${String(eventData.sample).padStart(3, '0')}.wav`);
       player.volume = Math.max(.2, eventData.velocity / 127);
-      player.playbackRate = eventData.fixed ? 1 : Math.pow(2, (eventData.note - 60) / 12);
+      player.playbackRate = eventData.rate ?? (eventData.fixed ? 1 : Math.pow(2, (eventData.note - 60) / 12));
       previewAudios.push(player);
       window.setTimeout(() => player.play().catch(() => {}), eventData.beat * 60000 / 96);
     }
