@@ -225,16 +225,22 @@ function scheduleTweezersMusic() {
   }
 }
 
-function playTweezersSfx(name) {
+function playTweezersSfx(name, eventBeat = null) {
   const events = tweezersSfx[name]; if (!events?.length) return;
   const ac = audio();
+  // In the GBA engine the sound command is emitted on the beat-script
+  // tick.  Schedule from the song clock instead of the JS frame that happens
+  // to notice the event; otherwise a busy frame shifts the hair-appearance
+  // sound behind the visual cue.
+  const baseWhen = eventBeat == null ? ac.currentTime : audioSongStart + eventBeat * 60 / 96;
   for (const event of events) {
     const offset = event.beat * 60 / 96; const sample = originalSamples[event.sample];
     if (sample) {
       const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
       source.playbackRate.value = name === 'appear' ? 0xd0 / 0x100 : (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12));
       gain.gain.value = .13 * (event.velocity / 127); source.connect(gain).connect(ac.destination);
-      source.start(ac.currentTime + offset); source.stop(ac.currentTime + offset + Math.max(.45, event.length * 60 / 96 + .2));
+      const when = Math.max(ac.currentTime + .005, baseWhen + offset);
+      source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
     } else tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, offset);
   }
 }
@@ -388,7 +394,7 @@ function tweezersUpdate(beat) {
     const event = tweezers.events[++tweezers.lastEvent];
     if (event.kind === 'cycle') tweezers.cycleAt = event.beat;
     if (event.kind === 'tweezers') tweezers.tweezersAt = event.beat;
-    if (event.kind === 'veg') { tweezers.nextVeg = event.veg; tweezers.scrollStart = event.beat; tweezers.scrollDuration = .5; playTweezersSfx('next'); }
+    if (event.kind === 'veg') { tweezers.nextVeg = event.veg; tweezers.scrollStart = event.beat; tweezers.scrollDuration = .5; playTweezersSfx('next', event.beat); }
     if (event.kind === 'cue') {
       const long = event.cue === 'long';
       // Cue durations are 0x60 script ticks = four beats. `spawn_cue` is
@@ -402,7 +408,7 @@ function tweezersUpdate(beat) {
       const cycleTarget = 112; // ticks_to_frames(0x48) at 96 BPM
       const orbitRotation = 0x340 - Math.floor(0x280 * cycleFrames / cycleTarget);
       tweezers.active.push({ beat: event.beat, hitBeat: event.beat + 4, type: long ? 'long' : 'short', fast: event.cue === 'fast', orbitRotation, state: 'fresh', hitAt: -1 });
-      playTweezersSfx(long ? 'long_appear' : 'appear');
+      playTweezersSfx(long ? 'long_appear' : 'appear', event.beat);
     }
   }
   for (const hair of tweezers.active) {
