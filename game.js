@@ -419,7 +419,10 @@ function tweezersUpdate(beat) {
       tweezers.tweezerAction = { kind: 'hit', at: hair.pullAt + hair.pullDuration };
     }
     // The engine releases a short hair at the penultimate pluck cel, not at
-    // the instant of input.  A long hair never becomes a falling-hair sprite.
+    // the instant of input.  Once that hand-off has happened, the original
+    // final composition is clean: the falling-hair sprite owns the visible
+    // strand and the anchored cue sprite must no longer be painted as a
+    // persistent dark "stubble" mark.
     if (hair.type === 'short' && hair.state === 'hit' && !hair.fallingSpawned && beat - hair.hitAt >= 13 / 37.5) {
       hair.fallingSpawned = true;
       const pos = tweezersOrbitAt(beat);
@@ -427,7 +430,9 @@ function tweezersUpdate(beat) {
       // base -0x200 affine rotation as the GBA engine.
       tweezers.falling.push({ x: pos.x, y: pos.y, spawnedAt: beat, orbitRotation: pos.rotation,
         rotationSpeed: Math.floor(Math.random() * 31) - 15 });
+      hair.state = 'done';
     }
+    if (hair.type === 'long' && hair.pullComplete) hair.state = 'done';
     if ((hair.state === 'hit' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
   }
   tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
@@ -489,7 +494,7 @@ function tweezersRender(beat) {
     if (hair.state === 'done') continue;
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
-    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? tweezersStubbleCell(hair, beat) : tweezersShortHairCell(hair, beat));
+    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : tweezersShortHairCell(hair, beat);
     // create_affine_sprite() gives every hair a base rotation of -0x200;
     // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
     // base term was the 90° mismatch that put hairs across the face.
@@ -525,21 +530,12 @@ function tweezersLongHairCell(hair, beat) {
   // bypassed by the original cue updater, so its idle cel durations do not
   // determine this motion.
   if (hair.pull) {
-    if (hair.pullComplete) return tweezersStubbleCell(hair, beat);
     return 59 + Math.min(31, Math.floor((beat - hair.pullAt) / hair.pullDuration * 31));
   }
   const frames = [[35,1],[36,1],[37,1],[38,1],[39,1],[40,1],[52,1],[50,1],[48,2],[46,3],[43,6],[44,5],[45,5],[46,5],[48,10],[47,10],[46,10],[45,10],[44,10],[43,40]];
   let at = Math.max(0, (beat - hair.beat) * 37.5);
   for (const [cell, duration] of frames) { if (at < duration) return cell; at -= duration; }
   return 43;
-}
-
-function tweezersStubbleCell(hair, beat) {
-  // anim_rhythm_tweezers_hair_stubble is cel042 for two native frames, then
-  // cel041.  The short residual is intentional original art, not a second
-  // unplucked hair.
-  const at = hair.stubbleAt ?? hair.hitAt ?? beat;
-  return Math.floor((beat - at) * 37.5) < 2 ? 42 : 41;
 }
 
 function tweezersActionCell(beat) {
