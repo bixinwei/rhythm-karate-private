@@ -258,7 +258,9 @@ function playTweezersSfx(name, eventBeat = null) {
 function scheduleTweezersEventAudio(currentBeat) {
   const lookAhead = 4;
   for (const [index, event] of tweezers.events.entries()) {
-    if (scheduledTweezersCueEvents.has(index) || event.beat < currentBeat - .25 || event.beat > currentBeat + lookAhead) continue;
+    // Never discard an event that fell just behind a delayed animation frame:
+    // schedule it immediately instead of losing that cue altogether.
+    if (scheduledTweezersCueEvents.has(index) || event.beat > currentBeat + lookAhead) continue;
     if (event.kind === 'cue') playTweezersSfx(event.cue === 'long' ? 'long_appear' : 'appear', event.beat);
     else if (event.kind === 'veg') playTweezersSfx('next', event.beat);
     scheduledTweezersCueEvents.add(index);
