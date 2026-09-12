@@ -106,7 +106,6 @@ const tweezersSfxLoadPromise = Promise.all(['appear', 'long_appear', 'hit', 'bar
   fetch(`assets/gba/tweezers_${name}_events.json`).then((response) => response.json()).then((events) => { tweezersSfx[name] = events; }).catch(() => {})
 ));
 const originalSfx = {};
-let previewAudios = [];
 for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
   fetch(`assets/gba/boxing_${name}_events.json`).then((response) => response.json()).then((events) => { originalSfx[name] = events; }).catch(() => {});
 }
@@ -390,30 +389,17 @@ function tweezersStart() {
   tweezersRender(-3);
   Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
-    // The first hair cue must use the original PCM (s_hanabi_pon / long
-    // hair-appear), never the oscillator fallback. Decode all tweezers SFX
-    // before opening the three-beat lead-in; the canvas is already visible.
-    const sfxNumbers = [...new Set(Object.values(tweezersSfx).flat().map((event) => event.sample).filter(Number.isFinite))];
-    return loadOriginalSamples(sfxNumbers).then(() => {
+    // Match the ROM's deterministic startup: decode every sample referenced
+    // by this level before opening the lead-in. No late/cold-cache audio
+    // insertion is allowed once the beat clock starts.
+    const allEvents = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()];
+    const needed = [...new Set(allEvents.map((event) => event.sample).filter(Number.isFinite))];
+    return loadOriginalSamples(needed).then(() => {
       if (run !== songRun || mode !== 'tweezers') return;
       startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
       running = true;
       scheduleTweezersEventAudio();
-    // Do not hold the first game frame behind every music sample.  The first
-    // few actions can use the existing oscillator fallback; decoded original
-    // PCM is scheduled into all still-future beats once it arrives.
-    const allEvents = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()];
-    const needed = allEvents.map((event) => event.sample).filter(Number.isFinite);
-    // The opening eight beats use only four samples.  Decode them first so
-    // the actual GBA backing track begins during the three-beat lead-in,
-    // rather than waiting for every sample used in the whole level.
-    const opening = [...new Set(tweezersBgmEvents.filter((event) => event.beat < 8).map((event) => event.sample))];
-    loadOriginalSamples(opening).then(() => {
-      if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
-    });
-    loadOriginalSamples([...new Set(needed)]).then(() => {
-      if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
-    });
+      scheduleTweezersMusic();
       cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
     });
   });
@@ -955,36 +941,6 @@ function finish() {
 
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
 $('#tweezersBtn').onclick = tweezersStart;
-// Original GBA Rhythm Tweezers SFX audition. Each button plays the exported
-// sequence once, using the same PCM, pitch and timing as in-game playback.
-for (const button of document.querySelectorAll('[data-tw-sfx]')) {
-  button.addEventListener('click', async (event) => {
-    event.stopPropagation();
-    const name = button.dataset.twSfx;
-    await tweezersSfxLoadPromise;
-    const numbers = [...new Set((tweezersSfx[name] || []).map((e) => e.sample).filter(Number.isFinite))];
-    await loadOriginalSamples(numbers);
-    // Safari/Chrome may keep the shared context suspended until the first
-    // gesture. Wait for the resume promise before starting the audition node.
-    const ac = audio();
-    if (ac.state === 'suspended') await ac.resume();
-    // Keep the WebAudio audition, but also use native WAV playback as a
-    // reliable fallback on Safari builds that decode these GBA PCM headers
-    // yet produce no audible BufferSource output.
-    previewAudios.forEach((player) => { player.pause(); player.currentTime = 0; });
-    previewAudios = [];
-    const sequence = name === 'appear_loop'
-      ? [0, 1, 2, 3].map((beat) => ({ ...(tweezersSfx.appear?.[0] || {}), beat }))
-      : (tweezersSfx[name] || []);
-    for (const eventData of sequence) {
-      const player = new Audio(`assets/gba/samples/sample_${String(eventData.sample).padStart(3, '0')}.wav`);
-      player.volume = Math.max(.2, eventData.velocity / 127);
-      player.playbackRate = eventData.rate ?? (eventData.fixed ? 1 : Math.pow(2, (eventData.note - 60) / 12));
-      previewAudios.push(player);
-      window.setTimeout(() => player.play().catch(() => {}), eventData.beat * 60000 / 96);
-    }
-  });
-}
 stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 touch.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds
