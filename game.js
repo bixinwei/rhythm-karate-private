@@ -470,8 +470,12 @@ function tweezersUpdate(beat) {
       tweezers.falling.push({ x: pos.x, y: pos.y, spawnedAt: beat, orbitRotation: pos.rotation,
         rotationSpeed: Math.floor(Math.random() * 31) - 15 });
     }
-    if (hair.type === 'long' && hair.pullComplete) hair.state = 'done';
-    if ((hair.state === 'hit' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
+    // The long-cue updater keeps the cue sprite alive until duration * 2,
+    // just like the short-cue updater. Pull completion only changes the cel
+    // to the remaining black-point/stubble state; it must not despawn the cue
+    // half a beat after the input.
+    if (hair.type === 'long' && hair.pullComplete && hair.state === 'hit') hair.state = 'stubble';
+    if ((hair.state === 'hit' || hair.state === 'stubble' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
   }
   tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
   tweezers.falling = tweezers.falling.filter((hair) => {
@@ -555,7 +559,8 @@ function tweezersRender(beat) {
     if (hair.state === 'done') continue;
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
-    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) :
+    const cell = hair.type === 'long' ?
+      (hair.state === 'stubble' ? (hair.perfect ? 42 : 41) : tweezersLongHairCell(hair, beat)) :
       (hair.state === 'hit' ? (hair.perfect ? 42 : 41) : tweezersShortHairCell(hair, beat));
     // create_affine_sprite() gives every hair a base rotation of -0x200;
     // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
