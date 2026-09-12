@@ -92,6 +92,9 @@ body {
   margin-left: 20px;
   opacity: 0.65;
 }
+.start.secondary {
+  background: #a8d8cb;
+}
 .menu-actions {
   display: flex;
   align-items: stretch;

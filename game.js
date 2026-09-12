@@ -6,6 +6,7 @@ const stage = $('#stage');
 const ctx = stage.getContext('2d');
 const touch = $('#lower');
 const touchCtx = touch.getContext('2d');
+let mode = 'karate';
 
 const sprites = {};
 // Local exports composed from the GBA decomp's original 4bpp tiles, palette
@@ -90,6 +91,7 @@ let audioCtx;
 let lastMusicBeat = -99;
 let originalBgmEvents = [];
 let originalFanEvents = [];
+let tweezersBgmEvents = [];
 let originalSamples = {};
 let sampleLoadPromise = null;
 let audioSongStart = 0;
@@ -97,6 +99,7 @@ let scheduledMusicNodes = [];
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
+const tweezersBgmLoadPromise = fetch('assets/gba/tweezers_bgm_events.json').then((response) => response.json()).then((events) => { tweezersBgmEvents = events; }).catch(() => []);
 const originalSfx = {};
 for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
   fetch(`assets/gba/boxing_${name}_events.json`).then((response) => response.json()).then((events) => { originalSfx[name] = events; }).catch(() => {});
@@ -128,7 +131,7 @@ const karateSfxSamples = {
 function loadOriginalSamples() {
   if (sampleLoadPromise) return sampleLoadPromise;
   const ac = audio();
-  const bgmNumbers = [...originalBgmEvents, ...originalFanEvents].map((event) => event.sample).filter(Number.isFinite);
+  const bgmNumbers = [...originalBgmEvents, ...originalFanEvents, ...tweezersBgmEvents].map((event) => event.sample).filter(Number.isFinite);
   const numbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
   sampleLoadPromise = Promise.allSettled(numbers.map(async (number) => {
     const name = String(number).padStart(3, '0');
@@ -183,6 +186,22 @@ function scheduleOriginalBgm() {
   scheduleOriginalMusic(originalBgmEvents);
   // The original script switches to s_karate_fan exactly after the `4` cue.
   scheduleOriginalMusic(originalFanEvents, 151);
+}
+
+function scheduleTweezersMusic() {
+  const ac = audio();
+  for (const event of tweezersBgmEvents) {
+    if (event.beat > 116) continue;
+    const sample = originalSamples[event.sample ?? tweezersProgramSamples[event.program] ?? 1];
+    const when = audioSongStart + event.beat * 60 / 96;
+    const duration = Math.max(.025, event.length * 60 / 96);
+    if (sample) {
+      const source = ac.createBufferSource(); const gain = ac.createGain(); source.buffer = sample;
+      source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
+      gain.gain.value = Math.min(.12, .006 + event.velocity / 127 * (event.program === 125 ? .045 : .028));
+      source.connect(gain).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
+    }
+  }
 }
 
 function playOriginalSfx(name) {
@@ -272,15 +291,101 @@ function quit() {
 }
 
 function songBeat() {
-  return beatAtElapsed(performance.now() - startAt);
+  return mode === 'tweezers' ? (performance.now() - startAt) / tweezersBeatMs : beatAtElapsed(performance.now() - startAt);
 }
 
 function loop() {
   const beat = songBeat();
+  if (mode === 'tweezers') return tweezersLoop(beat);
   if (beat > SONG_END) return finish();
   update(beat);
   render(beat);
   frame = requestAnimationFrame(loop);
+}
+
+// Rhythm Tweezers runtime. The timeline, cell art, and sprite layout are
+// taken from the decomp's rhythm_tweezers engine and main beatscript.
+const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
+for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
+const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
+fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
+const tweezersBeatMs = 60000 / 96;
+const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 8, 125: 1, 127: 11 };
+function tweezersStart() {
+  audio(); mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
+  for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
+  menu.classList.add('hidden'); game.classList.remove('hidden');
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = 0; tweezers.lastEvent = -1;
+  Promise.all([tweezersBgmLoadPromise, loadOriginalSamples()]).then(() => {
+    if (run !== songRun || mode !== 'tweezers') return;
+    startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
+    running = true; scheduleTweezersMusic(); cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+  });
+}
+function tweezersLoop(beat) {
+  if (beat > 120) return finish();
+  tweezersUpdate(beat); tweezersRender(beat); frame = requestAnimationFrame(loop);
+}
+function tweezersUpdate(beat) {
+  while (tweezers.events.length && tweezers.events[tweezers.lastEvent + 1]?.beat <= beat) {
+    const event = tweezers.events[++tweezers.lastEvent];
+    if (event.kind === 'cycle') tweezers.cycleAt = event.beat;
+    if (event.kind === 'tweezers') tweezers.tweezersAt = event.beat;
+    if (event.kind === 'veg') tweezers.veg = event.veg;
+    if (event.kind === 'cue') {
+      const long = event.cue === 'long';
+      tweezers.active.push({ beat: event.beat, type: long ? 'long' : 'short', state: 'fresh', hitAt: -1 });
+      tone(long ? 460 : 640, .055, 'square', .025);
+    }
+  }
+  for (const hair of tweezers.active) {
+    if (hair.state === 'fresh' && beat - hair.beat > .28) { hair.state = 'miss'; hair.missAt = beat; tweezers.falling.push({ x: 120, y: 42, vx: -0.15, vy: .1, angle: 0, spin: .04 }); }
+    if (hair.state === 'miss' && beat - hair.missAt > 1.5) hair.state = 'done';
+    if (hair.state === 'hit' && beat - hair.hitAt > (hair.type === 'long' ? 1.25 : .75)) hair.state = 'done';
+  }
+  tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
+  for (const hair of tweezers.falling) { hair.vy += .012; hair.y += hair.vy; hair.x += hair.vx; hair.angle += hair.spin; }
+  tweezers.falling = tweezers.falling.filter((h) => h.y < 190);
+}
+function tweezersPunch() {
+  if (!running || mode !== 'tweezers') return;
+  const beat = songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.beat - beat) <= 6 / 24);
+  if (!hair) { missSound(); return; }
+  const perfect = Math.abs(hair.beat - beat) <= 3 / 24; hair.state = 'hit'; hair.hitAt = beat;
+  if (hair.type === 'long') { hair.pull = true; } else { hair.cell = 41; }
+  tweezers.falling.push({ x: 120, y: 42, vx: -.1, vy: .05, angle: 0, spin: .03 });
+  if (hair.type === 'long') playOriginalSfx('normal'); else playOriginalSfx('punch');
+}
+function drawTweezersCell(cell, x, y, scale = 4, alpha = 1, angle = 0) {
+  const image = tweezers.cells[cell], meta = tweezersManifest[cell]; if (!image?.complete || !meta) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = alpha; ctx.translate(x * scale, y * scale); ctx.rotate(angle);
+  ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale); ctx.restore();
+}
+let tweezersManifest = {};
+fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); }).catch(() => {});
+function tweezersRender(beat) {
+  ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
+  const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
+  const cycleAge = tweezers.cycleAt < 0 ? 0 : Math.min(1, Math.max(0, (beat - tweezers.cycleAt) / 1.5));
+  const angle = -0.52 - cycleAge * 2.3; const orbitX = 120 + Math.cos(angle) * 30; const orbitY = 16 + Math.sin(angle) * 30;
+  const vegCell = tweezers.veg === 'turnip' ? 3 : tweezers.veg === 'potato' ? 6 : 0;
+  drawTweezersCell(vegCell,120,16,4,1); // vegetable face, native sprite origin
+  for (const hair of tweezers.active) {
+    if (hair.state === 'done') continue;
+    const hAngle = -0.52 - ((beat - (tweezers.cycleAt < 0 ? hair.beat : tweezers.cycleAt)) * 1.15);
+    const x = 120 + Math.cos(hAngle) * 30, y = 16 + Math.sin(hAngle) * 30;
+    const cell = hair.type === 'long' ? (hair.pull ? 47 + Math.min(8, Math.floor((beat-hair.hitAt)*16)) : 52) : (hair.state === 'hit' ? 41 : 39);
+    drawTweezersCell(cell,x,y,4,hair.state === 'miss' ? .45 : 1);
+    if (hair.state === 'miss') drawTweezersCell(9,orbitX,orbitY,4,.8);
+  }
+  if (tweezers.tweezersAt >= 0 && beat - tweezers.tweezersAt < 4) {
+    const age = Math.max(0, beat - tweezers.tweezersAt); const cell = age < .2 ? 9 : age < .55 ? 11 + Math.min(6, Math.floor(age*20)) : 9;
+    drawTweezersCell(cell, orbitX, orbitY, 4, 1);
+  }
+  for (const hair of tweezers.falling) drawTweezersCell(18,hair.x,hair.y,4,.85,hair.angle);
+  touchCtx.clearRect(0,0,touch.width,touch.height); touchCtx.fillStyle='#16161b'; touchCtx.fillRect(0,0,touch.width,touch.height);
+  if (bg?.complete) touchCtx.drawImage(bg, 0, 0, touch.width, touch.height);
+  touchCtx.fillStyle='#f4f3f4'; touchCtx.font='700 26px DM Mono'; touchCtx.fillText('TOUCH', touch.width-112, touch.height-22);
 }
 
 function update(beat) {
@@ -633,15 +738,16 @@ function finish() {
   setTimeout(quit, 120);
 }
 
-$('#startBtn').onclick = start;
-stage.addEventListener('pointerdown', punch);
-touch.addEventListener('pointerdown', punch);
+$('#startBtn').onclick = () => { mode = 'karate'; start(); };
+$('#tweezersBtn').onclick = tweezersStart;
+stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
+touch.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds
 // even with viewport constraints.  The game owns touch-end on both screens.
 for (const canvas of [stage, touch]) canvas.addEventListener('touchend', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 window.addEventListener('keydown', (event) => {
-  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); game.classList.contains('hidden') ? start() : punch(); }
-  if (event.code === 'F1' && !game.classList.contains('hidden')) { event.preventDefault(); start(); }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); if (game.classList.contains('hidden')) start(); else mode === 'tweezers' ? tweezersPunch() : punch(); }
+  if (event.code === 'F1' && !game.classList.contains('hidden')) { event.preventDefault(); mode === 'tweezers' ? tweezersStart() : start(); }
   if (event.code === 'F2') cheat = !cheat;
 });
