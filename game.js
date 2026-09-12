@@ -244,10 +244,21 @@ function playTweezersSfx(name, eventBeat = null) {
       gain.gain.value = .13 * (event.velocity / 127) * (name === 'appear' ? 0xd0 / 0x100 : 1); source.connect(gain).connect(ac.destination);
       const when = Math.max(ac.currentTime + .005, baseWhen + offset);
       source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
+      scheduledMusicNodes.push(source);
     } else {
       const delay = Math.max(0, baseWhen + offset - ac.currentTime);
       tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, delay);
     }
+  }
+}
+
+// The GBA beat-script invokes cue_spawn and the vegetable transition event
+// from its tick scheduler. Pre-schedule those same events against the audio
+// clock so a dropped render frame cannot make a sound disappear or drift.
+function scheduleTweezersEventAudio() {
+  for (const event of tweezers.events) {
+    if (event.kind === 'cue') playTweezersSfx(event.cue === 'long' ? 'long_appear' : 'appear', event.beat);
+    else if (event.kind === 'veg') playTweezersSfx('next', event.beat);
   }
 }
 
@@ -387,6 +398,7 @@ function tweezersStart() {
       if (run !== songRun || mode !== 'tweezers') return;
       startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
       running = true;
+      scheduleTweezersEventAudio();
     // Do not hold the first game frame behind every music sample.  The first
     // few actions can use the existing oscillator fallback; decoded original
     // PCM is scheduled into all still-future beats once it arrives.
@@ -415,7 +427,7 @@ function tweezersUpdate(beat) {
     const event = tweezers.events[++tweezers.lastEvent];
     if (event.kind === 'cycle') tweezers.cycleAt = event.beat;
     if (event.kind === 'tweezers') tweezers.tweezersAt = event.beat;
-    if (event.kind === 'veg') { tweezers.nextVeg = event.veg; tweezers.scrollStart = event.beat; tweezers.scrollDuration = .5; playTweezersSfx('next', event.beat); }
+    if (event.kind === 'veg') { tweezers.nextVeg = event.veg; tweezers.scrollStart = event.beat; tweezers.scrollDuration = .5; }
     if (event.kind === 'cue') {
       const long = event.cue === 'long';
       // Cue durations are 0x60 script ticks = four beats. `spawn_cue` is
@@ -429,7 +441,6 @@ function tweezersUpdate(beat) {
       const cycleTarget = 112; // ticks_to_frames(0x48) at 96 BPM
       const orbitRotation = 0x340 - Math.floor(0x280 * cycleFrames / cycleTarget);
       tweezers.active.push({ beat: event.beat, hitBeat: event.beat + 4, type: long ? 'long' : 'short', fast: event.cue === 'fast', orbitRotation, state: 'fresh', hitAt: -1 });
-      playTweezersSfx(long ? 'long_appear' : 'appear', event.beat);
     }
   }
   for (const hair of tweezers.active) {
