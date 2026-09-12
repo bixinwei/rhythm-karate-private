@@ -381,10 +381,14 @@ function quit() {
 }
 
 function songBeat() {
-  // Tweezers audio is scheduled on the Web Audio clock. Use that same clock
-  // for visual cue processing and input judgment so drift cannot accumulate
-  // between performance.now() and AudioContext.currentTime over later rounds.
-  if (mode === 'tweezers' && audioCtx) return (audioCtx.currentTime - audioSongStart) * 1000 / tweezersBeatMs;
+  // Both games schedule audio on the Web Audio clock. Derive gameplay beat
+  // from that same clock so visuals, object cues and input judgment cannot
+  // drift away from the music over the course of a song.
+  if (audioCtx && audioSongStart) {
+    const elapsedMs = (audioCtx.currentTime - audioSongStart) * 1000;
+    if (mode === 'tweezers') return elapsedMs / tweezersBeatMs;
+    return beatAtElapsed(elapsedMs);
+  }
   return mode === 'tweezers' ? (performance.now() - startAt) / tweezersBeatMs : beatAtElapsed(performance.now() - startAt);
 }
 
