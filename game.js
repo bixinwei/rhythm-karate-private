@@ -496,7 +496,7 @@ fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { twe
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
-  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; tweezers.scrollDirection *= -1; }
+  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; }
   const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
   const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width * tweezers.scrollDirection : 0;
   ctx.save();
