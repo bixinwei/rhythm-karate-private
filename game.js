@@ -384,8 +384,10 @@ function tweezersUpdate(beat) {
   }
   for (const hair of tweezers.active) {
     const missWindow = hair.fast ? 6 / 24 : hair.type === 'long' ? 4 / 24 : 5 / 24;
-    if (hair.state === 'fresh' && beat - hair.hitBeat > missWindow) { hair.state = 'miss'; hair.missAt = beat; const pos = tweezersOrbitAt(beat); tweezers.falling.push({ x: pos.x, y: pos.y, vx: -0.15, vy: .1, angle: 0, spin: .04 }); }
-    if (hair.state === 'miss' && beat - hair.missAt > 1.5) hair.state = 'done';
+    // `rhythm_tweezers_cue_miss` only re-enables the beat-script loop.  It
+    // does not create a falling hair or an extra tweezers sprite; the cue's
+    // own hair remains until update_short/update_long despawns it at 2x time.
+    if (hair.state === 'fresh' && beat - hair.hitBeat > missWindow) hair.state = 'miss';
     // The source retains long-hair cues for two cue lengths.  Its half-beat
     // pull then changes to a stubble cel and starts the normal recovery.
     if (hair.type === 'long' && hair.pull && !hair.pullComplete && beat - hair.pullAt >= hair.pullDuration) {
@@ -399,7 +401,7 @@ function tweezersUpdate(beat) {
       const pos = tweezersOrbitAt(beat);
       tweezers.falling.push({ x: pos.x, y: pos.y, vx: -.1, vy: .05, angle: 0, spin: .03 });
     }
-    if (hair.state === 'hit' && beat - hair.hitAt > (hair.type === 'long' ? 4 : .75)) hair.state = 'done';
+    if ((hair.state === 'hit' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
   }
   tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
   for (const hair of tweezers.falling) { hair.vy += .012; hair.y += hair.vy; hair.x += hair.vx; hair.angle += hair.spin; }
@@ -464,8 +466,7 @@ function tweezersRender(beat) {
       drawAngle = (orbit.rotation - hair.pullRotation - 0x200) * Math.PI * 2 / 0x800;
       if (hair.pullComplete) drawAngle = -Math.PI / 2;
     }
-    drawTweezersCell(cell,x,y,4,hair.state === 'miss' ? .45 : 1,drawAngle);
-    if (hair.state === 'miss') drawTweezersCell(9,orbitX,orbitY,4,.8);
+    drawTweezersCell(cell,x,y,4,1,drawAngle);
   }
   if (tweezers.tweezerAction?.kind !== 'hidden') {
     drawTweezersCell(tweezersActionCell(beat), orbitX, orbitY, 4, 1,orbit.angle);
