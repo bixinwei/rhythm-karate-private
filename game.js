@@ -942,6 +942,10 @@ for (const button of document.querySelectorAll('[data-tw-sfx]')) {
     await tweezersSfxLoadPromise;
     const numbers = [...new Set((tweezersSfx[name] || []).map((e) => e.sample).filter(Number.isFinite))];
     await loadOriginalSamples(numbers);
+    // Safari/Chrome may keep the shared context suspended until the first
+    // gesture. Wait for the resume promise before starting the audition node.
+    const ac = audio();
+    if (ac.state === 'suspended') await ac.resume();
     playTweezersSfx(name);
   });
 }
