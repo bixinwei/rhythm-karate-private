@@ -232,7 +232,7 @@ function playTweezersSfx(name) {
     const offset = event.beat * 60 / 96; const sample = originalSamples[event.sample];
     if (sample) {
       const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
-      source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
+      source.playbackRate.value = name === 'appear' ? 0xd0 / 0x100 : (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12));
       gain.gain.value = .13 * (event.velocity / 127); source.connect(gain).connect(ac.destination);
       source.start(ac.currentTime + offset); source.stop(ac.currentTime + offset + Math.max(.45, event.length * 60 / 96 + .2));
     } else tone(280 * Math.pow(2, (event.note - 60) / 12), Math.max(.04, event.length * 60 / 96), 'triangle', .04, offset);
@@ -341,7 +341,7 @@ function loop() {
 
 // Rhythm Tweezers runtime. The timeline, cell art, and sprite layout are
 // taken from the decomp's rhythm_tweezers engine and main beatscript.
-const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
+const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
 fetch('assets/gba/tweezers/chart.json').then((r) => r.json()).then((v) => { tweezers.events = v; }).catch(() => {});
@@ -353,7 +353,7 @@ function tweezersStart() {
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
   // The beat event starts its orbit; it does not create or reveal it.
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
@@ -388,7 +388,7 @@ function tweezersUpdate(beat) {
     const event = tweezers.events[++tweezers.lastEvent];
     if (event.kind === 'cycle') tweezers.cycleAt = event.beat;
     if (event.kind === 'tweezers') tweezers.tweezersAt = event.beat;
-    if (event.kind === 'veg') { tweezers.veg = event.veg; playTweezersSfx('next'); }
+    if (event.kind === 'veg') { tweezers.nextVeg = event.veg; tweezers.scrollStart = event.beat; tweezers.scrollDuration = .5; playTweezersSfx('next'); }
     if (event.kind === 'cue') {
       const long = event.cue === 'long';
       // Cue durations are 0x60 script ticks = four beats. `spawn_cue` is
@@ -479,6 +479,12 @@ let tweezersManifest = {};
 fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); }).catch(() => {});
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
+  const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
+  if (tweezers.scrollStart >= 0 && !scrolling) { tweezers.veg = tweezers.nextVeg; tweezers.scrollStart = -1; }
+  const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
+  const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width : 0;
+  ctx.save();
+  ctx.translate(-slide, 0);
   const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
   // The engine's affine angle unit is one turn per 0x800, and the orbit
   // distance in rhythm_tweezers.c is 0x4c — 76 native screen pixels.
@@ -514,6 +520,15 @@ function tweezersRender(beat) {
     drawTweezersCell(18, hair.x, y, 4, 1,
       (-0x200 + frames * hair.rotationSpeed + hair.orbitRotation) * Math.PI * 2 / 0x800);
   }
+  if (scrolling) {
+    ctx.save(); ctx.translate(stage.width, 0);
+    const nextBg = tweezersBg[tweezers.nextVeg];
+    if (nextBg?.complete) ctx.drawImage(nextBg, 0, 0, stage.width, stage.height);
+    const nextCell = tweezers.nextVeg === 'turnip' ? 3 : tweezers.nextVeg === 'potato' ? 6 : 0;
+    drawTweezersCell(nextCell, 120, 16, 4, 1);
+    ctx.restore();
+  }
+  ctx.restore();
   drawTouchScreen();
 }
 
