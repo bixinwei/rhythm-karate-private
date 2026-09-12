@@ -256,11 +256,11 @@ function playTweezersSfx(name, eventBeat = null) {
 // from its tick scheduler. Pre-schedule those same events against the audio
 // clock so a dropped render frame cannot make a sound disappear or drift.
 function scheduleTweezersEventAudio(currentBeat) {
-  const lookAhead = 4;
+  // All tweezers samples are decoded before the clock starts. Schedule the
+  // complete cue timeline here so a delayed/backgrounded render frame cannot
+  // make a visual hair appear before its sound is inserted.
   for (const [index, event] of tweezers.events.entries()) {
-    // Never discard an event that fell just behind a delayed animation frame:
-    // schedule it immediately instead of losing that cue altogether.
-    if (scheduledTweezersCueEvents.has(index) || event.beat > currentBeat + lookAhead) continue;
+    if (scheduledTweezersCueEvents.has(index)) continue;
     if (event.kind === 'cue') playTweezersSfx(event.cue === 'long' ? 'long_appear' : 'appear', event.beat);
     else if (event.kind === 'veg') playTweezersSfx('next', event.beat);
     scheduledTweezersCueEvents.add(index);
@@ -411,6 +411,7 @@ function tweezersStart() {
       startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
       running = true;
       scheduledTweezersCueEvents = new Set();
+      scheduleTweezersEventAudio();
       scheduleTweezersMusic();
       cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
     });
@@ -421,7 +422,6 @@ function tweezersStart() {
 }
 function tweezersLoop(beat) {
   if (beat > 120) return finish();
-  scheduleTweezersEventAudio(beat);
   tweezersUpdate(beat); tweezersRender(beat); frame = requestAnimationFrame(loop);
 }
 function tweezersUpdate(beat) {
