@@ -310,12 +310,14 @@ function update(beat) {
       flowLevel = 0;
       perfectRun = false;
       judgement = 'MISS';
-      createImpact('miss');
       missSound();
     }
     if (item.state === 'flying' && cueTime > 2) {
       item.state = 'landed';
       item.landBeat = beat;
+      // The object has now visibly reached the floor: show the miss label,
+      // but no touch-screen star burst.
+      if (item.missed) createImpact('land');
     }
   }
   active = active.filter((item) => beat - item.spawnBeat < 5);
@@ -334,7 +336,8 @@ function punch() {
     flowLevel = 0;
     perfectRun = false;
     judgement = 'MISS';
-    createImpact('miss');
+    // An empty punch is acknowledged only by the small yellow star.
+    createImpact('empty');
     missSound();
     return;
   }
@@ -368,7 +371,7 @@ function createImpact(kind) {
   touchFx.push({
     life: 1,
     kind,
-    label: kind === 'perfect' ? 'PERFECT' : kind === 'miss' ? 'MISS' : '',
+    label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
     y: safeRadius + Math.random() * (touch.height - safeRadius * 2)
   });
@@ -598,8 +601,8 @@ function drawTouchScreen() {
         draw3dsStar(touchCtx, x, y, 8.712 + travel * 13.464, '#ffe229', Math.max(0, fx.life), 0);
         draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.376 + travel * 3.96, '#ffe229', Math.max(0, fx.life * .9), 0);
       }
-    } else {
-      // A miss produces only the single yellow centre star.
+    } else if (fx.kind === 'empty') {
+      // An empty punch produces only the single yellow centre star.
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
       draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, fx.life), 0);
     }
