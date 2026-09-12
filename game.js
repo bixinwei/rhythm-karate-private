@@ -198,8 +198,12 @@ function scheduleOriginalBgm() {
 
 function scheduleTweezersMusic() {
   const ac = audio();
+  const nowBeat = Math.max(0, (ac.currentTime - audioSongStart) * 96 / 60);
   for (const event of tweezersBgmEvents) {
-    if (event.beat > 116) continue;
+    // Samples may finish decoding after gameplay has begun.  Never attempt
+    // to schedule a note already in the past; future notes are added as soon
+    // as their shared sample bank is ready.
+    if (event.beat > 116 || event.beat < nowBeat - .04) continue;
     const sample = originalSamples[event.sample];
     const when = audioSongStart + event.beat * 60 / 96;
     const duration = Math.max(.025, event.length * 60 / 96);
@@ -352,12 +356,17 @@ function tweezersStart() {
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
   Promise.all([tweezersBgmLoadPromise, tweezersSfxLoadPromise]).then(() => {
-    const needed = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
-    return loadOriginalSamples([...new Set(needed)]);
-  }).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
-    running = true; scheduleTweezersMusic(); cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+    running = true;
+    // Do not hold the first game frame behind every music sample.  The first
+    // few actions can use the existing oscillator fallback; decoded original
+    // PCM is scheduled into all still-future beats once it arrives.
+    const needed = [...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
+    loadOriginalSamples([...new Set(needed)]).then(() => {
+      if (run === songRun && mode === 'tweezers' && running) scheduleTweezersMusic();
+    });
+    cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
   });
 }
 function tweezersLoop(beat) {
@@ -396,6 +405,7 @@ function tweezersUpdate(beat) {
     // pull then changes to a stubble cel and starts the normal recovery.
     if (hair.type === 'long' && hair.pull && !hair.pullComplete && beat - hair.pullAt >= hair.pullDuration) {
       hair.pullComplete = true;
+      hair.stubbleAt = beat;
       tweezers.tweezerAction = { kind: 'hit', at: hair.pullAt + hair.pullDuration };
     }
     // The engine releases a short hair at the penultimate pluck cel, not at
@@ -469,7 +479,7 @@ function tweezersRender(beat) {
     if (hair.state === 'done') continue;
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
-    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? 41 : tweezersShortHairCell(hair, beat));
+    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? tweezersStubbleCell(hair, beat) : tweezersShortHairCell(hair, beat));
     // create_affine_sprite() gives every hair a base rotation of -0x200;
     // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
     // base term was the 90° mismatch that put hairs across the face.
@@ -505,13 +515,21 @@ function tweezersLongHairCell(hair, beat) {
   // bypassed by the original cue updater, so its idle cel durations do not
   // determine this motion.
   if (hair.pull) {
-    if (hair.pullComplete) return 41;
+    if (hair.pullComplete) return tweezersStubbleCell(hair, beat);
     return 59 + Math.min(31, Math.floor((beat - hair.pullAt) / hair.pullDuration * 31));
   }
   const frames = [[35,1],[36,1],[37,1],[38,1],[39,1],[40,1],[52,1],[50,1],[48,2],[46,3],[43,6],[44,5],[45,5],[46,5],[48,10],[47,10],[46,10],[45,10],[44,10],[43,40]];
   let at = Math.max(0, (beat - hair.beat) * 37.5);
   for (const [cell, duration] of frames) { if (at < duration) return cell; at -= duration; }
   return 43;
+}
+
+function tweezersStubbleCell(hair, beat) {
+  // anim_rhythm_tweezers_hair_stubble is cel042 for two native frames, then
+  // cel041.  The short residual is intentional original art, not a second
+  // unplucked hair.
+  const at = hair.stubbleAt ?? hair.hitAt ?? beat;
+  return Math.floor((beat - at) * 37.5) < 2 ? 42 : 41;
 }
 
 function tweezersActionCell(beat) {
