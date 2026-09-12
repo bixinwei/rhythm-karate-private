@@ -377,7 +377,11 @@ function tweezersUpdate(beat) {
       // `cue_spawn` calculates this orbit once, then leaves the sprite at
       // that position.  The later hairs do not rotate around the vegetable.
       const cycleBeat = event.beat - (tweezers.cycleAt < 0 ? event.beat : tweezers.cycleAt);
-      const orbitRotation = 0x340 - 0x280 * cycleBeat / 3;
+      // The engine advances this integer counter once per GBA frame.  Keep
+      // that quantisation instead of interpolating by JavaScript time.
+      const cycleFrames = Math.floor(cycleBeat * 37.5);
+      const cycleTarget = 112; // ticks_to_frames(0x48) at 96 BPM
+      const orbitRotation = 0x340 - Math.floor(0x280 * cycleFrames / cycleTarget);
       tweezers.active.push({ beat: event.beat, hitBeat: event.beat + 4, type: long ? 'long' : 'short', fast: event.cue === 'fast', orbitRotation, state: 'fresh', hitAt: -1 });
       playTweezersSfx(long ? 'long_appear' : 'appear');
     }
@@ -399,13 +403,20 @@ function tweezersUpdate(beat) {
     if (hair.type === 'short' && hair.state === 'hit' && !hair.fallingSpawned && beat - hair.hitAt >= 13 / 37.5) {
       hair.fallingSpawned = true;
       const pos = tweezersOrbitAt(beat);
-      tweezers.falling.push({ x: pos.x, y: pos.y, vx: -.1, vy: .05, angle: 0, spin: .03 });
+      // Falling hairs preserve the plucker's orbit angle and use the same
+      // base -0x200 affine rotation as the GBA engine.
+      tweezers.falling.push({ x: pos.x, y: pos.y, spawnedAt: beat, orbitRotation: pos.rotation,
+        rotationSpeed: Math.floor(Math.random() * 31) - 15 });
     }
     if ((hair.state === 'hit' || hair.state === 'miss') && beat - hair.beat > 8) hair.state = 'done';
   }
   tweezers.active = tweezers.active.filter((h) => h.state !== 'done');
-  for (const hair of tweezers.falling) { hair.vy += .012; hair.y += hair.vy; hair.x += hair.vx; hair.angle += hair.spin; }
-  tweezers.falling = tweezers.falling.filter((h) => h.y < 190);
+  tweezers.falling = tweezers.falling.filter((hair) => {
+    const frames = Math.max(0, Math.floor((beat - hair.spawnedAt) * 37.5));
+    // Original fixed-point trajectory: distance += speed += 0x20 each GBA
+    // frame, then the sprite receives distance >> 8 as its base Y.
+    return hair.y + frames * (frames + 1) / 16 < 190;
+  });
 }
 function tweezersPunch() {
   if (!running || mode !== 'tweezers') return;
@@ -436,8 +447,8 @@ function tweezersOrbitAt(beat) {
   // Before the first event, the initialized sprite remains at -0x200.
   let rotation = -0x200;
   if (tweezers.tweezersAt >= 0) {
-    const elapsedFrames = Math.max(0, (beat - tweezers.tweezersAt) * 37.5);
-    rotation = 0x4ea - 0x5d5 * Math.min(1, elapsedFrames / 262.5);
+    const elapsedFrames = Math.max(0, Math.floor((beat - tweezers.tweezersAt) * 37.5));
+    rotation = 0x4ea - Math.floor(0x5d5 * Math.min(262, elapsedFrames) / 262);
   }
   const angle = rotation * Math.PI * 2 / 0x800;
   return { rotation, angle, x: 120 + Math.cos(angle) * 76, y: 16 + Math.sin(angle) * 76 };
@@ -459,19 +470,27 @@ function tweezersRender(beat) {
     const hAngle = hair.orbitRotation * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
     const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? 41 : tweezersShortHairCell(hair, beat));
-    // Both sprites use affine_sprite_rotate_with_orbit(TRUE).  A successful
-    // long pull then rotates relative to the tweezers' hit angle.
-    let drawAngle = hAngle;
-    if (hair.type === 'long' && hair.pull) {
-      drawAngle = (orbit.rotation - hair.pullRotation - 0x200) * Math.PI * 2 / 0x800;
-      if (hair.pullComplete) drawAngle = -Math.PI / 2;
+    // create_affine_sprite() gives every hair a base rotation of -0x200;
+    // rotate_with_orbit then adds its fixed orbit angle.  Leaving out that
+    // base term was the 90° mismatch that put hairs across the face.
+    // On a long pull, the ROM changes the sprite's own rotation relative to
+    // the plucker while keeping this hair's original orbit angle.  The two
+    // terms must both be present; otherwise the curl either snaps or drifts.
+    let rotation = hair.orbitRotation - 0x200;
+    if (hair.type === 'long' && hair.pull && !hair.pullComplete) {
+      rotation = orbit.rotation - hair.pullRotation - 0x200 + hair.orbitRotation;
     }
-    drawTweezersCell(cell,x,y,4,1,drawAngle);
+    drawTweezersCell(cell, x, y, 4, 1, rotation * Math.PI * 2 / 0x800);
   }
   if (tweezers.tweezerAction?.kind !== 'hidden') {
-    drawTweezersCell(tweezersActionCell(beat), orbitX, orbitY, 4, 1,orbit.angle);
+    drawTweezersCell(tweezersActionCell(beat), orbitX, orbitY, 4, 1, (orbit.rotation - 0x200) * Math.PI * 2 / 0x800);
   }
-  for (const hair of tweezers.falling) drawTweezersCell(18,hair.x,hair.y,4,.85,hair.angle);
+  for (const hair of tweezers.falling) {
+    const frames = Math.max(0, Math.floor((beat - hair.spawnedAt) * 37.5));
+    const y = hair.y + frames * (frames + 1) / 16;
+    drawTweezersCell(18, hair.x, y, 4, 1,
+      (-0x200 + frames * hair.rotationSpeed + hair.orbitRotation) * Math.PI * 2 / 0x800);
+  }
   drawTouchScreen();
 }
 
