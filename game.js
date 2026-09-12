@@ -315,8 +315,8 @@ const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 
 function tweezersStart() {
   audio(); mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
-  menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.add('tweezers-mode');
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = 0; tweezers.lastEvent = -1;
+  menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.rotation = 0; tweezers.lastEvent = -1; touchFx = [];
   Promise.all([tweezersBgmLoadPromise, loadOriginalSamples()]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
@@ -335,12 +335,15 @@ function tweezersUpdate(beat) {
     if (event.kind === 'veg') tweezers.veg = event.veg;
     if (event.kind === 'cue') {
       const long = event.cue === 'long';
-      tweezers.active.push({ beat: event.beat, type: long ? 'long' : 'short', state: 'fresh', hitAt: -1 });
+      // Cue durations are 0x60 script ticks = four beats. `spawn_cue` is
+      // when the hair starts appearing, not the moment the player plucks it.
+      tweezers.active.push({ beat: event.beat, hitBeat: event.beat + 4, type: long ? 'long' : 'short', fast: event.cue === 'fast', state: 'fresh', hitAt: -1 });
       tone(long ? 460 : 640, .055, 'square', .025);
     }
   }
   for (const hair of tweezers.active) {
-    if (hair.state === 'fresh' && beat - hair.beat > .28) { hair.state = 'miss'; hair.missAt = beat; tweezers.falling.push({ x: 120, y: 42, vx: -0.15, vy: .1, angle: 0, spin: .04 }); }
+    const missWindow = hair.fast ? 6 / 24 : hair.type === 'long' ? 4 / 24 : 5 / 24;
+    if (hair.state === 'fresh' && beat - hair.hitBeat > missWindow) { hair.state = 'miss'; hair.missAt = beat; const pos = tweezersOrbitAt(beat); tweezers.falling.push({ x: pos.x, y: pos.y, vx: -0.15, vy: .1, angle: 0, spin: .04 }); }
     if (hair.state === 'miss' && beat - hair.missAt > 1.5) hair.state = 'done';
     if (hair.state === 'hit' && beat - hair.hitAt > (hair.type === 'long' ? 1.25 : .75)) hair.state = 'done';
   }
@@ -350,46 +353,69 @@ function tweezersUpdate(beat) {
 }
 function tweezersPunch() {
   if (!running || mode !== 'tweezers') return;
-  const beat = songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.beat - beat) <= 6 / 24);
-  if (!hair) { missSound(); return; }
-  const perfect = Math.abs(hair.beat - beat) <= 3 / 24; hair.state = 'hit'; hair.hitAt = beat;
+  const beat = songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.hitBeat - beat) <= (h.fast ? 6 / 24 : h.type === 'long' ? 4 / 24 : 5 / 24));
+  if (!hair) { missSound(); createImpact('empty'); return; }
+  const perfectWindow = hair.fast || hair.type === 'long' ? 4 / 24 : 3 / 24;
+  const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat;
   if (hair.type === 'long') { hair.pull = true; } else { hair.cell = 41; }
-  tweezers.falling.push({ x: 120, y: 42, vx: -.1, vy: .05, angle: 0, spin: .03 });
+  const pluckPosition = tweezersOrbitAt(beat);
+  tweezers.falling.push({ x: pluckPosition.x, y: pluckPosition.y, vx: -.1, vy: .05, angle: 0, spin: .03 });
   if (hair.type === 'long') playOriginalSfx('normal'); else playOriginalSfx('punch');
+  createImpact(perfect ? 'perfect' : 'normal');
 }
 function drawTweezersCell(cell, x, y, scale = 4, alpha = 1, angle = 0) {
   const image = tweezers.cells[cell], meta = tweezersManifest[cell]; if (!image?.complete || !meta) return;
   ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = alpha; ctx.translate(x * scale, y * scale); ctx.rotate(angle);
   ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale); ctx.restore();
 }
+function tweezersOrbitAt(beat) {
+  const progress = tweezers.tweezersAt < 0 ? 0 : Math.min(1, Math.max(0, (beat - tweezers.tweezersAt) / 7));
+  const angle = (0x4ea - 0x5d5 * progress) * Math.PI * 2 / 0x800;
+  return { angle, x: 120 + Math.cos(angle) * 76, y: 16 + Math.sin(angle) * 76 };
+}
 let tweezersManifest = {};
 fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); }).catch(() => {});
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
-  // The engine's affine angle unit is one turn per 0x400, and the orbit
+  // The engine's affine angle unit is one turn per 0x800, and the orbit
   // distance in rhythm_tweezers.c is 0x4c — 76 native screen pixels.
   // Keeping both values intact puts the tweezers around the vegetable face
   // instead of collapsed in the centre.
-  const cycleAge = tweezers.cycleAt < 0 ? 0 : Math.min(1, Math.max(0, (beat - tweezers.cycleAt) / 1.5));
-  const angle = (0x4ea - 0x5d5 * cycleAge) * Math.PI * 2 / 0x400;
-  const orbitX = 120 + Math.cos(angle) * 76, orbitY = 16 + Math.sin(angle) * 76;
+  const orbit = tweezersOrbitAt(beat); const orbitX = orbit.x, orbitY = orbit.y;
   const vegCell = tweezers.veg === 'turnip' ? 3 : tweezers.veg === 'potato' ? 6 : 0;
   drawTweezersCell(vegCell,120,16,4,1); // vegetable face, native sprite origin
   for (const hair of tweezers.active) {
     if (hair.state === 'done') continue;
-    const hairCycle = Math.min(1, Math.max(0, (hair.beat - (tweezers.cycleAt < 0 ? hair.beat : tweezers.cycleAt)) / 1.5));
-    const hAngle = (0x340 - 0x280 * hairCycle) * Math.PI * 2 / 0x400;
+    // `hairCycleTime` is never clamped by the engine. At 96 BPM it advances
+    // 37.5 frames per beat; its 0x48-tick target is 112.5 frames, so each
+    // script beat advances the placement angle by 640 / 3.
+    const hairCycle = hair.beat - (tweezers.cycleAt < 0 ? hair.beat : tweezers.cycleAt);
+    const hAngle = (0x340 - 0x280 * hairCycle / 3) * Math.PI * 2 / 0x800;
     const x = 120 + Math.cos(hAngle) * 76, y = 16 + Math.sin(hAngle) * 76;
-    const cell = hair.type === 'long' ? (hair.pull ? 47 + Math.min(8, Math.floor((beat-hair.hitAt)*16)) : 52) : (hair.state === 'hit' ? 41 : 39);
+    const cell = hair.type === 'long' ? tweezersLongHairCell(hair, beat) : (hair.state === 'hit' ? 41 : tweezersShortHairCell(hair, beat));
     drawTweezersCell(cell,x,y,4,hair.state === 'miss' ? .45 : 1);
     if (hair.state === 'miss') drawTweezersCell(9,orbitX,orbitY,4,.8);
   }
-  if (tweezers.tweezersAt >= 0 && beat - tweezers.tweezersAt < 4) {
+  if (tweezers.tweezersAt >= 0 && beat - tweezers.tweezersAt < 7) {
     const age = Math.max(0, beat - tweezers.tweezersAt); const cell = age < .2 ? 9 : age < .55 ? 11 + Math.min(6, Math.floor(age*20)) : 9;
     drawTweezersCell(cell, orbitX, orbitY, 4, 1);
   }
   for (const hair of tweezers.falling) drawTweezersCell(18,hair.x,hair.y,4,.85,hair.angle);
+  drawTouchScreen();
+}
+
+function tweezersShortHairCell(hair, beat) {
+  const cells = [35, 36, 37, 38, 39, 40, 39];
+  return cells[Math.min(cells.length - 1, Math.max(0, Math.floor((beat - hair.beat) * 60 / 96 * 60)))];
+}
+
+function tweezersLongHairCell(hair, beat) {
+  if (hair.pull) return 47 + Math.min(8, Math.floor((beat - hair.hitAt) * 16));
+  const frames = [[35,1],[36,1],[37,1],[38,1],[39,1],[40,1],[52,1],[50,1],[48,2],[46,3],[43,6],[44,5],[45,5],[46,5],[48,10],[47,10],[46,10],[45,10],[44,10],[43,40]];
+  let at = Math.max(0, (beat - hair.beat) * 37.5);
+  for (const [cell, duration] of frames) { if (at < duration) return cell; at -= duration; }
+  return 43;
 }
 
 function update(beat) {

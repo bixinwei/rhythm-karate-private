@@ -29,15 +29,6 @@ body {
 #game.screen {
   width: min(1120px, 100%);
 }
-#game.tweezers-mode {
-  width: min(960px, 100%);
-}
-#game.tweezers-mode .screens {
-  grid-template-columns: 1fr;
-}
-#game.tweezers-mode .lower {
-  display: none;
-}
 .hidden {
   display: none !important;
 }
