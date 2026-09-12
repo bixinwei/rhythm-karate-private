@@ -377,13 +377,14 @@ const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r
 // source frames and the first vegetable are decoded; otherwise a cold iPad
 // cache can reveal only the final, already-grown hair cel.
 function waitForImage(image) {
-  // `complete` also covers a cached 404. Never leave the game clock blocked
-  // forever because a single optional cel failed; drawTweezersCell has its
-  // own missing-image fallback.
-  if (image.complete) return Promise.resolve();
-  return new Promise((resolve) => { image.addEventListener('load', resolve, { once: true }); image.addEventListener('error', resolve, { once: true }); });
+  if (image.complete && image.naturalWidth) return Promise.resolve();
+  if (image.complete) return Promise.reject(new Error(`Failed to load ${image.src}`));
+  return new Promise((resolve, reject) => {
+    image.addEventListener('load', resolve, { once: true });
+    image.addEventListener('error', () => reject(new Error(`Failed to load ${image.src}`)), { once: true });
+  });
 }
-const tweezersOpeningVisualsReady = Promise.all([0, 35, 36, 37, 38, 39, 40].map((cell) => waitForImage(tweezers.cells[cell])).concat([waitForImage(tweezersBg.onion)]));
+const tweezersOpeningVisualsReady = Promise.all(Object.values(tweezers.cells).map(waitForImage).concat(Object.values(tweezersBg).map(waitForImage)));
 const tweezersBeatMs = 60000 / 96;
 const tweezersProgramSamples = { 23: 2, 26: 3, 37: 5, 38: 7, 39: 10, 41: 5, 42: 8, 125: 1, 127: 11 };
 function tweezersStart() {
@@ -398,7 +399,7 @@ function tweezersStart() {
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
-  Promise.all([audioContextReady, tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady]).then(() => {
+  Promise.all([audioContextReady, tweezersBgmLoadPromise, tweezersSfxLoadPromise, tweezersChartLoadPromise, tweezersOpeningVisualsReady, tweezersManifestLoadPromise]).then(() => {
     if (run !== songRun || mode !== 'tweezers') return;
     // Match the ROM's deterministic startup: decode every sample referenced
     // by this level before opening the lead-in. No late/cold-cache audio
@@ -413,6 +414,9 @@ function tweezersStart() {
       scheduleTweezersMusic();
       cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
     });
+  }).catch((error) => {
+    running = false;
+    console.error('Rhythm Tweezers resource load failed:', error);
   });
 }
 function tweezersLoop(beat) {
@@ -512,7 +516,7 @@ function tweezersOrbitAt(beat) {
   return { rotation, angle, x: 120 + Math.cos(angle) * 76, y: 16 + Math.sin(angle) * 76 };
 }
 let tweezersManifest = {};
-fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); }).catch(() => {});
+const tweezersManifestLoadPromise = fetch('assets/gba/tweezers/frames.json').then((r) => r.json()).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); });
 function tweezersRender(beat) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
