@@ -1627,16 +1627,20 @@ function samuraiHopAt(cue, tick) {
     return e < frameAt(160) ? phaseParabola(local, span) : 0;
   }
   if (cue.objectType === 1) {
-    const span = frameAt(24), local = e % span;
-    return e < frameAt(160) ? phaseParabola(local, span) : 0;
+    // The medium demon uses the source's final 0x30-tick segment rather
+    // than repeating the small 0x18-tick hop for its whole lifetime.
+    if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));
+    if (e < frameAt(120)) return phaseParabola(e - frameAt(72), frameAt(48));
+    if (e < frameAt(160)) return phaseParabola(e - frameAt(120), frameAt(48));
+    return 0;
   }
   if (cue.objectType === 2 || cue.objectType === 3) {
-    const start = frameAt(120), span = frameAt(40);
-    if (e < start || e >= start + span) return 0;
-    return 32 + 32 * Math.sin((e - start) / span * Math.PI * 2);
+    const start = frameAt(120), active = frameAt(40), waveSpan = frameAt(48);
+    if (e < start || e >= start + active) return 0;
+    return 32 + 32 * Math.sin((e - start) / waveSpan * Math.PI * 2);
   }
   const start = frameAt(96), span = frameAt(48);
-  return e >= start && e < start + span ? phaseParabola(48, e - start, span) : 0;
+  return e >= start && e < start + span ? phaseParabola(e - start, span) : 0;
 }
 function samuraiFogAt(tick) {
   const effect = latestPortedEvent('samurai_slice_event03',tick);
