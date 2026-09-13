@@ -7,6 +7,8 @@ const ctx = stage.getContext('2d');
 const touch = $('#lower');
 const touchCtx = touch.getContext('2d');
 let mode = 'karate';
+const localAuditPerfect = (location.hostname === '127.0.0.1' || location.hostname === 'localhost')
+  && new URLSearchParams(location.search).has('auditPerfect');
 
 const sprites = {};
 // Local exports composed from the GBA decomp's original 4bpp tiles, palette
@@ -388,7 +390,7 @@ function loop() {
 
 // Rhythm Tweezers runtime. The timeline, cell art, and sprite layout are
 // taken from the decomp's rhythm_tweezers engine and main beatscript.
-const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1, faceState: 0, verticalOffset: 0 };
+const tweezers = { cells: {}, events: [], active: [], falling: [], veg: 'onion', nextVeg: 'onion', scrollStart: -1, scrollDuration: .5, scrollDirection: 1, rotation: 0, cycleAt: -1, tweezersAt: -1, lastEvent: -1, faceState: 0, verticalOffset: 0, perfectHits: 0 };
 for (let i = 0; i <= 90; i++) { const image = new Image(); image.src = `assets/gba/tweezers/cel${String(i).padStart(3,'0')}.png?v=1`; tweezers.cells[i] = image; }
 const tweezersBg = {}; for (const veg of ['onion','turnip','potato']) { const image = new Image(); image.src = `assets/gba/tweezers/bg_${veg}.png?v=1`; tweezersBg[veg] = image; }
 const tweezersChartLoadPromise = fetch('assets/gba/tweezers/chart.json').then((r) => { if (!r.ok) throw new Error(`Failed to load tweezers chart (${r.status})`); return r.json(); }).then((v) => { tweezers.events = v; });
@@ -417,7 +419,7 @@ function tweezersStart() {
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
   // The beat event starts its orbit; it does not create or reveal it.
-  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.scrollDirection = 1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.faceState = 0; tweezers.verticalOffset = 0; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
+  tweezers.active = []; tweezers.falling = []; tweezers.veg = 'onion'; tweezers.nextVeg = 'onion'; tweezers.scrollStart = -1; tweezers.scrollDirection = 1; tweezers.rotation = -0x200; tweezers.tweezersAt = -1; tweezers.cycleAt = -1; tweezers.lastEvent = -1; tweezers.faceState = 0; tweezers.verticalOffset = 0; tweezers.perfectHits = 0; tweezers.tweezerAction = null; touchFx = []; scheduledTweezersEvents = new Set();
   // Show the game immediately.  Audio decoding must not leave the player on
   // an empty black screen, and this mode only needs its own small sample set.
   tweezersRender(-3);
@@ -444,7 +446,20 @@ function tweezersStart() {
 }
 function tweezersLoop(beat) {
   if (beat > 120) return finish();
-  tweezersUpdate(beat); tweezersRender(beat); auditStatePublisher(); frame = requestAnimationFrame(loop);
+  if (localAuditPerfect) {
+    // Automated browser runs can advance the audio clock by several frames at
+    // once. Replay the next fresh cue from its source tick instead of relying
+    // on a single animation-frame-sized judgment window.
+    const hair = tweezers.active
+      .filter(item => item.state === 'fresh')
+      .sort((a, b) => a.hitBeat - b.hitBeat)[0];
+    if (hair && hair.hitBeat <= beat + 0.5) {
+      audioSongStart = audio().currentTime - hair.hitBeat * tweezersBeatMs / 1000;
+      tweezersPunch(hair.hitBeat);
+    }
+  }
+  tweezersUpdate(beat);
+  tweezersRender(beat); auditStatePublisher(); frame = requestAnimationFrame(loop);
 }
 function tweezersUpdate(beat) {
   if (tweezers.verticalOffset > 0) tweezers.verticalOffset = Math.max(0, tweezers.verticalOffset - 1 / 37.5);
@@ -507,12 +522,13 @@ function tweezersUpdate(beat) {
     return hair.y + frames * (frames + 1) / 16 < 190;
   });
 }
-function tweezersPunch() {
+function tweezersPunch(targetBeat = null) {
   if (!running || mode !== 'tweezers') return;
-  const beat = songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.hitBeat - beat) <= (h.fast ? 6 / 24 : h.type === 'long' ? 4 / 24 : 5 / 24));
+  const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.hitBeat - beat) <= (h.fast ? 6 / 24 : h.type === 'long' ? 4 / 24 : 5 / 24));
   if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; missSound(); createImpact('empty'); return; }
   const perfectWindow = hair.fast || hair.type === 'long' ? 4 / 24 : 3 / 24;
   const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  if (perfect) tweezers.perfectHits++;
   if (hair.type === 'long') {
     // gameplay_get_last_hit_offset() is in ticks; at 96 BPM one beat is 24
     // ticks. The engine subtracts that tick offset from the frame duration.
@@ -1681,6 +1697,15 @@ function portedLoop() {
       cue.platformResolved = true;
     }
   }
+  if (localAuditPerfect) {
+    const cue = ported.cues.find(item => item.state === 'fresh' && item.hit <= tick + 1);
+    if (cue) {
+      // Keep the replay exactly on the source judgment tick so a backgrounded
+      // browser frame cannot turn an automated perfect replay into a barely.
+      audioSongStart = audio().currentTime - secondsAtTick(cue.hit);
+      portedPunch();
+    }
+  }
   const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
   for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > lateWindow) {
     cue.state = 'miss';
@@ -2043,7 +2068,17 @@ function portedPunch() {
 // exposed by GitHub Pages and cannot change normal gameplay.
 if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && new URLSearchParams(location.search).has('audit')) {
   const audit = {
-    state: () => ({ mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length }),
+    state: () => {
+      if (mode === 'tweezers') return {
+        mode, running, beat: songBeat(), lastEvent: tweezers.lastEvent,
+        auditPerfect: localAuditPerfect,
+        perfectHits: tweezers.perfectHits,
+        active: tweezers.active.map(hair => ({ beat: hair.beat, hitBeat: hair.hitBeat, type: hair.type, state: hair.state, pullComplete: Boolean(hair.pullComplete) })),
+        scrolling: tweezers.scrollStart >= 0
+      };
+      if (portedModes[mode]) return { mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length };
+      return { mode, running, beat: songBeat() };
+    },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
     nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,
     hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
@@ -2053,6 +2088,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     const value = audit.state();
     value.nextCue = audit.nextCue();
     value.cueSpawningDisabled = ported.cueSpawningDisabled;
+    if (portedModes[mode]) value.perfectHits = ported.cues.filter(cue => cue.state === 'hit' && cue.perfect).length;
     value.cueStates = ported.cues.map(cue => ({ spawn: cue.spawn, hit: cue.hit, state: cue.state, perfect: cue.perfect ?? null }));
     document.body.dataset.auditState = JSON.stringify(value);
   };
