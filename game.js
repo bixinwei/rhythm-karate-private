@@ -1139,7 +1139,12 @@ function drawPorted(tick, cfg) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
   const age = (tick - ported.actionAt) / 30; const frames = age >= 0 && age < cfg.action.length / 30 ? cfg.action[Math.floor(age * 30)] : [cfg.idle];
-  drawPortedCell(frames[0], cfg.actor[0], cfg.actor[1]);
+  let actorX = cfg.actor[0], actorY = cfg.actor[1];
+  if (mode === 'night_walk' && ported.actionAt >= 0) {
+    const age = Math.max(0, (tick - ported.actionAt) / 20);
+    if (age < 1) { actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256; frames[0] = 2; }
+  }
+  drawPortedCell(frames[0], actorX, actorY);
   if (mode === 'power_calligraphy') {
     const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
     if (brush) drawPortedCell(brush.op.endsWith('_down') ? 1 : 0, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
@@ -1150,7 +1155,10 @@ function drawPorted(tick, cfg) {
     if (mode === 'spaceball') {
       const x = 70 + 68 * p, y = 120 - (90 - 360 * (p-.5) * (p-.5)); drawPortedCell(cfg.object, x, y, 4 * (.4 + p * .7), tick * .05);
     } else if (mode === 'samurai_slice') drawPortedCell(cfg.object, 210 - 110 * p, 98 - 24 * Math.sin(p * Math.PI), 4);
-    else if (mode === 'night_walk') drawPortedCell(cfg.object, 165 + 36 * Math.sin(tick / 16), 124, 4);
+    else if (mode === 'night_walk') {
+      const p = Math.max(0, Math.min(1, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
+      drawPortedCell(cfg.object, 320 - 256 * p, 120, 4);
+    }
   }
   drawTouchScreen();
 }
