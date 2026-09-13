@@ -75,7 +75,16 @@ for (const palette of [1, 2, 3, 4]) for (const cel of [89, 90, 91, 92]) {
 // Verify every configured music/SFX JSON exists, preventing silent cues.
 for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)\}/g)) {
   const names = [...match[1].matchAll(/'([^']+_events)'/g), ...match[2].matchAll(/'([^']+_events)'/g)].map(m => m[1]);
-  for (const name of names) check(fs.existsSync(path.join(assets, `${name}.json`)), `missing audio asset ${name}.json`);
+  for (const name of names) {
+    const file = path.join(assets, `${name}.json`);
+    check(fs.existsSync(file), `missing audio asset ${name}.json`);
+    if (fs.existsSync(file)) {
+      const audio = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const events = audio.events ?? audio;
+      check(Array.isArray(events) && events.length > 0, `empty audio event list ${name}.json`);
+      check(Array.isArray(events) && events.every(event => Number.isFinite(event.sample) || event.wave), `audio event without sample/wave ${name}.json`);
+    }
+  }
 }
 
 if (failures.length) {
