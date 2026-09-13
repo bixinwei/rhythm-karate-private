@@ -1753,10 +1753,11 @@ function drawPorted(tick, cfg) {
     } else if (mode === 'samurai_slice') {
       const demonSeqs = [ [[70,8],[67,2],[68,4],[69,4]], [[58,8],[53,2],[54,4],[55,4]], [[59,6],[60,4],[61,4],[62,3],[63,2]], [[71,3],[72,3],[73,3],[74,3],[75,3]], [[84,12],[85,12]], [[84,12],[85,12]] ];
       const seq = demonSeqs[cue.objectType] ?? demonSeqs[1];
-      // The demon is created by event02 and reaches the strike point at the
-      // cue's hit tick.  The previous fixed 192-tick denominator left every
-      // demon short of the player (and desynchronised its hop animation).
-      const travel = Math.max(0, Math.min(1, (tick - cue.visualSpawn) / Math.max(1, cue.hit - cue.visualSpawn)));
+      // func_08031c94 advances the demon for ticks_to_frames(0xC0), i.e. a
+      // 192-tick engine lifetime, independent of the cue's 24-tick judging
+      // window.  Using cue.hit as the endpoint made demons rush 25% too fast.
+      const moveDuration = Math.max(1, framesBetweenTicks(cue.visualSpawn, cue.visualSpawn + 192));
+      const travel = Math.max(0, Math.min(1, framesBetweenTicks(cue.visualSpawn, tick) / moveDuration));
       const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
       // Demon hop/hover cels loop independently of horizontal travel in the
       // original sprite engine; tying this phase to travel made paired cues
