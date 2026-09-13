@@ -1341,8 +1341,14 @@ function startPortedMode(id) {
       const cue = { index, spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' };
       if (id === 'spaceball') cue.objectType = portedEnum(latestPortedEvent('spaceball_set_ball_sprite', event.tick)?.args[0], { BASEBALL:0, RICE_BALL:1, STAR_BALL:2 });
       if (id === 'samurai_slice') {
-        const visualSpawn = samuraiSpawns[index];
-        cue.visualSpawn = visualSpawn?.tick ?? event.tick - 120;
+        // event02 is the engine's demon-create command.  It is normally 120
+        // ticks before the cue, but the script contains paired cues and
+        // tempo changes, so array-index pairing is not reliable.  Resolve the
+        // command immediately preceding this cue, exactly as the engine does.
+        const expectedSpawnTick = event.tick - 120;
+        const visualSpawn = samuraiSpawns.find(item => item.tick === expectedSpawnTick)
+          ?? samuraiSpawns.filter(item => item.tick <= event.tick).at(-1);
+        cue.visualSpawn = visualSpawn?.tick ?? event.tick;
         cue.objectType = Number(visualSpawn?.args[0] ?? 0);
       }
       if (id === 'night_walk') {
@@ -1740,9 +1746,12 @@ function drawPorted(tick, cfg) {
     } else if (mode === 'samurai_slice') {
       const demonSeqs = [ [[70,8],[67,2],[68,4],[69,4]], [[58,8],[53,2],[54,4],[55,4]], [[59,6],[60,4],[61,4],[62,3],[63,2]], [[71,3],[72,3],[73,3],[74,3],[75,3]], [[84,12],[85,12]], [[84,12],[85,12]] ];
       const seq = demonSeqs[cue.objectType] ?? demonSeqs[1];
-      const travel = Math.max(0, Math.min(1, (tick - cue.visualSpawn) / 192));
+      // The demon is created by event02 and reaches the strike point at the
+      // cue's hit tick.  The previous fixed 192-tick denominator left every
+      // demon short of the player (and desynchronised its hop animation).
+      const travel = Math.max(0, Math.min(1, (tick - cue.visualSpawn) / Math.max(1, cue.hit - cue.visualSpawn)));
       const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
-      const phase = ((tick - cue.visualSpawn) % 24 + 24) % 24 / 24;
+      const phase = travel;
       let hop = 0;
       if (cue.objectType === 0) hop = 24 * 4 * phase * (1-phase);
       else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * 4 * phase * (1-phase);
