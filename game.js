@@ -1566,6 +1566,32 @@ function drawSamuraiScene(tick) {
   }
   drawPortedCell(cell,14,123,4);
 }
+function samuraiHopAt(cue, tick) {
+  const elapsed = framesBetweenTicks(cue.visualSpawn, tick);
+  const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn));
+  const frameAt = value => value * framePerTick;
+  const phaseParabola = (amplitude, local, span) => {
+    const x = Math.max(0, Math.min(span, local)) / Math.max(1, span);
+    return amplitude * 4 * x * (1 - x);
+  };
+  const e = Math.max(0, elapsed);
+  if (cue.objectType === 0) {
+    const span = frameAt(24), local = e % span;
+    return e < frameAt(160) ? phaseParabola(24, local, span) : 0;
+  }
+  if (cue.objectType === 1) {
+    const span = frameAt(24), local = e % span;
+    const amp = e < frameAt(48) ? 24 : e < frameAt(72) ? 24 : e < frameAt(96) ? 48 : 0;
+    return e < frameAt(160) ? phaseParabola(amp, local, span) : 0;
+  }
+  if (cue.objectType === 2 || cue.objectType === 3) {
+    const start = frameAt(120), span = frameAt(40);
+    if (e < start || e >= start + span) return 0;
+    return 32 + 32 * Math.sin((e - start) / span * Math.PI * 2);
+  }
+  const start = frameAt(96), span = frameAt(48);
+  return e >= start && e < start + span ? phaseParabola(48, e - start, span) : 0;
+}
 function samuraiFogAt(tick) {
   const effect = latestPortedEvent('samurai_slice_event03',tick);
   if (!effect) return { offsets:[0,0], alpha:0 };
@@ -1882,15 +1908,7 @@ function drawPorted(tick, cfg) {
       // Demon hop/hover cels loop independently of horizontal travel in the
       // original sprite engine; tying this phase to travel made paired cues
       // stretch the hop and visibly drift away from the beat.
-      const phase = ((tick - cue.visualSpawn) % 24 + 24) % 24 / 24;
-      let hop = 0;
-      // func_08031c68 returns 4 * amplitude * phase * (1-phase) in 8.8
-      // fixed-point; the factor of four is required for the parabola's peak
-      // to equal the native-pixel amplitude.
-      if (cue.objectType === 0) hop = 24 * 4 * phase * (1-phase);
-      else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * 4 * phase * (1-phase);
-      else if (cue.objectType === 2 || cue.objectType === 3) hop = 8 + 8*Math.sin((tick-cue.visualSpawn)*Math.PI/24);
-      else if (tick-cue.visualSpawn >= 96 && tick-cue.visualSpawn < 144) hop = 48 * 4 * (((tick-cue.visualSpawn-96)/48)) * (1-((tick-cue.visualSpawn-96)/48));
+      const hop = samuraiHopAt(cue, tick);
       const y = baseY - hop;
       if (cue.state === 'hit') {
         const drift = Math.max(0,tick-(cue.actionTick ?? cue.hit));

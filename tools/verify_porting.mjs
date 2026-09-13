@@ -48,7 +48,8 @@ for (let i = 0; i < Math.min(samuraiCreate.length, samuraiCues.length); i++) {
   check(samuraiCues[i].tick - samuraiCreate[i].tick === 120, `samurai: pair ${i} offset ${samuraiCues[i].tick - samuraiCreate[i].tick}, expected 120`);
 }
 check(game.includes('192 * 150'), 'samurai: movement is not using source 0xC0 lifetime');
-check(game.includes('hop = 24 * 4 * phase * (1-phase)'), 'samurai: func_08031c68 parabola factor missing');
+check(game.includes('amplitude * 4 * x * (1 - x)'), 'samurai: func_08031c68 parabola factor missing');
+check(game.includes('function samuraiHopAt(cue, tick)') && game.includes('const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn))'), 'samurai: hop phase is not evaluated in spawn-tempo frame domain');
 check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.includes('192 * 150'), 'samurai: movement lifetime must lock spawn tempo');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
 check(game.includes('samuraiSpawns.find(item => item.tick === expectedSpawnTick)') && !game.includes('samuraiSpawns.filter(item => item.tick <= event.tick)'), 'samurai: visual spawn must use exact event02 pairing');
