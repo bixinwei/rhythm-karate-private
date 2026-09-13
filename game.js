@@ -1013,6 +1013,26 @@ function gbaRandom(max) {
   gbaRandomState = (gbaRandomState * 109 + 1021) & 0xffff;
   return Math.floor((gbaRandomState * max) / 0x10000);
 }
+let spaceballRandomState = 0, spaceballStars = [];
+function spaceballRandom(max) {
+  spaceballRandomState = (spaceballRandomState * 109 + 1021) & 0xffff;
+  return Math.floor((spaceballRandomState * max) / 0x10000);
+}
+function resetSpaceballStar(index, zoom) {
+  const scale = spaceballRandom(3) + 1;
+  spaceballStars[index] = {
+    x: (spaceballRandom(240) - 120) * scale,
+    y: (spaceballRandom(160) - 80) * scale,
+    z: zoom + scale
+  };
+}
+function updateSpaceballStars(zoom) {
+  const zMin = zoom + 1, zMax = zoom + 4;
+  for (let i = 0; i < spaceballStars.length; i++) {
+    const star = spaceballStars[i]; star.z -= 8 / 256;
+    if (star.z < zMin || star.z > zMax) resetSpaceballStar(i, zoom);
+  }
+}
 const PORTED_ASSET_REV = 'gba-ports-13';
 const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
@@ -1356,6 +1376,11 @@ function startPortedMode(id) {
         ported.balloons.push({ x, y: 120 - i * 2, variant, palette: i % 5 });
       }
     }
+    if (id === 'spaceball') {
+      spaceballRandomState = 0; spaceballStars = [];
+      const initialZoom = spaceballZoomAt(0);
+      for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZoom);
+    }
     ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map((event, index) => {
       const cue = { index, spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' };
       if (id === 'spaceball') cue.objectType = portedEnum(latestPortedEvent('spaceball_set_ball_sprite', event.tick)?.args[0], { BASEBALL:0, RICE_BALL:1, STAR_BALL:2 });
@@ -1475,12 +1500,11 @@ function spaceballFlight(cue, tick) {
   return { arc, landingFrames, landingTicks: landingFrames, x: 70 + 68*q, y: 120 - (arc - arc * Math.pow(2*q-1,2)) };
 }
 function drawSpaceballScene(tick) {
-  const zoom = spaceballZoomAt(tick), frame = Math.max(0, secondsAtTick(Math.max(0,tick)) * 60);
-  // The original creates one star per frame until its fixed 24-star field is full.
-  for (let i=0;i<24;i++) {
-    const seed = (i * 1664525 + 1013904223) >>> 0, angle = (seed % 6283) / 1000;
-    const radius = 18 + ((seed >>> 8) % 105), drift = 1 + ((frame + i*7) % 90) / 180;
-    drawPortedCell(27, 120 + Math.cos(angle)*radius*drift, 80 + Math.sin(angle)*radius*.66*drift, 2.3);
+  const zoom = spaceballZoomAt(tick);
+  updateSpaceballStars(zoom);
+  for (const star of spaceballStars) {
+    const scale = 1 / Math.max(.05, star.z - zoom);
+    drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 2.3);
   }
   const batterType = portedEnum(latestPortedEvent('spaceball_set_batter_sprite', tick)?.args[0], { BATTER_GREEN:0, BATTER_RED:1, BATTER_PINK:2 });
   const close = [[1,2,3,4,5],[9,10,11,12,13],[30,31,32,33,34]][batterType] ?? [1,2,3,4,5];
