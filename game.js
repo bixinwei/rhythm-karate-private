@@ -1656,14 +1656,23 @@ function drawPorted(tick, cfg) {
   }
   if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
   if (mode === 'night_walk') {
-    const popped = ported.timeline.events.filter(e => e.op === 'night_walk_pop_balloon' && e.tick <= tick).length;
+    const popEvents = ported.timeline.events.filter(e => e.op === 'night_walk_pop_balloon' && e.tick <= tick);
+    const popped = popEvents.length;
     const balloonFrame = Math.floor(secondsAtTick(Math.max(0,tick))*10);
+    // The engine changes the last remaining balloon to cel092 for two
+    // rendered frames before it disappears; removing it immediately loses
+    // the characteristic pop animation.
     for (let i=0; i<Math.max(0,ported.balloons.length-popped); i++) {
       const balloon = ported.balloons[i];
       // The palette is part of the original sprite state; exported cels are
       // shared, so never fabricate a cell index from the palette number.
       const cell = [89,90,91,92][(balloon.variant + balloonFrame + i * 2) % 4];
       drawPortedCell(cell, balloon.x, balloon.y, 4);
+    }
+    for (let j = 0; j < popped; j++) {
+      const pop = popEvents[j], balloon = ported.balloons[ported.balloons.length - 1 - j];
+      if (!balloon || framesBetweenTicks(pop.tick, tick) >= 2) continue;
+      drawPortedCell(92, balloon.x, balloon.y, 4);
     }
   }
   if (mode === 'spaceball') drawSpaceballScene(tick);
