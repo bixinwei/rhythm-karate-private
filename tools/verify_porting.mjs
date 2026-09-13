@@ -78,6 +78,7 @@ check(game.includes('night_walk_init_balloons sets anim_play_yan_jump') && game.
 check(game.includes('ported.nightStars.push') && game.includes('gbaRandom(8), x = gbaRandom(256)') && game.includes('initialCel = ported.nightStars[i].variant'), 'night_walk: persistent star initialization/animation missing');
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
 check(game.includes('cue.platformResolved') && game.includes('cue.spawn > tick') && game.includes('const rollVariant = gbaRandom(4)'), 'night_walk: runtime RNG order for random platforms/roll phrases is not preserved');
+check(game.includes("playPortedSfx('snare',tick + 4)") && game.includes("playPortedSfx('cymbal',tick + 12,128)"), 'night_walk: kick/snare/cymbal DrumTech deltas differ from source');
 check(game.includes('night_walk_init_balloons') && game.includes('ported.balloons.push') && game.includes('balloon.palette * 1000'), 'night_walk: balloon palette namespaces are not applied');
 check(game.includes('drawPortedCell(92 + balloon.palette * 1000, balloon.x, balloon.y, 4)') && game.includes('framesBetweenTicks(pop.tick, tick) >= 2'), 'night_walk: balloon pop cel/lifetime missing');
 const nightManifest = readJson('night_walk/frames.json');

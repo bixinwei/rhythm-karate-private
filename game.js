@@ -1326,10 +1326,13 @@ function playNightWalkDrum(cue, perfect, tick) {
   }
   if (cue.kind === 'CUE_KICK') return playPortedSfx('kick',tick);
   if (cue.kind === 'CUE_SNARE') {
-    playPortedSfx('kick',tick); playPortedSfx('snare',tick); return;
+    // drum_seq_night_walk_snare1: drum 4 at t=0, drum 17 at +0x04 ticks.
+    playPortedSfx('kick',tick); playPortedSfx('snare',tick + 4); return;
   }
   if (cue.kind === 'CUE_CYMBAL' || cue.kind === 'CUE_STAR_WAND') {
-    playPortedSfx('kick',tick); playPortedSfx('snare',tick); playPortedSfx('cymbal',tick,128); return;
+    // drum_seq_night_walk_cymbal1: kick/snare at t=0, cymbal at +0x0C.
+    playPortedSfx('kick',tick); playPortedSfx('snare',tick);
+    playPortedSfx('cymbal',tick + 12,128); return;
   }
   if (cue.kind === 'CUE_ROLL') {
     // The GBA selects one of four roll phrases with agb_random(4). The
