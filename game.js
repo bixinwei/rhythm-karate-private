@@ -1504,7 +1504,9 @@ function drawSpaceballScene(tick) {
   updateSpaceballStars(zoom);
   for (const star of spaceballStars) {
     const scale = 1 / Math.max(.05, star.z - zoom);
-    drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 2.3);
+    // GBA affine sprites use scale = 256 / (z - zoom). `drawPortedCell`
+    // already maps native pixels at 4x, so preserve that factor here.
+    drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 4 * scale);
   }
   const batterType = portedEnum(latestPortedEvent('spaceball_set_batter_sprite', tick)?.args[0], { BATTER_GREEN:0, BATTER_RED:1, BATTER_PINK:2 });
   const close = [[1,2,3,4,5],[9,10,11,12,13],[30,31,32,33,34]][batterType] ?? [1,2,3,4,5];
