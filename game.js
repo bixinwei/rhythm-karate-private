@@ -1565,7 +1565,10 @@ function portedLoop() {
   // script_night_walk_end: fade_music_out 96, ten rest 24 commands, then
   // fade_screen_out and two final rests. Keep the falling scene alive for the
   // complete end script instead of ending after the old 96-tick shortcut.
-  if (mode === 'night_walk' && ported.failedAt >= 0 && tick - ported.failedAt > 240) return finish();
+  if (mode === 'night_walk' && ported.failedAt >= 0) {
+    const fadeTicks = 12 * tempoAtTick(ported.failedAt) / 150;
+    if (tick - ported.failedAt > 192 + fadeTicks + 48) return finish();
+  }
   drawPorted(tick, cfg); frame = requestAnimationFrame(loop);
 }
 function drawPorted(tick, cfg) {
@@ -1833,7 +1836,7 @@ function drawPorted(tick, cfg) {
   if (mode === 'night_walk' && ported.failedAt >= 0) {
     // The original end script fades the gameplay screen after eight rests
     // (192 ticks), over a 12-tick fade interval, before its final waits.
-    const fade = Math.max(0, Math.min(1, (tick - ported.failedAt - 192) / 12));
+    const fade = Math.max(0, Math.min(1, framesBetweenTicks(ported.failedAt + 192, tick) / 12));
     if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, stage.width, stage.height); ctx.restore(); }
   }
   drawTouchScreen();
