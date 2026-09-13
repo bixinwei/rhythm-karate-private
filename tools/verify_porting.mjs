@@ -52,6 +52,7 @@ check(game.includes('if (!cue.endOfBridge || cue.state !== \'hit\''), 'night_wal
 check(game.includes('return -completed * 16'), 'night_walk: shared origin sign does not match GBA');
 check(game.includes('const y = 120 + nightWalkWorldShift(tick)'), 'night_walk: bridge does not use shared origin');
 check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset'), 'night_walk: jump timing offset is not applied');
+check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') && game.includes('framesBetweenTicks(actionBase, actionBase + 20) - actionOffset'), 'night_walk: jump timing offset sign differs from source');
 check(game.includes('192 + fadeTicks + 48'), 'night_walk: end script duration is shorter than source');
 check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'night_walk: screen fade phase missing');
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');

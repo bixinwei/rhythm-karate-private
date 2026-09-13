@@ -1543,7 +1543,10 @@ function nightWalkWorldShift(tick) {
     if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
     const elapsed = framesBetweenTicks(cue.actionTick,tick);
     const timingOffset = signedFramesBetweenTicks(cue.hit, cue.actionTick);
-    const duration = Math.max(1, framesBetweenTicks(cue.hit, cue.hit + 20) + timingOffset);
+    // night_walk_play_yan_jump uses ticks_to_frames(0x14) - timingOffset.
+    // An early hit (negative offset) therefore lengthens the jump, while a
+    // late hit shortens it, exactly as in the GBA engine.
+    const duration = Math.max(1, framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset);
     if (elapsed < duration && (!active || cue.actionTick > active.actionTick)) active = { cue, elapsed, duration };
     else completed++;
   }
@@ -1604,7 +1607,7 @@ function drawPorted(tick, cfg) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick);
     const actionOffset = ported.actionCue ? signedFramesBetweenTicks(ported.actionCue.hit, ported.actionAt) : 0;
     const actionBase = ported.actionCue?.hit ?? ported.actionAt;
-    const duration = Math.max(1, framesBetweenTicks(actionBase, actionBase + 20) + actionOffset);
+    const duration = Math.max(1, framesBetweenTicks(actionBase, actionBase + 20) - actionOffset);
     const age = Math.max(0,elapsed/duration);
     if (ported.actionHit && age < 1) {
       if (!ported.actionCue?.endOfBridge) actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256;
