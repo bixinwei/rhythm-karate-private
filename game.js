@@ -1004,7 +1004,7 @@ const portedModes = {
   spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events' } },
   samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100]], sfx: { spawn:'samurai_appear_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
   night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [100,112], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]] },
-  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 0, action: [1,2,3,4], actor: [120,80], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', miss:'calligraphy_miss_events' } }
+  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', miss:'calligraphy_miss_events' } }
 };
 const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionGood: false, scheduled: new Set(), tempo: [] };
 
@@ -1147,7 +1147,7 @@ function drawPorted(tick, cfg) {
   drawPortedCell(frames[0], actorX, actorY);
   if (mode === 'power_calligraphy') {
     const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
-    if (brush) drawPortedCell(brush.op.endsWith('_down') ? 1 : 0, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
+    if (brush) drawPortedCell(brush.op.endsWith('_down') ? 129 : 128, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
   }
   for (const cue of ported.cues) {
     if (cue.state === 'done' || tick < cue.spawn || tick > cue.hit + 30) continue;
