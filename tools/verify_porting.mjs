@@ -83,6 +83,10 @@ for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)
       const events = audio.events ?? audio;
       check(Array.isArray(events) && events.length > 0, `empty audio event list ${name}.json`);
       check(Array.isArray(events) && events.every(event => Number.isFinite(event.sample) || event.wave), `audio event without sample/wave ${name}.json`);
+      if (Array.isArray(events)) for (const event of events) if (Number.isFinite(event.sample)) {
+        const sample = path.join(assets, 'samples', `sample_${String(event.sample).padStart(3, '0')}.wav`);
+        check(fs.existsSync(sample), `missing PCM sample ${event.sample} referenced by ${name}.json`);
+      }
     }
   }
 }
