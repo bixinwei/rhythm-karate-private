@@ -1751,7 +1751,9 @@ function drawPorted(tick, cfg) {
         }
       }
     } else if (mode === 'samurai_slice') {
-      const demonSeqs = [ [[70,8],[67,2],[68,4],[69,4]], [[58,8],[53,2],[54,4],[55,4]], [[59,6],[60,4],[61,4],[62,3],[63,2]], [[71,3],[72,3],[73,3],[74,3],[75,3]], [[84,12],[85,12]], [[84,12],[85,12]] ];
+      // Movement table follows D_089e4928: type 2 is winged-fly and type 3
+      // is propeller-hover (the previous implementation had these reversed).
+      const demonSeqs = [ [[70,8],[67,2],[68,4],[69,4]], [[58,8],[53,2],[54,4],[55,4]], [[71,3],[72,3],[73,3],[74,3],[75,3]], [[59,6],[60,4],[61,4],[62,3],[63,2]], [[84,12],[85,12]], [[84,12],[85,12]] ];
       const seq = demonSeqs[cue.objectType] ?? demonSeqs[1];
       // func_08031c94 advances the demon for ticks_to_frames(0xC0), i.e. a
       // 192-tick engine lifetime, independent of the cue's 24-tick judging
@@ -1772,10 +1774,10 @@ function drawPorted(tick, cfg) {
       if (cue.state === 'hit') {
         const drift = Math.max(0,tick-(cue.actionTick ?? cue.hit));
         if (!cue.perfect) {
-          const barelyCells = [76,56,57,77,86,86];
+          const barelyCells = [76,56,77,57,86,86];
           drawPortedCell(barelyCells[cue.objectType] ?? 56,x+drift*1.2,y+drift*.45,4,drift*.025);
         } else {
-          const hitCells = [78,64,65,79,82,83];
+          const hitCells = [78,64,79,65,82,83];
           drawPortedCell(hitCells[cue.objectType] ?? 64,x+drift*1.8,y-drift*1.2,4,drift*.06);
           drawPortedCell(cue.objectType >= 4 ? (cue.objectType === 4 ? 83 : 82) : 66,x-drift*1.2,y+drift*.9,4,-drift*.04);
           if (drift < 7) drawPortedCell(animationCell([[88,1],[89,4],[90,2]],framesBetweenTicks(cue.actionTick ?? cue.hit,tick)),74,96,4);
