@@ -1006,7 +1006,7 @@ const portedModes = {
   night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [100,112], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]] },
   power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', miss:'calligraphy_miss_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionGood: false, scheduled: new Set(), tempo: [] };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionGood: false, scheduled: new Set(), tempo: [] };
 
 function gameAssetPrefix(id) { return `assets/gba/${id}`; }
 async function loadPortedMode(id) {
@@ -1021,6 +1021,14 @@ async function loadPortedMode(id) {
     const image = new Image(); image.src = `${prefix}/${meta.file}`; frames[Number(number)] = image; imageLoads.push(waitForImage(image));
   }
   const bg = new Image(); bg.src = `${prefix}/${portedModes[id].bg}`; imageLoads.push(waitForImage(bg));
+  let peopleManifest = {}, peopleFrames = {};
+  if (id === 'power_calligraphy') {
+    peopleManifest = await fetch('assets/gba/power_calligraphy_people/frames.json').then(r => r.json());
+    for (const [number, meta] of Object.entries(peopleManifest)) {
+      const image = new Image(); image.src = `assets/gba/power_calligraphy_people/${meta.file}`;
+      peopleFrames[Number(number)] = image; imageLoads.push(waitForImage(image));
+    }
+  }
   const music = await Promise.all(portedModes[id].music.map(async ([name, volume]) => {
     const result = await fetch(`assets/gba/${name}.json`).then(r => { if (!r.ok) throw new Error(`Missing ${name}`); return r.json(); });
     return { name, volume: result.volume ?? volume, events: result.events ?? result };
@@ -1028,7 +1036,7 @@ async function loadPortedMode(id) {
   const sfx = {};
   await Promise.all(Object.entries(portedModes[id].sfx ?? {}).map(async ([kind,name]) => { const result = await fetch(`assets/gba/${name}.json`).then(r => r.json()); sfx[kind] = result.events ?? result; }));
   const needed = [...new Set([...music.flatMap(track => track.events), ...Object.values(sfx).flat()].map(event => event.sample).filter(Number.isFinite))];
-  const result = { timeline, manifest: Object.fromEntries(Object.entries(manifest).map(([k,v]) => [Number(k),v])), frames, bg, music, sfx, needed, imageLoads };
+  const result = { timeline, manifest: Object.fromEntries(Object.entries(manifest).map(([k,v]) => [Number(k),v])), frames, bg, peopleManifest: Object.fromEntries(Object.entries(peopleManifest).map(([k,v]) => [Number(k),v])), peopleFrames, music, sfx, needed, imageLoads };
   ported.data[id] = result; return result;
 }
 function setPortedTempo(timeline) {
@@ -1115,7 +1123,7 @@ function startPortedMode(id) {
     if (run !== songRun || mode !== id) return;
     // Render the fully decoded original art right away.  PCM still preloads
     // before the lead-in, but a first visit never shows an empty game panel.
-    ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.music = data.music; ported.sfx = data.sfx; ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map(event => ({ spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' }));
+    ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.peopleFrames = data.peopleFrames; ported.peopleManifest = data.peopleManifest; ported.music = data.music; ported.sfx = data.sfx; ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map(event => ({ spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' }));
     ported.cueIndex = 0; ported.actionAt = -99; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
@@ -1128,6 +1136,10 @@ function drawPortedCell(cell, x, y, scale = 4, rotation = 0) {
   const image = ported.frames[cell], meta = ported.manifest[cell]; if (!image || !meta) return;
   ctx.save(); ctx.translate(x * scale, y * scale); ctx.rotate(rotation); ctx.imageSmoothingEnabled = false;
   ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale); ctx.restore();
+}
+function drawPortedPerson(cell, x, y) {
+  const image = ported.peopleFrames[cell], meta = ported.peopleManifest[cell]; if (!image || !meta) return;
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(image, (x-meta.originX)*4, (y-meta.originY)*4, image.naturalWidth*4, image.naturalHeight*4); ctx.restore();
 }
 function portedLoop() {
   const tick = portedTick(), cfg = portedModes[mode];
@@ -1152,6 +1164,18 @@ function drawPorted(tick, cfg) {
     if (kanaEvent && celEvent) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120, 84, 4);
     const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
     if (brush) drawPortedCell(brush.op.endsWith('_down') ? 129 : 128, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
+    const peopleEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_people_state' && e.tick <= tick).at(-1);
+    const peopleState = peopleEvent?.args[0] ?? 'LITTLE_PEOPLE_NULL';
+    if (peopleState !== 'LITTLE_PEOPLE_NULL') {
+      const dance = peopleState === 'LITTLE_PEOPLE_DANCE', side = Math.floor(tick/24)&1;
+      for (let i=0;i<6;i++) {
+        const travel = ((Math.min(tick,4974)-3438)/6.75) % 192;
+        const my = ((-160+i*32+travel+384)%192);
+        const wy = ((192+i*32-travel+384)%192);
+        drawPortedPerson(dance ? [1,5][side] : [12,13,12,14][Math.floor(tick/6)%4], 32, my);
+        drawPortedPerson(dance ? [18,22][side] : [29,30,29,31][Math.floor(tick/6)%4], 216, wy);
+      }
+    }
   }
   for (const cue of ported.cues) {
     if (cue.state === 'done' || tick < cue.spawn || tick > cue.hit + 30) continue;
