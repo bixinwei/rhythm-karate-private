@@ -1830,6 +1830,12 @@ function drawPorted(tick, cfg) {
   if (mode === 'samurai_slice' && ported.overlays[0] && samuraiFog.alpha > 0) {
     ctx.save(); ctx.globalAlpha=samuraiFog.alpha; drawGbaTilemap(ported.overlays[0],0,samuraiFog.offsets[0]); ctx.restore();
   }
+  if (mode === 'night_walk' && ported.failedAt >= 0) {
+    // The original end script fades the gameplay screen after eight rests
+    // (192 ticks), over a 12-tick fade interval, before its final waits.
+    const fade = Math.max(0, Math.min(1, (tick - ported.failedAt - 192) / 12));
+    if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, stage.width, stage.height); ctx.restore(); }
+  }
   drawTouchScreen();
 }
 function portedPunch() {
