@@ -1477,7 +1477,14 @@ function drawSamuraiScene(tick) {
   const beat = latestPortedEvent('beat_anim',tick), actionFrames = framesBetweenTicks(ported.actionAt,tick);
   let cell = animationCell(beatSeqs[power], beat ? framesBetweenTicks(beat.tick,tick) : 999);
   if (ported.actionAt >= 0 && actionFrames < 24) cell = animationCell(sliceSeqs[power], 64 + actionFrames);
-  drawPortedCell(animationCell([[0,6],[2,6],[1,6]],secondsAtTick(Math.max(0,tick))*60,true),20,120,4);
+  // The flame sprite is created hidden during engine_start. It is only
+  // revealed by the later Event 03 transition (the opening at tick 0 must
+  // remain the clean street scene shown in the original cartridge).
+  const flameEvent = latestPortedEvent('samurai_slice_event03', tick);
+  if (flameEvent) {
+    const flameCell = animationCell([[0,6],[2,6],[1,6]],framesBetweenTicks(flameEvent.tick,tick),true);
+    drawPortedCell(flameCell,20,120,4);
+  }
   drawPortedCell(cell,14,123,4);
 }
 function samuraiFogAt(tick) {
