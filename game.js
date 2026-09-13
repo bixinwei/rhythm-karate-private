@@ -1324,15 +1324,19 @@ function playNightWalkDrum(cue, perfect, tick) {
     playPortedSfx('kick',tick); playPortedSfx('snare',tick); playPortedSfx('cymbal',tick,128); return;
   }
   if (cue.kind === 'CUE_ROLL') {
+    // The GBA selects one of four roll phrases with agb_random(4). The
+    // exported web audio uses the corresponding extracted phrase, but the
+    // RNG side effect must remain in order for later random platforms.
+    const rollVariant = gbaRandom(4);
     playPortedSfx('kick',tick);
     const rolls = [
       [[8,32],[12,48],[16,64],[20,96]],
       [[8,48],[12,64],[20,80]],
       [[8,64]],
       []
-    ][cue.index & 3];
+    ][rollVariant];
     for (const [delay,volume] of rolls) playPortedSfx('roll',tick+delay,volume);
-    if ((cue.index & 3) === 2) playPortedSfx('barelySnare',tick+12,64);
+    if (rollVariant === 2) playPortedSfx('barelySnare',tick+12,64);
   }
 }
 function playNightWalkOffbeat(cue) {
@@ -1413,7 +1417,11 @@ function startPortedMode(id) {
       }
       if (id === 'night_walk') {
         cue.platformType = Number(latestPortedEvent('night_walk_set_platform', event.tick)?.args[0] ?? 0);
-        cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
+        // PLATFORM_TYPE_RANDOM consumes agb_random(4) in cue_spawn, not at
+        // engine initialisation. Resolve it when this cue reaches the running
+        // timeline so input-time RNG calls retain their original order.
+        cue.endOfBridge = cue.platformType === 1;
+        cue.platformResolved = cue.platformType !== 2;
         cue.hasFish = cue.platformType === 3;
       }
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
@@ -1648,6 +1656,15 @@ function portedLoop() {
   pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
   if (tick > ported.timeline.endTick) return finish();
+  if (mode === 'night_walk') {
+    // Match the engine's cue-spawn order. Pre-resolving every random platform
+    // at startup lets later input RNG calls change the wrong cue.
+    for (const cue of ported.cues) {
+      if (cue.platformResolved || cue.spawn > tick) continue;
+      cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
+      cue.platformResolved = true;
+    }
+  }
   const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
   for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > lateWindow) {
     cue.state = 'miss';
