@@ -1369,7 +1369,10 @@ function startPortedMode(id) {
       for (const event of data.timeline.events.filter(item => item.op === 'samurai_slice_event02')) {
         const variant = Number(event.args[0]) <= 1 ? 1 : Number(event.args[0]) <= 3 ? 2 : 3;
         const alternate = Boolean(latestPortedEvent('samurai_slice_event04',event.tick));
-        playPortedSfx(`phrase${variant}${alternate?'b':'a'}`,event.tick,256,0,tempoAtTick(event.tick)/140);
+        // Phrase sequences are authored in quarter-beat units.  Convert them
+        // with the active song tempo (the audio helper's base is 120 BPM),
+        // rather than the old /140 guess which slowed 120-BPM phrases.
+        playPortedSfx(`phrase${variant}${alternate?'b':'a'}`,event.tick,256,0,tempoAtTick(event.tick)/120);
       }
     }
     for (const cue of ported.cues) {
