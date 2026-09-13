@@ -1001,42 +1001,78 @@ function finish() {
 // BeatScripts.  Their clocks, image manifests and original PCM music all load
 // before the lead-in begins; no render-frame clock is used for judgement.
 const portedModes = {
-  spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events' } },
-  samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100]], sfx: { spawn:'samurai_appear_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
-  night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [100,112], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]] },
-  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', miss:'calligraphy_miss_events' } }
+  spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
+  samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', overlays: ['samurai_slice_bg_map_fog_bottom.png','samurai_slice_bg_map_fog_top.png'], idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100]], sfx: { spawn:'samurai_appear_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
+  night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
+  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionGood: false, scheduled: new Set(), tempo: [] };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [] };
+const PORTED_ASSET_REV = 'gba-ports-7';
+function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
 function gameAssetPrefix(id) { return `assets/gba/${id}`; }
+function latestPortedEvent(op, tick, before = Infinity) {
+  const events = ported.timeline?.events ?? [];
+  for (let i = events.length - 1; i >= 0; i--) {
+    const event = events[i];
+    if (event.tick <= tick && event.tick < before && event.op === op) return event;
+  }
+  return null;
+}
+function signedHex16(value) {
+  const parsed = Number.parseInt(String(value), 0) & 0xffff;
+  return parsed & 0x8000 ? parsed - 0x10000 : parsed;
+}
+function portedEnum(value, table, fallback = 0) {
+  if (Object.prototype.hasOwnProperty.call(table, value)) return table[value];
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+function animationCell(sequence, elapsedFrames, loop = false) {
+  if (!sequence.length) return 0;
+  const total = sequence.reduce((sum, frame) => sum + frame[1], 0);
+  let cursor = loop && total ? ((elapsedFrames % total) + total) % total : Math.max(0, elapsedFrames);
+  for (const [cell, duration] of sequence) {
+    if (cursor < duration) return cell;
+    cursor -= duration;
+  }
+  return sequence.at(-1)[0];
+}
+function framesBetweenTicks(from, to) { return Math.max(0, (secondsAtTick(to) - secondsAtTick(from)) * 60); }
 async function loadPortedMode(id) {
   if (ported.data[id]) return ported.data[id];
   const prefix = gameAssetPrefix(id);
   const [timeline, manifest] = await Promise.all([
-    fetch(`assets/gba/${id}_timeline.json`).then(r => { if (!r.ok) throw new Error(`Missing ${id} BeatScript timeline`); return r.json(); }),
-    fetch(`${prefix}/frames.json`).then(r => { if (!r.ok) throw new Error(`Missing ${id} animation manifest`); return r.json(); })
+    fetch(portedAssetUrl(`assets/gba/${id}_timeline.json`)).then(r => { if (!r.ok) throw new Error(`Missing ${id} BeatScript timeline`); return r.json(); }),
+    fetch(portedAssetUrl(`${prefix}/frames.json`)).then(r => { if (!r.ok) throw new Error(`Missing ${id} animation manifest`); return r.json(); })
   ]);
   const frames = {}, imageLoads = [];
-  for (const [number, meta] of Object.entries(manifest)) {
-    const image = new Image(); image.src = `${prefix}/${meta.file}`; frames[Number(number)] = image; imageLoads.push(waitForImage(image));
-  }
-  const bg = new Image(); bg.src = `${prefix}/${portedModes[id].bg}`; imageLoads.push(waitForImage(bg));
-  let peopleManifest = {}, peopleFrames = {};
-  if (id === 'power_calligraphy') {
-    peopleManifest = await fetch('assets/gba/power_calligraphy_people/frames.json').then(r => r.json());
-    for (const [number, meta] of Object.entries(peopleManifest)) {
-      const image = new Image(); image.src = `assets/gba/power_calligraphy_people/${meta.file}`;
-      peopleFrames[Number(number)] = image; imageLoads.push(waitForImage(image));
+  if (Object.values(manifest).some(meta => Number.isFinite(meta.atlasX))) {
+    const atlas = new Image(); atlas.src = portedAssetUrl(`${prefix}/atlas.png`); imageLoads.push(waitForImage(atlas));
+    for (const number of Object.keys(manifest)) frames[Number(number)] = atlas;
+  } else {
+    for (const [number, meta] of Object.entries(manifest)) {
+      const image = new Image(); image.src = portedAssetUrl(`${prefix}/${meta.file}`); frames[Number(number)] = image; imageLoads.push(waitForImage(image));
     }
   }
+  const bg = new Image(); bg.src = portedAssetUrl(`${prefix}/${portedModes[id].bg}`); imageLoads.push(waitForImage(bg));
+  const overlays = (portedModes[id].overlays ?? []).map(file => {
+    const image = new Image(); image.src = portedAssetUrl(`${prefix}/${file}`); imageLoads.push(waitForImage(image)); return image;
+  });
+  let peopleManifest = {}, peopleFrames = {};
+  if (id === 'power_calligraphy') {
+    peopleManifest = await fetch(portedAssetUrl('assets/gba/power_calligraphy_people/frames.json')).then(r => r.json());
+    const peopleAtlas = new Image(); peopleAtlas.src = portedAssetUrl('assets/gba/power_calligraphy_people/atlas.png'); imageLoads.push(waitForImage(peopleAtlas));
+    for (const number of Object.keys(peopleManifest)) peopleFrames[Number(number)] = peopleAtlas;
+  }
   const music = await Promise.all(portedModes[id].music.map(async ([name, volume]) => {
-    const result = await fetch(`assets/gba/${name}.json`).then(r => { if (!r.ok) throw new Error(`Missing ${name}`); return r.json(); });
+    const result = await fetch(portedAssetUrl(`assets/gba/${name}.json`)).then(r => { if (!r.ok) throw new Error(`Missing ${name}`); return r.json(); });
     return { name, volume: result.volume ?? volume, events: result.events ?? result };
   }));
   const sfx = {};
-  await Promise.all(Object.entries(portedModes[id].sfx ?? {}).map(async ([kind,name]) => { const result = await fetch(`assets/gba/${name}.json`).then(r => r.json()); sfx[kind] = result.events ?? result; }));
-  const needed = [...new Set([...music.flatMap(track => track.events), ...Object.values(sfx).flat()].map(event => event.sample).filter(Number.isFinite))];
-  const result = { timeline, manifest: Object.fromEntries(Object.entries(manifest).map(([k,v]) => [Number(k),v])), frames, bg, peopleManifest: Object.fromEntries(Object.entries(peopleManifest).map(([k,v]) => [Number(k),v])), peopleFrames, music, sfx, needed, imageLoads };
+  await Promise.all(Object.entries(portedModes[id].sfx ?? {}).map(async ([kind,name]) => { const result = await fetch(portedAssetUrl(`assets/gba/${name}.json`)).then(r => { if (!r.ok) throw new Error(`Missing ${name}`); return r.json(); }); sfx[kind] = { volume: result.volume ?? 256, events: result.events ?? result }; }));
+  const needed = [...new Set([...music.flatMap(track => track.events), ...Object.values(sfx).flatMap(entry => entry.events)].map(event => event.sample).filter(Number.isFinite))];
+  const result = { timeline, manifest: Object.fromEntries(Object.entries(manifest).map(([k,v]) => [Number(k),v])), frames, bg, overlays, peopleManifest: Object.fromEntries(Object.entries(peopleManifest).map(([k,v]) => [Number(k),v])), peopleFrames, music, sfx, needed, imageLoads };
   ported.data[id] = result; return result;
 }
 function setPortedTempo(timeline) {
@@ -1089,29 +1125,80 @@ function schedulePortedMusic() {
     // the current sequence rather than layering a second copy over it.
     const replaceTick = starts[startIndex + 1]?.tick ?? Infinity;
     for (const note of track.events) {
-      if (!Number.isFinite(note.sample)) continue;
-      const sample = originalSamples[note.sample]; if (!sample) throw new Error(`Unloaded original PCM ${note.sample}`);
+      if (!Number.isFinite(note.sample) && !note.wave) continue;
       const atTick = start.tick + note.beat * 24; if (atTick >= replaceTick) continue;
       const endTick = Math.min(replaceTick, atTick + note.length * 24), when = audioSongStart + secondsAtTick(atTick), duration = Math.max(.02, secondsAtTick(endTick) - secondsAtTick(atTick));
-      const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
-      source.playbackRate.value = note.fixed ? 1 : Math.pow(2, (note.note - 60) / 12);
+      const source = note.wave ? ac.createOscillator() : ac.createBufferSource(), gain = ac.createGain();
+      if (note.wave) { source.type = note.wave; source.frequency.value = 440 * Math.pow(2,(note.note-69)/12); }
+      else { const sample = originalSamples[note.sample]; if (!sample) throw new Error(`Unloaded original PCM ${note.sample}`); source.buffer = sample; source.playbackRate.value = note.fixed ? 1 : Math.pow(2, (note.note - 60) / 12); }
       // SongHeader volume and BeatScript music-bus volume are distinct GBA
       // mixer stages.  Preserve both instead of applying a browser-only boost.
-      gain.gain.value = GBA_MIX_SCALE * (note.velocity / 127) * (track.volume / 256) * (portedMusicVolumeAt(atTick) / 256);
+      gain.gain.value = GBA_MIX_SCALE * (note.wave ? .32 : 1) * (note.velocity / 127) * (track.volume / 256) * (portedMusicVolumeAt(atTick) / 256);
       source.connect(gain).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
     }
   }
 }
-function playPortedSfx(kind, atTick = null) {
-  const events = ported.sfx[kind]; if (!events?.length) return;
+function playPortedSfx(kind, atTick = null, eventVolume = 256, eventPitch = 0) {
+  const entry = ported.sfx[kind], events = entry?.events; if (!events?.length) return;
   const ac = audio(), base = atTick == null ? ac.currentTime : audioSongStart + secondsAtTick(atTick);
   for (const event of events) {
     const sample = originalSamples[event.sample]; if (!sample) continue;
     const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
-    source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
-    gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127); source.connect(gain).connect(ac.destination);
+    source.playbackRate.value = (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12)) * Math.pow(2,eventPitch/(256*12));
+    gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * (entry.volume / 256) * (eventVolume / 256); source.connect(gain).connect(ac.destination);
     const when = Math.max(ac.currentTime + .005, base + event.beat * 60 / 120);
     source.start(when); source.stop(when + Math.max(.15, event.length * 60 / 120)); scheduledMusicNodes.push(source);
+  }
+}
+function playNightWalkDrum(cue, perfect, tick) {
+  if (!perfect) {
+    if (cue.kind === 'CUE_KICK') playPortedSfx('barely',tick,256,0xc00);
+    else {
+      playPortedSfx('barelySnare',tick,256,0x400);
+      playPortedSfx('barely',tick,256,0xc00);
+    }
+    return;
+  }
+  if (cue.kind === 'CUE_KICK') return playPortedSfx('kick',tick);
+  if (cue.kind === 'CUE_SNARE') {
+    playPortedSfx('kick',tick); playPortedSfx('snare',tick); return;
+  }
+  if (cue.kind === 'CUE_CYMBAL' || cue.kind === 'CUE_STAR_WAND') {
+    playPortedSfx('kick',tick); playPortedSfx('snare',tick); playPortedSfx('cymbal',tick,128); return;
+  }
+  if (cue.kind === 'CUE_ROLL') {
+    playPortedSfx('kick',tick);
+    const rolls = [
+      [[8,32],[12,48],[16,64],[20,96]],
+      [[8,48],[12,64],[20,80]],
+      [[8,64]],
+      []
+    ][cue.index & 3];
+    for (const [delay,volume] of rolls) playPortedSfx('roll',tick+delay,volume);
+    if ((cue.index & 3) === 2) playPortedSfx('barelySnare',tick+12,64);
+  }
+}
+function playNightWalkOffbeat(cue) {
+  const tick = cue.hit + 12;
+  if (cue.kind === 'CUE_SNARE') {
+    playPortedSfx('open',tick); playPortedSfx('open',tick+6); playPortedSfx('kick',tick+12); return;
+  }
+  if (cue.kind === 'CUE_CYMBAL') {
+    playPortedSfx('open',tick); playPortedSfx('open',tick+4,192); playPortedSfx('open',tick+8,160); playPortedSfx('kick',tick+12); return;
+  }
+  playPortedSfx('open',tick); playPortedSfx('kick',tick+12);
+}
+function schedulePortedTimelineSfx() {
+  const calligraphy = {
+    s_shuji_ho_seqData:'ho', s_f_shuji_start_seqData:'start', s_f_shuji_swing1_seqData:'swing1',
+    s_f_shuji_v_funuue_seqData:'chargeVoice', s_f_shuji_v_ha1_seqData:'ha1', s_f_shuji_v_ha2_seqData:'ha2',
+    s_f_shuji_v_ha3_seqData:'ha3', s_rabbit_break2_seqData:'break', s_f_shuji_swing2_seqData:'swing2', s_furi_seqData:'furi'
+  };
+  for (const event of ported.timeline.events) {
+    if (event.op === 'night_walk_play_drumtech_note' && Number(event.args[0]) === 38) playPortedSfx('count',event.tick,Number(event.args[1]),Number(event.args[2]));
+    if (!/^play_sfx(?:_vol(?:_pitch)?)?$/.test(event.op) || event.args[0] === 'NULL') continue;
+    const kind = calligraphy[event.args[0]]; if (!kind) continue;
+    playPortedSfx(kind,event.tick,Number(event.args[1] ?? 256),Number(event.args[2] ?? 0));
   }
 }
 function startPortedMode(id) {
@@ -1123,80 +1210,406 @@ function startPortedMode(id) {
     if (run !== songRun || mode !== id) return;
     // Render the fully decoded original art right away.  PCM still preloads
     // before the lead-in, but a first visit never shows an empty game panel.
-    ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.peopleFrames = data.peopleFrames; ported.peopleManifest = data.peopleManifest; ported.music = data.music; ported.sfx = data.sfx; ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map(event => ({ spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' }));
-    ported.cueIndex = 0; ported.actionAt = -99; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.overlays = data.overlays; ported.peopleFrames = data.peopleFrames; ported.peopleManifest = data.peopleManifest; ported.music = data.music; ported.sfx = data.sfx;
+    const samuraiSpawns = id === 'samurai_slice' ? data.timeline.events.filter(event => event.op === 'samurai_slice_event02') : [];
+    ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map((event, index) => {
+      const cue = { index, spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' };
+      if (id === 'spaceball') cue.objectType = portedEnum(latestPortedEvent('spaceball_set_ball_sprite', event.tick)?.args[0], { BASEBALL:0, RICE_BALL:1, STAR_BALL:2 });
+      if (id === 'samurai_slice') {
+        const visualSpawn = samuraiSpawns[index];
+        cue.visualSpawn = visualSpawn?.tick ?? event.tick - 120;
+        cue.objectType = Number(visualSpawn?.args[0] ?? 0);
+      }
+      if (id === 'night_walk') {
+        cue.platformType = Number(latestPortedEvent('night_walk_set_platform', event.tick)?.args[0] ?? 0);
+        cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && ((index * 1103515245 + 12345) >>> 30) === 0);
+        cue.hasFish = cue.platformType === 3;
+      }
+      if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
+      return cue;
+    });
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
-    audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic();
-    for (const cue of ported.cues) { const sound = mode === 'spaceball' && cue.kind === 'CUE_HIGH' ? 'high' : 'spawn'; if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn); }
+    audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
+    for (const cue of ported.cues) {
+      let sound = 'spawn';
+      if (mode === 'spaceball' && ['CUE_HIGH','CUE_HIGH_FAST'].includes(cue.kind)) sound = 'high';
+      if (mode === 'spaceball' && cue.kind === 'CUE_LOW_FAST') continue;
+      if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn);
+    }
     cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
   }).catch(error => { console.error(`Unable to start ${id}:`, error); quit(); });
 }
-function drawPortedCell(cell, x, y, scale = 4, rotation = 0) {
+function drawPortedCell(cell, x, y, scale = 4, rotation = 0, flipX = false) {
   const image = ported.frames[cell], meta = ported.manifest[cell]; if (!image || !meta) return;
-  ctx.save(); ctx.translate(x * scale, y * scale); ctx.rotate(rotation); ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale); ctx.restore();
+  // x/y are always native 240x160 screen coordinates. `scale` changes only
+  // the sprite size (affine sprites must not drag their anchor with zoom).
+  ctx.save(); ctx.translate(x * 4, y * 4); ctx.rotate(rotation); if (flipX) ctx.scale(-1,1); ctx.imageSmoothingEnabled = false;
+  if (Number.isFinite(meta.atlasX)) ctx.drawImage(image,meta.atlasX,meta.atlasY,meta.width,meta.height,-meta.originX*scale,-meta.originY*scale,meta.width*scale,meta.height*scale);
+  else ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale);
+  ctx.restore();
 }
 function drawPortedPerson(cell, x, y) {
   const image = ported.peopleFrames[cell], meta = ported.peopleManifest[cell]; if (!image || !meta) return;
-  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(image, (x-meta.originX)*4, (y-meta.originY)*4, image.naturalWidth*4, image.naturalHeight*4); ctx.restore();
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  if (Number.isFinite(meta.atlasX)) ctx.drawImage(image,meta.atlasX,meta.atlasY,meta.width,meta.height,(x-meta.originX)*4,(y-meta.originY)*4,meta.width*4,meta.height*4);
+  else ctx.drawImage(image, (x-meta.originX)*4, (y-meta.originY)*4, image.naturalWidth*4, image.naturalHeight*4);
+  ctx.restore();
+}
+function spaceballZoomAt(tick) {
+  let value = -.5;
+  for (const event of ported.timeline.events) {
+    if (event.op !== 'spaceball_zoom_camera' || event.tick > tick) continue;
+    const target = signedHex16(event.args[0]) / 256, duration = Number(event.args[1]);
+    const nextTick = event.tick + duration;
+    if (tick < nextTick) return value + (target - value) * (tick - event.tick) / Math.max(1, duration);
+    value = target;
+  }
+  return value;
+}
+function drawSpaceballEntity(cell, worldX, worldY, z, zoom, rotation = 0, farCell = null) {
+  let scale = 1 / Math.max(.05, z - zoom), selected = cell;
+  if (farCell != null && scale <= .5) { scale *= 2; selected = farCell; }
+  drawPortedCell(selected, 120 + worldX * scale, 80 + worldY * scale, 4 * scale, rotation);
+}
+function spaceballFlight(cue, tick) {
+  const arcTicks = cue.hit - cue.spawn;
+  const arc = arcTicks >= 24 ? 90 * arcTicks / 24 : 90;
+  const landingTicks = arc <= 48 ? arcTicks : 2 * arcTicks / (Math.sqrt((arc - 48) / arc) + 1);
+  const q = Math.max(0, Math.min(1, (tick - cue.spawn) / landingTicks));
+  return { arc, landingTicks, x: 70 + 68*q, y: 120 - (arc - arc * Math.pow(2*q-1,2)) };
+}
+function drawSpaceballScene(tick) {
+  const zoom = spaceballZoomAt(tick), frame = Math.max(0, secondsAtTick(Math.max(0,tick)) * 60);
+  // The original creates one star per frame until its fixed 24-star field is full.
+  for (let i=0;i<24;i++) {
+    const seed = (i * 1664525 + 1013904223) >>> 0, angle = (seed % 6283) / 1000;
+    const radius = 18 + ((seed >>> 8) % 105), drift = 1 + ((frame + i*7) % 90) / 180;
+    drawPortedCell(27, 120 + Math.cos(angle)*radius*drift, 80 + Math.sin(angle)*radius*.66*drift, 2.3);
+  }
+  const batterType = portedEnum(latestPortedEvent('spaceball_set_batter_sprite', tick)?.args[0], { BATTER_GREEN:0, BATTER_RED:1, BATTER_PINK:2 });
+  const close = [[1,2,3,4,5],[9,10,11,12,13],[30,31,32,33,34]][batterType] ?? [1,2,3,4,5];
+  const far = [[44,44,45,45,46],[47,47,48,48,49],[50,50,51,51,52]][batterType] ?? [44,44,45,45,46];
+  const swingFrames = framesBetweenTicks(ported.actionAt,tick);
+  const swingStep = swingFrames < 9 ? Math.min(3, Math.floor(swingFrames/3)+1) : swingFrames < 20 ? 4 : 0;
+  const ufoEvent = latestPortedEvent('spaceball_set_ufo_anim',tick);
+  const ufoOpen = ufoEvent && portedEnum(ufoEvent.args[0], { UFO_OPEN:1, UFO_SWAY:0 });
+  const ufoCell = ufoOpen ? animationCell([[55,4],[60,20],[59,10],[58,10],[55,10]],framesBetweenTicks(ufoEvent.tick,tick)) : animationCell([[55,4],[54,4],[53,4],[54,4],[55,4],[56,4],[57,4],[56,4]],frame,true);
+  drawSpaceballEntity(ufoCell,0,9,0,zoom);
+  const pitcherThrow = ported.cues.find(c => tick >= c.spawn && tick < c.spawn + 6);
+  drawSpaceballEntity(pitcherThrow ? animationCell([[16,4],[14,2]],framesBetweenTicks(pitcherThrow.spawn,tick)) : 15,-50,48,0,zoom);
+  drawSpaceballEntity(close[swingStep],50,0,0,zoom,0,far[swingStep]);
+}
+function samuraiPowerAt(tick) {
+  let hits = 0;
+  for (const cue of ported.cues) {
+    if (cue.hit > tick) break;
+    if (cue.state === 'hit' && cue.perfect) hits++;
+    else if (cue.state === 'hit') hits = 0;
+  }
+  return Math.min(2, hits);
+}
+function drawSamuraiScene(tick) {
+  const power = samuraiPowerAt(tick), beatSeqs = [
+    [[20,4],[19,3],[18,3],[17,30]], [[31,4],[30,3],[28,3],[29,30]], [[43,4],[42,3],[41,3],[40,30]]
+  ], sliceSeqs = [
+    [[20,64],[21,2],[22,1],[23,1],[22,6],[24,1],[25,1],[26,1],[27,1]],
+    [[30,64],[33,2],[34,1],[35,1],[34,1],[35,1],[34,4],[36,1],[37,1],[38,1],[39,1]],
+    [[42,64],[44,2],[45,1],[46,1],[45,1],[46,1],[45,1],[46,1],[45,1],[46,1],[47,1],[48,1],[49,1],[50,1]]
+  ];
+  const beat = latestPortedEvent('beat_anim',tick), actionFrames = framesBetweenTicks(ported.actionAt,tick);
+  let cell = animationCell(beatSeqs[power], beat ? framesBetweenTicks(beat.tick,tick) : 999);
+  if (ported.actionAt >= 0 && actionFrames < 24) cell = animationCell(sliceSeqs[power], 64 + actionFrames);
+  drawPortedCell(animationCell([[0,6],[2,6],[1,6]],secondsAtTick(Math.max(0,tick))*60,true),20,120,4);
+  drawPortedCell(cell,14,123,4);
 }
 function portedLoop() {
   const tick = portedTick(), cfg = portedModes[mode];
   if (tick > ported.timeline.endTick) return finish();
-  for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > 5) cue.state = 'miss';
+  const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
+  for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > lateWindow) {
+    cue.state = 'miss';
+    if (mode === 'power_calligraphy') playPortedSfx('miss');
+    if (mode === 'night_walk' && cue.endOfBridge && ported.failedAt < 0) {
+      ported.failedAt = tick; ported.failedCue = cue; playPortedSfx('miss');
+    }
+  }
+  if (mode === 'night_walk') for (const cue of ported.cues) {
+    if (cue.state === 'miss' && !cue.endOfBridge && !cue.offbeatPlayed && tick >= cue.hit + 12) {
+      cue.offbeatPlayed = true; playNightWalkOffbeat(cue);
+    }
+  }
+  if (mode === 'spaceball') for (const cue of ported.cues) {
+    const flight = spaceballFlight(cue,tick);
+    if (cue.state === 'miss' && !cue.landed && tick >= cue.spawn + flight.landingTicks) {
+      cue.landed = true; cue.landedAt = tick; playPortedSfx('land');
+    }
+  }
+  if (mode === 'night_walk' && ported.failedAt >= 0 && tick - ported.failedAt > 96) return finish();
   drawPorted(tick, cfg); frame = requestAnimationFrame(loop);
 }
 function drawPorted(tick, cfg) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
   ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
-  const age = (tick - ported.actionAt) / 30; const frames = age >= 0 && age < cfg.action.length / 30 ? cfg.action[Math.floor(age * 30)] : [cfg.idle];
+  if (mode === 'samurai_slice' && ported.overlays[1]) ctx.drawImage(ported.overlays[1], 0, 0, stage.width, stage.height);
+  const actionFrame = framesBetweenTicks(ported.actionAt, tick);
+  let actorCell = animationCell(cfg.action.map(cell => [cell, 2]), actionFrame);
+  if (tick < ported.actionAt || actionFrame >= cfg.action.length * 2) actorCell = cfg.idle;
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
   if (mode === 'night_walk' && ported.actionAt >= 0) {
-    const age = Math.max(0, (tick - ported.actionAt) / 20);
-    if (age < 1) { actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256; frames[0] = 2; }
+    const elapsed = framesBetweenTicks(ported.actionAt,tick), duration = Math.max(1,framesBetweenTicks(ported.actionAt,ported.actionAt+20));
+    const age = Math.max(0,elapsed/duration);
+    if (ported.actionHit && age < 1) { actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256; actorCell = 2; }
+    else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
+    else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
-  drawPortedCell(frames[0], actorX, actorY);
+  if (mode === 'night_walk' && ported.actionAt < 0) actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
+  if (mode === 'night_walk' && ported.failedAt >= 0) actorCell = animationCell([[12,4],[13,4],[14,4],[15,4],[14,4]],framesBetweenTicks(ported.failedAt,tick));
+  if (mode === 'night_walk') {
+    const expandedStars = ported.cues.filter(c => c.state === 'hit' && c.perfect && c.hit <= tick).length
+      + ported.timeline.events.filter(e => e.op === 'night_walk_expand_stars' && e.tick <= tick).reduce((sum,e) => sum + Number(e.args[0] ?? 0),0);
+    const starLevel = Math.min(4, Math.floor(expandedStars / 32)), nextStar = expandedStars % 32;
+    const starCells = [95,97,99,101,103];
+    for (let i=0;i<32;i++) {
+      const sx = (i*73+19)%240, sy = (i*47+11)%112;
+      drawPortedCell(starCells[Math.min(4,starLevel + (i < nextStar ? 1 : 0))],sx,sy,2.4);
+    }
+  }
+  if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
+  if (mode === 'night_walk') {
+    const popped = ported.timeline.events.filter(e => e.op === 'night_walk_pop_balloon' && e.tick <= tick).length;
+    for (let i=0;i<Math.max(0,7-popped);i++) drawPortedCell([89,90,91][i%3],64+(i%2?3:-3),118-i*2,4);
+  }
+  if (mode === 'spaceball') drawSpaceballScene(tick);
+  if (mode === 'samurai_slice') drawSamuraiScene(tick);
   if (mode === 'power_calligraphy') {
+    const kana = { KANA_ONORE:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], KANA_CHIKARA:[21,22,23,24,25,26,27,28,29,30,31,32], KANA_SUN:[39,40,41,42,43,44,45,46,47,48,49], KANA_KOKORO:[56,57,58,59,60,61,62,63,64,65,66,67,68,69], KANA_RE:[80,81,82,83,84,85], KANA_COMMA:[88,89], KANA_FACE:[92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123], KANA_END_KANJI:[127] };
+    const inputCells = {
+      KANA_INPUT_ONORE1:[18,19,20], KANA_INPUT_CHIKARA1:[33,34,35], KANA_INPUT_CHIKARA2:[36,37,38],
+      KANA_INPUT_SUN1:[50,51,52], KANA_INPUT_SUN2:[53,54,55], KANA_INPUT_KOKORO1:[70,71,72],
+      KANA_INPUT_KOKORO2:[73,75,76], KANA_INPUT_KOKORO3:[77,78,79], KANA_INPUT_RE1:[85,86,87],
+      KANA_INPUT_COMMA1:[89,90,91], KANA_INPUT_FACE1:[124,125,126]
+    };
+    const removals = ported.timeline.events.filter(e => (e.op === 'power_calligraphy_remove_paper' || e.op === 'power_calligraphy_remove_paper_slowly') && e.tick <= tick);
+    const removeEvent = removals.at(-1), lastPaper = removeEvent?.tick ?? -1;
+    if (removeEvent) {
+      const slow = removeEvent.op.endsWith('_slowly'), age = framesBetweenTicks(removeEvent.tick,tick);
+      if (age < (slow ? 160 : 20)) {
+        const previousRemove = removals.at(-2)?.tick ?? -1;
+        let oldX = 0, oldY = 0;
+        for (const event of ported.timeline.events) if (event.op === 'power_calligraphy_offset_paper' && event.tick >= previousRemove && event.tick < removeEvent.tick) {
+          oldX += Number(event.args[0] ?? 0); oldY += Number(event.args[1] ?? 0);
+        }
+        oldX += (slow ? 0 : -4) * age; oldY += (slow ? -1 : -8) * age;
+        ctx.drawImage(ported.bg,71,7,114,153,(71+oldX)*4,(7+oldY)*4,456,612);
+        const oldKana = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana' && e.tick < removeEvent.tick).at(-1);
+        const oldCel = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana_cel' && e.tick < removeEvent.tick).at(-1);
+        if (oldKana && oldCel && Number(oldCel.args[0]) >= 0) drawPortedCell(kana[oldKana.args[0]]?.[Number(oldCel.args[0])] ?? 0,120+oldX,84+oldY,4);
+        for (const cue of ported.cues) if (cue.result != null && cue.hit >= previousRemove && cue.hit < removeEvent.tick) {
+          drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0,120+oldX,84+oldY,4);
+        }
+      }
+    }
+    let paperX = 0, paperY = 0;
+    for (const event of ported.timeline.events) if (event.op === 'power_calligraphy_offset_paper' && event.tick >= lastPaper && event.tick <= tick) {
+      paperX += Number(event.args[0] ?? 0); paperY += Number(event.args[1] ?? 0);
+    }
+    const paperMotions = {
+      KANA_INPUT_ONORE1:[0,-8], KANA_INPUT_CHIKARA1:[-6,-6], KANA_INPUT_CHIKARA2:[-4,8],
+      KANA_INPUT_SUN1:[-4,-6], KANA_INPUT_SUN2:[4,4], KANA_INPUT_KOKORO1:[-4,-6],
+      KANA_INPUT_KOKORO2:[4,4], KANA_INPUT_KOKORO3:[6,6], KANA_INPUT_RE1:[6,-6],
+      KANA_INPUT_COMMA1:[5,6], KANA_INPUT_FACE1:[6,-1]
+    };
+    for (const cue of ported.cues) if (cue.result === 0 && cue.hit >= lastPaper && cue.hit <= tick) {
+      const motion = paperMotions[cue.inputType];
+      if (motion) { paperX -= motion[0]; paperY -= motion[1]; }
+    }
     const kanaEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana' && e.tick <= tick).at(-1);
     const celEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana_cel' && e.tick <= tick).at(-1);
-    const kana = { KANA_ONORE:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], KANA_CHIKARA:[21,22,23,24,25,26,27,28,29,30,31,32], KANA_SUN:[39,40,41,42,43,44,45,46,47,48,49], KANA_KOKORO:[56,57,58,59,60,61,62,63,64,65,66,67,68,69], KANA_RE:[80,81,82,83,84,85], KANA_COMMA:[88,89], KANA_FACE:[92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123], KANA_END_KANJI:[127] };
-    if (kanaEvent && celEvent) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120, 84, 4);
-    const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
-    if (brush) drawPortedCell(brush.op.endsWith('_down') ? 129 : 128, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
+    if (kanaEvent && celEvent && Number(celEvent.args[0]) >= 0) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120 + paperX, 84 + paperY, 4);
+    for (const cue of ported.cues) if (cue.result != null && cue.hit >= lastPaper && cue.hit <= tick) {
+      drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0, 120 + paperX, 84 + paperY, 4);
+    }
+    const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush(?:_(raised|down))?$/.test(e.op) && e.tick <= tick).at(-1);
+    let brushDrawX = 180, brushDrawY = 100;
+    if (brush) {
+      const hitCue = ported.cues.filter(c => c.result != null && c.hit <= tick && c.hit >= lastPaper).at(-1);
+      const brushMotions = {
+        KANA_INPUT_ONORE1:[[31,-30,0],[65,-14,0],[36,-7,0]], KANA_INPUT_CHIKARA1:[[1,-22,0],[-11,28,0],[19,-4,0]], KANA_INPUT_CHIKARA2:[[-61,43,0],[-46,40,0],[3,-54,0]],
+        KANA_INPUT_SUN1:[[-14,-15,0],[-19,-8,0],[9,6,0]], KANA_INPUT_SUN2:[[1,-7,1],[2,-8,1],[6,-18,1]], KANA_INPUT_KOKORO1:[[29,-40,0],[76,-30,0],[51,-22,0]],
+        KANA_INPUT_KOKORO2:[[17,-34,1],[15,-41,1],[21,-54,1]], KANA_INPUT_KOKORO3:[[44,-36,1],[60,-32,0],[38,-51,1]], KANA_INPUT_RE1:[[39,-29,0],[30,-14,0],[17,-8,0]],
+        KANA_INPUT_COMMA1:[[12,-4,1],[35,-6,0],[20,-10,0]], KANA_INPUT_FACE1:[[32,-11,0],[10,81,0],[0,14,0]]
+      };
+      const motion = hitCue ? brushMotions[hitCue.inputType]?.[hitCue.result] : null;
+      const normalCharge = latestPortedEvent('power_calligraphy_charge_brush',tick), commaCharge = latestPortedEvent('power_calligraphy_charge_brush_comma',tick);
+      const charge = !normalCharge ? commaCharge : !commaCharge ? normalCharge : normalCharge.tick > commaCharge.tick ? normalCharge : commaCharge;
+      const nextChargeEnd = charge && ported.timeline.events.find(e => e.op === 'power_calligraphy_end_charge_effect' && e.tick >= charge.tick);
+      const charging = charge && charge.tick >= brush.tick && tick < (nextChargeEnd?.tick ?? Infinity) && (!hitCue || hitCue.hit < charge.tick);
+      let brushCell = motion ? 128 + motion[2] : (brush.op.endsWith('_down') ? 129 : 128);
+      if (charging) brushCell = charge.op.endsWith('_comma') ? animationCell([[138,3],[139,3],[140,3],[141,3],[142,3],[143,3]],framesBetweenTicks(charge.tick,tick)) : animationCell([[130,1],[131,1],[132,1],[133,2],[134,2],[135,2],[136,2]],framesBetweenTicks(charge.tick,tick));
+      brushDrawX = 120 + (motion?.[0] ?? Number(brush.args[0])) + paperX;
+      brushDrawY = 84 + (motion?.[1] ?? Number(brush.args[1])) + paperY;
+      const raise = latestPortedEvent('power_calligraphy_raise_brush',tick);
+      if (raise && raise.tick >= brush.tick) { brushDrawY -= 24; brushCell = 128; }
+      drawPortedCell(brushCell,brushDrawX,brushDrawY,4);
+    } else drawPortedCell(128,brushDrawX,brushDrawY,4);
+    const chargeEffect = latestPortedEvent('power_calligraphy_start_charge_effect',tick);
+    const chargeEffectEnd = chargeEffect && ported.timeline.events.find(e => e.op === 'power_calligraphy_end_charge_effect' && e.tick >= chargeEffect.tick);
+    if (chargeEffect && tick < (chargeEffectEnd?.tick ?? chargeEffect.tick)) {
+      drawPortedCell(animationCell([[152,2],[153,2],[154,2],[155,2],[156,2]],framesBetweenTicks(chargeEffect.tick,tick),true),brushDrawX,brushDrawY,4);
+    }
     const peopleEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_people_state' && e.tick <= tick).at(-1);
-    const peopleState = peopleEvent?.args[0] ?? 'LITTLE_PEOPLE_NULL';
+    const stumble = tick - ported.peopleStumbleAt >= 0 && tick - ported.peopleStumbleAt < 48;
+    const peopleState = stumble ? 'LITTLE_PEOPLE_STUMBLE' : (peopleEvent?.args[0] ?? 'LITTLE_PEOPLE_NULL');
     if (peopleState !== 'LITTLE_PEOPLE_NULL') {
       const dance = peopleState === 'LITTLE_PEOPLE_DANCE', side = Math.floor(tick/24)&1;
+      const bow = peopleState === 'LITTLE_PEOPLE_BOW' || peopleState === 'LITTLE_PEOPLE_END_BOW';
+      const peopleFrames = secondsAtTick(Math.max(0,tick))*60;
+      const manDance = side ? [[5,4],[6,4],[7,4],[8,10],[7,4],[6,4],[5,4],[0,10]] : [[1,4],[2,4],[3,4],[4,10],[3,4],[2,4],[1,4],[0,10]];
+      const womanDance = side ? [[18,4],[19,4],[20,4],[21,10],[20,4],[19,4],[18,4],[17,10]] : [[22,4],[23,4],[24,4],[25,10],[24,4],[23,4],[22,4],[17,10]];
       for (let i=0;i<6;i++) {
         const travel = ((Math.min(tick,4974)-3438)/6.75) % 192;
         const my = ((-160+i*32+travel+384)%192);
         const wy = ((192+i*32-travel+384)%192);
-        drawPortedPerson(dance ? [1,5][side] : [12,13,12,14][Math.floor(tick/6)%4], 32, my);
-        drawPortedPerson(dance ? [18,22][side] : [29,30,29,31][Math.floor(tick/6)%4], 216, wy);
+        let man = dance ? animationCell(manDance,peopleFrames,true) : stumble ? 15 : animationCell([[12,6],[13,8],[12,6],[14,20]],peopleFrames,peopleState!=='LITTLE_PEOPLE_END_BOW');
+        let woman = dance ? animationCell(womanDance,peopleFrames,true) : stumble ? 33 : animationCell([[29,6],[30,8],[29,6],[31,20]],peopleFrames,peopleState!=='LITTLE_PEOPLE_END_BOW');
+        if (bow && i < 3) { man = animationCell([[9,6],[10,8],[9,6],[11,20]],peopleFrames,peopleState!=='LITTLE_PEOPLE_END_BOW'); woman = animationCell([[26,6],[27,8],[26,6],[28,20]],peopleFrames,peopleState!=='LITTLE_PEOPLE_END_BOW'); }
+        drawPortedPerson(man,32,my); drawPortedPerson(woman,216,wy);
       }
     }
   }
   for (const cue of ported.cues) {
-    if (cue.state === 'done' || tick < cue.spawn || tick > cue.hit + 30) continue;
+    const tail = mode === 'night_walk' ? 96 : mode === 'spaceball' ? 180 : mode === 'samurai_slice' ? 60 : 30;
+    const visibleFrom = mode === 'samurai_slice' ? cue.visualSpawn : cue.spawn;
+    if (cue.state === 'done' || tick < visibleFrom || tick > cue.hit + tail) continue;
     const p = Math.max(0, Math.min(1, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
     if (mode === 'spaceball') {
-      const x = 70 + 68 * p, y = 120 - (90 - 360 * (p-.5) * (p-.5)); drawPortedCell(cfg.object, x, y, 4 * (.4 + p * .7), tick * .05);
-    } else if (mode === 'samurai_slice') drawPortedCell(cfg.object, 210 - 110 * p, 98 - 24 * Math.sin(p * Math.PI), 4);
+      const flight = spaceballFlight(cue,tick), { landingTicks, x, y } = flight;
+      const ballCells = [6,8,7], ball = ballCells[cue.objectType] ?? 6, zoom = spaceballZoomAt(tick);
+      if (cue.state === 'hit') {
+        const actionTick = cue.actionTick ?? cue.hit, base = spaceballFlight(cue,actionTick), hitFrames = framesBetweenTicks(actionTick,tick);
+        if (cue.perfect) {
+          const z = -.25 * hitFrames;
+          if (z >= zoom + .25) drawSpaceballEntity(ball,base.x-120,base.y-80,z,zoom,tick*.012);
+        } else {
+          const z = -(4/256)*hitFrames, dx = cue.actionTick < cue.hit ? -3 : 3;
+          const bx = base.x + dx*hitFrames, by = base.y - 4*hitFrames + .125*hitFrames*hitFrames;
+          if (z >= zoom + .25 && by < 1000) drawSpaceballEntity(ball,bx-120,by-80,z,zoom,-tick*.012);
+        }
+      } else if (tick <= cue.spawn + landingTicks) drawSpaceballEntity(ball,x-120,y-80,0,zoom,tick*.012);
+      if (cue.landedAt != null) {
+        const poofFrames = framesBetweenTicks(cue.landedAt,tick);
+        if (poofFrames < 9) {
+          const poof = animationCell([[24,4],[25,3],[26,2]],poofFrames);
+          drawSpaceballEntity(poof,34,52,0,zoom); drawPortedCell(poof,120 + 2/(0-zoom),80 + 52/(0-zoom),4/(0-zoom),0,true);
+        }
+      }
+    } else if (mode === 'samurai_slice') {
+      const demonSeqs = [ [[70,8],[67,2],[68,4],[69,4]], [[58,8],[53,2],[54,4],[55,4]], [[59,6],[60,4],[61,4],[62,3],[63,2]], [[71,3],[72,3],[73,3],[74,3],[75,3]], [[84,12],[85,12]], [[84,12],[85,12]] ];
+      const seq = demonSeqs[cue.objectType] ?? demonSeqs[1];
+      const travel = Math.max(0, Math.min(1, (tick - cue.visualSpawn) / 192));
+      const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
+      const phase = ((tick - cue.visualSpawn) % 24 + 24) % 24 / 24;
+      let hop = 0;
+      if (cue.objectType === 0) hop = 24 * 4 * phase * (1-phase);
+      else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * 4 * phase * (1-phase);
+      else if (cue.objectType === 2 || cue.objectType === 3) hop = 8 + 8*Math.sin((tick-cue.visualSpawn)*Math.PI/24);
+      else if (tick-cue.visualSpawn >= 96 && tick-cue.visualSpawn < 144) hop = 48 * 4 * (((tick-cue.visualSpawn-96)/48)) * (1-((tick-cue.visualSpawn-96)/48));
+      const y = baseY - hop;
+      if (cue.state === 'hit') {
+        const drift = Math.max(0,tick-(cue.actionTick ?? cue.hit));
+        if (!cue.perfect) {
+          const barelyCells = [76,56,57,77,86,86];
+          drawPortedCell(barelyCells[cue.objectType] ?? 56,x+drift*1.2,y+drift*.45,4,drift*.025);
+        } else {
+          const hitCells = [78,64,65,79,82,83];
+          drawPortedCell(hitCells[cue.objectType] ?? 64,x+drift*1.8,y-drift*1.2,4,drift*.06);
+          drawPortedCell(cue.objectType >= 4 ? (cue.objectType === 4 ? 83 : 82) : 66,x-drift*1.2,y+drift*.9,4,-drift*.04);
+          if (drift < 7) drawPortedCell(animationCell([[88,1],[89,4],[90,2]],framesBetweenTicks(cue.actionTick ?? cue.hit,tick)),74,96,4);
+        }
+      } else {
+        if (![2,3].includes(cue.objectType)) drawPortedCell(cue.objectType >= 4 ? 87 : 80,x,baseY+4,4);
+        drawPortedCell(animationCell(seq,framesBetweenTicks(cue.visualSpawn,tick),true),x,y,4);
+      }
+    }
     else if (mode === 'night_walk') {
-      const p = Math.max(0, Math.min(1, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
-      drawPortedCell(cfg.object, 320 - 256 * p, 120, 4);
+      const p = Math.max(0, Math.min(1.5, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
+      const bridgeAnimations = {
+        CUE_KICK:[[29,40],[37,1],[38,1],[39,2],[40,3],[41,40]], CUE_SNARE:[[29,40],[43,1],[44,1],[45,2],[46,3],[47,40]],
+        CUE_CYMBAL:[[29,40],[50,1],[51,1],[52,1],[53,2],[54,3],[55,40]], CUE_ROLL:[[29,40],[37,1],[38,1],[39,2],[40,3],[41,40]],
+        CUE_STAR_WAND:[[57,1],[58,1],[59,1],[60,1],[61,1],[62,1],[63,1],[64,40]]
+      };
+      const boxAnimations = {
+        CUE_KICK:[[56,40],[67,1],[68,1],[69,2],[70,3],[71,40]], CUE_SNARE:[[56,40],[73,1],[74,1],[75,2],[76,3],[77,40]],
+        CUE_CYMBAL:[[56,40],[80,1],[81,1],[82,1],[83,2],[84,3],[85,40]], CUE_ROLL:[[56,40],[67,1],[68,1],[69,2],[70,3],[71,40]],
+        CUE_STAR_WAND:[[57,1],[58,1],[59,1],[60,1],[61,1],[62,1],[63,1],[64,40]]
+      };
+      const animation = (cue.endOfBridge ? boxAnimations : bridgeAnimations)[cue.kind] ?? bridgeAnimations.CUE_KICK;
+      const noteAnimation = [[30,40],[31,1],[32,2],[33,2],[34,3],[35,6],[34,3],[33,6]];
+      const cell = cue.state === 'hit' ? animationCell(animation,40+framesBetweenTicks(cue.hit,tick))
+        : cue.state === 'miss' && !cue.endOfBridge && tick >= cue.hit + 12 ? animationCell(noteAnimation,framesBetweenTicks(cue.hit+12,tick))
+        : animation[0][0];
+      const x = 320 - 256*p;
+      const gapsSpawnedBefore = ported.cues.filter(c => c.index < cue.index && c.endOfBridge).length;
+      const gapsCompleted = ported.cues.filter(c => c.endOfBridge && c.state === 'hit' && c.hit < tick).length;
+      // The GBA stores each post-gap bridge 16 px higher in world space, then
+      // moves their shared origin by the same amount when Play-Yan lands.
+      const y = 120 - 16 * gapsSpawnedBefore + 16 * gapsCompleted;
+      drawPortedCell(cell,x,y,4);
+      if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
     }
   }
+  if (mode === 'samurai_slice' && ported.overlays[0]) ctx.drawImage(ported.overlays[0], 0, 0, stage.width, stage.height);
   drawTouchScreen();
 }
 function portedPunch() {
-  if (!running) return; const tick = portedTick(), cue = ported.cues.find(item => item.state === 'fresh' && Math.abs(item.hit - tick) <= 5);
-  ported.actionAt = tick;
-  if (!cue) { createImpact('empty'); return; }
-  cue.state = 'hit'; const perfect = Math.abs(cue.hit - tick) <= 3;
-  playPortedSfx(perfect ? (mode === 'samurai_slice' && cue.kind === 'CUE_SECOND' ? 'hit2' : 'hit') : 'barely');
+  if (!running) return; const tick = portedTick();
+  const cue = ported.cues.find(item => {
+    if (item.state !== 'fresh') return false;
+    if (mode === 'power_calligraphy') return tick-item.hit >= -24 && tick-item.hit <= 12;
+    const barelyWindow = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
+    return Math.abs(item.hit - tick) <= barelyWindow;
+  });
+  ported.actionAt = tick; ported.actionHit = Boolean(cue);
+  if (!cue) {
+    if (mode === 'night_walk') playPortedSfx('count',tick,128,-0xc00);
+    createImpact('empty'); return;
+  }
+  cue.state = 'hit'; const offset = tick - cue.hit;
+  cue.actionTick = tick;
+  const perfectWindow = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
+  const perfect = Math.abs(offset) <= perfectWindow;
+  cue.perfect = perfect;
+  if (mode === 'power_calligraphy') cue.result = perfect ? 0 : offset < 0 ? 1 : 2;
+  if (mode === 'power_calligraphy' && !perfect) ported.peopleStumbleAt = tick;
+  let sound = perfect ? (mode === 'samurai_slice' && cue.kind === 'CUE_SECOND' ? 'hit2' : 'hit') : 'barely';
+  if (mode === 'spaceball' && perfect && cue.kind === 'CUE_LOW_FAST') sound = null;
+  if (mode === 'night_walk') sound = null;
+  if (mode === 'power_calligraphy' && perfect && ['KANA_INPUT_SUN2','KANA_INPUT_KOKORO2','KANA_INPUT_KOKORO3','KANA_INPUT_COMMA1'].includes(cue.inputType)) sound = 'hit2';
+  if (mode === 'power_calligraphy' && !perfect && ['KANA_INPUT_CHIKARA2','KANA_INPUT_FACE1'].includes(cue.inputType)) sound = 'barelyUnuu';
+  if (mode === 'power_calligraphy' && !perfect && ['KANA_INPUT_SUN2','KANA_INPUT_KOKORO2','KANA_INPUT_KOKORO3','KANA_INPUT_COMMA1'].includes(cue.inputType)) sound = 'barelyOuch';
+  if (sound) playPortedSfx(sound);
+  if (mode === 'night_walk') playNightWalkDrum(cue,perfect,tick);
   createImpact(perfect ? 'perfect' : 'normal');
+}
+
+// Local-only inspection hook used by the automated browser audit. It is not
+// exposed by GitHub Pages and cannot change normal gameplay.
+if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && new URLSearchParams(location.search).has('audit')) {
+  const audit = {
+    state: () => ({ mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length }),
+    jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
+    nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,
+    hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
+  };
+  window.__rhythmAudit = audit;
+  document.addEventListener('rhythm-audit', () => {
+    const [command, value] = (document.body.dataset.auditCommand ?? 'state').split(':');
+    if (command === 'jump') audit.jumpToTick(Number(value));
+    if (command === 'hit') audit.hitNext();
+    document.body.dataset.auditState = JSON.stringify(audit.state());
+  });
 }
 
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
