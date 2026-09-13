@@ -1562,7 +1562,10 @@ function portedLoop() {
       cue.landed = true; cue.landedAt = tick; playPortedSfx('land');
     }
   }
-  if (mode === 'night_walk' && ported.failedAt >= 0 && tick - ported.failedAt > 96) return finish();
+  // script_night_walk_end: fade_music_out 96, ten rest 24 commands, then
+  // fade_screen_out and two final rests. Keep the falling scene alive for the
+  // complete end script instead of ending after the old 96-tick shortcut.
+  if (mode === 'night_walk' && ported.failedAt >= 0 && tick - ported.failedAt > 240) return finish();
   drawPorted(tick, cfg); frame = requestAnimationFrame(loop);
 }
 function drawPorted(tick, cfg) {
