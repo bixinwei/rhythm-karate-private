@@ -1006,7 +1006,7 @@ const portedModes = {
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
 // Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
 let gbaRandomState = 0;
 function gbaRandom(max) {
@@ -1344,7 +1344,18 @@ function startPortedMode(id) {
     // before the lead-in, but a first visit never shows an empty game panel.
     ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.overlays = data.overlays; ported.peopleFrames = data.peopleFrames; ported.peopleManifest = data.peopleManifest; ported.music = data.music; ported.sfx = data.sfx;
     const samuraiSpawns = id === 'samurai_slice' ? data.timeline.events.filter(event => event.op === 'samurai_slice_event02') : [];
-    if (id === 'night_walk') gbaRandomState = 0;
+    if (id === 'night_walk') {
+      // night_walk_init_balloons(7) consumes the GBA RNG before any random
+      // platform decisions. Cache these values once, rather than regenerating
+      // positions during every render frame.
+      gbaRandomState = 0; ported.balloons = [];
+      const count = Number(data.timeline.events.find(e => e.op === 'night_walk_init_balloons')?.args[0] ?? 0);
+      for (let i = 0; i < count; i++) {
+        const x = gbaRandom(i * 3) + 64 - Math.floor(i * 3 / 2) - i;
+        const variant = gbaRandom(6);
+        ported.balloons.push({ x, y: 120 - i * 2, variant, palette: i % 5 });
+      }
+    }
     ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map((event, index) => {
       const cue = { index, spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' };
       if (id === 'spaceball') cue.objectType = portedEnum(latestPortedEvent('spaceball_set_ball_sprite', event.tick)?.args[0], { BASEBALL:0, RICE_BALL:1, STAR_BALL:2 });
@@ -1646,11 +1657,13 @@ function drawPorted(tick, cfg) {
   if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
   if (mode === 'night_walk') {
     const popped = ported.timeline.events.filter(e => e.op === 'night_walk_pop_balloon' && e.tick <= tick).length;
-    const balloonSeq = [89,90,90,89,91,91], balloonFrame = Math.floor(secondsAtTick(Math.max(0,tick))*10);
-    for (let i=0;i<Math.max(0,7-popped);i++) {
-      const span=i*3, random=span ? (((i+1)*1103515245+12345)>>>16)%span : 0;
-      const x=random+64-Math.floor(span/2)-i, cell=balloonSeq[(balloonFrame+i*5)%balloonSeq.length]+(i%5)*1000;
-      drawPortedCell(cell,x,120-i*2,4);
+    const balloonFrame = Math.floor(secondsAtTick(Math.max(0,tick))*10);
+    for (let i=0; i<Math.max(0,ported.balloons.length-popped); i++) {
+      const balloon = ported.balloons[i];
+      // The palette is part of the original sprite state; exported cels are
+      // shared, so never fabricate a cell index from the palette number.
+      const cell = [89,90,91,92][(balloon.variant + balloonFrame + i * 2) % 4];
+      drawPortedCell(cell, balloon.x, balloon.y, 4);
     }
   }
   if (mode === 'spaceball') drawSpaceballScene(tick);

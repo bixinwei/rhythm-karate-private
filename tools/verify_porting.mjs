@@ -56,6 +56,7 @@ check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') 
 check(game.includes('192 + fadeTicks + 48'), 'night_walk: end script duration is shorter than source');
 check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'night_walk: screen fade phase missing');
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
+check(game.includes('night_walk_init_balloons') && game.includes('ported.balloons.push') && !game.includes('(i%5)*1000'), 'night_walk: balloon cells/positions are not sourced from init event');
 
 // Verify every configured music/SFX JSON exists, preventing silent cues.
 for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)\}/g)) {
