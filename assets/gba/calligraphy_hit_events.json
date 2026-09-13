@@ -1,1 +1,1 @@
-{"volume":100,"events":[{"beat":0.0,"length":1.0,"note":60,"velocity":127,"program":8,"channel":0,"sample":20,"fixed":false,"playNote":60,"baseNote":60,"sampleRate":13379}]}
+{"volume":100,"events":[{"beat":0.0,"length":1.0,"note":60,"velocity":127,"program":8,"channel":0,"volume":127,"expression":127,"panning":64,"pitchWheel":8192,"pitchRange":2,"sample":20,"fixed":false,"playNote":60,"baseNote":60,"sampleRate":13379,"adsrInit":8323072,"adsrSustain":8323072,"adsrAttack":6291456,"adsrDecay":2129920,"adsrFade":0,"adsrRelease":2080768}]}

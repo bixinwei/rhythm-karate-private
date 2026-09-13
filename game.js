@@ -1006,8 +1006,9 @@ const portedModes = {
   night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [] };
-const PORTED_ASSET_REV = 'gba-ports-12';
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const PORTED_ASSET_REV = 'gba-ports-13';
+const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
 function gameAssetPrefix(id) { return `assets/gba/${id}`; }
@@ -1123,7 +1124,8 @@ function portedMusicVolumeAt(tick) {
 function configurePortedSample(source, event, pitchSemitones = 0, rateScale = 1) {
   const note = event.playNote ?? event.note;
   const baseNote = event.baseNote ?? 60;
-  source.playbackRate.value = (event.fixed ? 1 : Math.pow(2,(note-baseNote)/12)) * Math.pow(2,pitchSemitones/12) * rateScale;
+  const bend = ((event.pitchWheel ?? 0x2000) - 0x2000) / 0x2000 * (event.pitchRange ?? 2);
+  source.playbackRate.value = (event.fixed ? 1 : Math.pow(2,(note-baseNote+bend)/12)) * Math.pow(2,pitchSemitones/12) * rateScale;
   if (event.sampleLoop?.length === 2 && source.buffer) {
     const [start,end] = event.sampleLoop;
     if (end > start && end <= source.buffer.length) {
@@ -1133,6 +1135,67 @@ function configurePortedSample(source, event, pitchSemitones = 0, rateScale = 1)
       source.loopEnd = end / sampleRate;
     }
   }
+}
+function connectPortedVoice(source, event, level, when, duration, pitchSemitones = 0, rateScale = 1, automationSecondsPerBeat = .5) {
+  const ac = audio(), envelope = ac.createGain(), channel = ac.createGain();
+  let volume = event.volume ?? 127, expression = event.expression ?? 127, panning = event.panning ?? 64;
+  const voiceDuration = schedulePortedEnvelope(envelope,level,when,duration,event);
+  channel.gain.setValueAtTime(volume / 127 * expression / 127,when);
+  const panner = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  if (panner) panner.pan.setValueAtTime(Math.max(-1,Math.min(1,(panning-64)/63)),when);
+  let pitchWheel = event.pitchWheel ?? 0x2000, pitchRange = event.pitchRange ?? 2;
+  const note = event.playNote ?? event.note, baseNote = event.baseNote ?? 60;
+  for (const point of event.automation ?? []) {
+    const at = when + point.beat * automationSecondsPerBeat;
+    if (at >= when + duration) break;
+    if (point.volume != null) volume = point.volume;
+    if (point.expression != null) expression = point.expression;
+    if (point.panning != null) panning = point.panning;
+    if (point.pitchWheel != null) pitchWheel = point.pitchWheel;
+    if (point.pitchRange != null) pitchRange = point.pitchRange;
+    channel.gain.setValueAtTime(volume / 127 * expression / 127,at);
+    if (panner) panner.pan.setValueAtTime(Math.max(-1,Math.min(1,(panning-64)/63)),at);
+    if (!event.fixed && (point.pitchWheel != null || point.pitchRange != null)) {
+      const bend = (pitchWheel - 0x2000) / 0x2000 * pitchRange;
+      const rate = Math.pow(2,(note-baseNote+bend+pitchSemitones)/12) * rateScale;
+      if (source.playbackRate) source.playbackRate.setValueAtTime(rate,at);
+      else if (source.frequency) source.frequency.setValueAtTime(440*Math.pow(2,(note-69+bend+pitchSemitones)/12)*rateScale,at);
+    }
+  }
+  source.connect(envelope).connect(channel);
+  if (panner) channel.connect(panner).connect(ac.destination); else channel.connect(ac.destination);
+  source.start(when); source.stop(when + voiceDuration + .01); scheduledMusicNodes.push(source);
+  source.onended = () => {
+    source.disconnect(); envelope.disconnect(); channel.disconnect(); if (panner) panner.disconnect();
+    const index = scheduledMusicNodes.indexOf(source); if (index >= 0) scheduledMusicNodes.splice(index,1);
+  };
+}
+function schedulePortedEnvelope(gain, level, when, noteDuration, event) {
+  if (event.adsrInit == null) { schedulePortedGain(gain,level,when,noteDuration); return noteDuration; }
+  const full=127*65536, frame=1/60;
+  const initial=Math.max(0,Math.min(1,event.adsrInit/full));
+  const sustain=Math.max(0,Math.min(1,event.adsrSustain/full));
+  const attackFrames=event.adsrAttack ? Math.max(0,(full-event.adsrInit)/event.adsrAttack) : 0;
+  const decayFrames=event.adsrDecay ? Math.max(0,(full-event.adsrSustain)/event.adsrDecay) : 0;
+  const attackEnd=attackFrames*frame, decayEnd=attackEnd+decayFrames*frame;
+  function envelopeAt(seconds) {
+    if (seconds < attackEnd && attackEnd) return initial+(1-initial)*seconds/attackEnd;
+    if (seconds < decayEnd && decayEnd>attackEnd) return 1-(1-sustain)*(seconds-attackEnd)/(decayEnd-attackEnd);
+    if (!event.adsrFade) return sustain;
+    return Math.max(0,sustain-event.adsrFade*(seconds-decayEnd)*60/full);
+  }
+  gain.gain.setValueAtTime(level*initial,when);
+  if (attackEnd>0) gain.gain.linearRampToValueAtTime(level*envelopeAt(Math.min(noteDuration,attackEnd)),when+Math.min(noteDuration,attackEnd));
+  if (noteDuration>attackEnd && decayEnd>attackEnd) gain.gain.linearRampToValueAtTime(level*envelopeAt(Math.min(noteDuration,decayEnd)),when+Math.min(noteDuration,decayEnd));
+  const fadeSeconds=event.adsrFade ? event.adsrSustain/event.adsrFade*frame : Infinity;
+  const naturalEnd=decayEnd+fadeSeconds;
+  if (noteDuration>decayEnd && event.adsrFade) gain.gain.linearRampToValueAtTime(level*envelopeAt(Math.min(noteDuration,naturalEnd)),when+Math.min(noteDuration,naturalEnd));
+  const atRelease=envelopeAt(noteDuration);
+  gain.gain.setValueAtTime(level*atRelease,when+noteDuration);
+  const releaseSeconds=event.adsrRelease ? atRelease*full/event.adsrRelease*frame : 0;
+  if (releaseSeconds>0) gain.gain.linearRampToValueAtTime(0,when+noteDuration+releaseSeconds);
+  else gain.gain.setValueAtTime(0,when+noteDuration);
+  return Math.min(noteDuration+releaseSeconds,Number.isFinite(naturalEnd)?naturalEnd:Infinity);
 }
 function schedulePortedGain(gain, level, when, duration) {
   // WebAudio otherwise cuts an arbitrary non-zero PCM sample at note-off,
@@ -1144,7 +1207,6 @@ function schedulePortedGain(gain, level, when, duration) {
   gain.gain.linearRampToValueAtTime(0,when+duration);
 }
 function schedulePortedMusic() {
-  const ac = audio();
   const starts = ported.timeline.events.filter(e => e.op === 'play_music');
   const names = { s_shibafu1_bgm_seqData: 'spaceball_bgm_events', s_iai_bgm1_seqData: 'samurai_bgm1_events', s_iai_bgm2_seqData: 'samurai_bgm2_events', s_iai_bgm3_seqData: 'samurai_bgm3_events', s_iai_result_seqData: 'samurai_result_events', s_4beat_bgm_seqData: 'night_walk_bgm_events', s_shuji_bgm1_seqData: 'calligraphy_bgm1_events', s_shuji_bgm2_seqData: 'calligraphy_bgm2_events', s_shuji_bgm3_seqData: 'calligraphy_bgm3_events', s_shuji_bgm_end_seqData: 'calligraphy_end_events' };
   for (const [startIndex, start] of starts.entries()) {
@@ -1161,30 +1223,56 @@ function schedulePortedMusic() {
         if (!Number.isFinite(note.sample) && !note.wave) continue;
         const atTick = start.tick + loopOffset + noteTick; if (atTick >= replaceTick) continue;
         const endTick = Math.min(replaceTick, atTick + note.length * 24), when = audioSongStart + secondsAtTick(atTick), duration = Math.max(.02, secondsAtTick(endTick) - secondsAtTick(atTick));
-        const source = note.wave ? ac.createOscillator() : ac.createBufferSource(), gain = ac.createGain();
-        if (note.wave) { source.type = note.wave; source.frequency.value = 440 * Math.pow(2,(note.note-69)/12); }
-        else { const sample = originalSamples[note.sample]; if (!sample) throw new Error(`Unloaded original PCM ${note.sample}`); source.buffer = sample; configurePortedSample(source,note); }
         // SongHeader volume and BeatScript music-bus volume are distinct GBA
         // mixer stages.  Preserve both instead of applying a browser-only boost.
         const level = GBA_MIX_SCALE * (note.wave ? .32 : 1) * (note.velocity / 127) * (track.volume / 256) * (portedMusicVolumeAt(atTick) / 256);
-        schedulePortedGain(gain,level,when,duration);
-        source.connect(gain).connect(ac.destination); source.start(when); source.stop(when + duration + .01); scheduledMusicNodes.push(source);
+        queuePortedAudio({ type:'music', note, when, duration, level, automationSecondsPerBeat: secondsAtTick(atTick+24)-secondsAtTick(atTick) });
       }
       if (!loopTicks) break;
     }
+  }
+}
+function queuePortedAudio(item) {
+  if (!ported.audioQueueReady) { ported.audioQueue.push(item); return; }
+  let low = ported.audioQueueIndex, high = ported.audioQueue.length;
+  while (low < high) { const mid = (low + high) >> 1; if (ported.audioQueue[mid].when <= item.when) low = mid + 1; else high = mid; }
+  ported.audioQueue.splice(low,0,item); pumpPortedAudio();
+}
+function startPortedAudioItem(item) {
+  const ac = audio(), event = item.note ?? item.event;
+  const when = Math.max(ac.currentTime + .005,item.when);
+  const duration = Math.max(.02,item.duration - Math.max(0,when-item.when));
+  const source = event.wave ? ac.createOscillator() : ac.createBufferSource();
+  if (event.wave) {
+    const bend=((event.pitchWheel??0x2000)-0x2000)/0x2000*(event.pitchRange??2);
+    source.type=event.wave; source.frequency.value=440*Math.pow(2,(event.note-69+bend+(item.pitchSemitones??0))/12)*(item.rateScale??1);
+  }
+  else {
+    const sample=originalSamples[event.sample]; if (!sample) throw new Error(`Unloaded original PCM ${event.sample}`);
+    source.buffer=sample; configurePortedSample(source,event,item.pitchSemitones,item.rateScale);
+  }
+  connectPortedVoice(source,event,item.level,when,duration,item.pitchSemitones,item.rateScale,item.automationSecondsPerBeat);
+}
+function pumpPortedAudio() {
+  if (!ported.audioQueueReady) return;
+  const horizon = audio().currentTime + PORTED_AUDIO_LOOKAHEAD;
+  while (ported.audioQueueIndex < ported.audioQueue.length && ported.audioQueue[ported.audioQueueIndex].when <= horizon) {
+    startPortedAudioItem(ported.audioQueue[ported.audioQueueIndex++]);
+  }
+  if (ported.audioQueueIndex > 512) {
+    ported.audioQueue.splice(0,ported.audioQueueIndex); ported.audioQueueIndex=0;
   }
 }
 function playPortedSfx(kind, atTick = null, eventVolume = 256, eventPitch = 0, rateScale = 1) {
   const entry = ported.sfx[kind], events = entry?.events; if (!events?.length) return;
   const ac = audio(), base = atTick == null ? ac.currentTime : audioSongStart + secondsAtTick(atTick);
   for (const event of events) {
-    const sample = originalSamples[event.sample]; if (!sample) continue;
-    const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
-    configurePortedSample(source,event,eventPitch/256,rateScale);
-    const level = GBA_MIX_SCALE * (event.velocity / 127) * (entry.volume / 256) * (eventVolume / 256); source.connect(gain).connect(ac.destination);
+    if (!originalSamples[event.sample]) continue;
+    const level = GBA_MIX_SCALE * (event.velocity / 127) * (entry.volume / 256) * (eventVolume / 256);
     const when = Math.max(ac.currentTime + .005, base + event.beat * 60 / (120*rateScale));
-    const duration=Math.max(.15,event.length*60/(120*rateScale)); schedulePortedGain(gain,level,when,duration);
-    source.start(when); source.stop(when + duration + .01); scheduledMusicNodes.push(source);
+    const duration=Math.max(.15,event.length*60/(120*rateScale));
+    const item={ type:'sfx', event, when, duration, level, pitchSemitones:eventPitch/256, rateScale, automationSecondsPerBeat:60/(120*rateScale) };
+    if (atTick == null) startPortedAudioItem(item); else queuePortedAudio(item);
   }
 }
 function playNightWalkDrum(cue, perfect, tick) {
@@ -1265,7 +1353,7 @@ function startPortedMode(id) {
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
       return cue;
     });
-    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
@@ -1282,6 +1370,7 @@ function startPortedMode(id) {
       if (mode === 'spaceball' && cue.kind === 'CUE_LOW_FAST') continue;
       if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn);
     }
+    ported.audioQueue.sort((a,b) => a.when-b.when); ported.audioQueueReady=true; pumpPortedAudio();
     cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
   }).catch(error => { console.error(`Unable to start ${id}:`, error); quit(); });
 }
@@ -1425,6 +1514,7 @@ function nightWalkWorldShift(tick) {
   return completed * 16 + Math.max(0,jumpHeight);
 }
 function portedLoop() {
+  pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
   if (tick > ported.timeline.endTick) return finish();
   const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
