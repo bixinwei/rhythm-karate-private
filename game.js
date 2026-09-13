@@ -1659,7 +1659,13 @@ function drawPorted(tick, cfg) {
     actorCell = animationCell([[111,30],[112,2],[111,10],[112,2]],riseFrames,true);
     actorY -= Math.min(110, riseFrames * 0.5);
   }
-  if (mode === 'night_walk' && ported.failedAt >= 0) actorCell = animationCell([[12,4],[13,4],[14,4],[15,4],[14,4]],framesBetweenTicks(ported.failedAt,tick));
+  if (mode === 'night_walk' && ported.failedAt >= 0) {
+    const fallFrames = framesBetweenTicks(ported.failedAt, tick);
+    actorCell = animationCell([[12,4],[13,4],[14,4],[15,4],[14,4]], fallFrames);
+    // night_walk_play_yan_update_fall: yVelocity += 28; yDistance +=
+    // yVelocity (8.8 fixed point), capped after 100 native pixels.
+    actorY += Math.min(110, (28 * fallFrames * (fallFrames + 1) / 2) / 256);
+  }
   if (mode === 'night_walk') {
     const worldShift = nightWalkWorldShift(tick);
     const starFrames = secondsAtTick(Math.max(0,tick))*60;
