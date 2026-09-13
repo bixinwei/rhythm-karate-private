@@ -72,6 +72,7 @@ check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'ni
 check(game.includes('28 * fallFrames * (fallFrames + 1) / 2') && game.includes('actorY += Math.min(110'), 'night_walk: fall state does not advance yDistance');
 check(game.includes("fall:'night_walk_fall_events'") && game.includes("playPortedSfx('fall', tick)"), 'night_walk: gap fall uses wrong SFX');
 check(game.includes('night_walk_init_balloons sets anim_play_yan_jump') && game.includes('openingFrames < 20'), 'night_walk: opening balloon jump animation missing');
+check(game.includes('ported.nightStars.push') && game.includes('gbaRandom(8), x = gbaRandom(256)') && game.includes('initialCel = ported.nightStars[i].variant'), 'night_walk: persistent star initialization/animation missing');
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
 check(game.includes('night_walk_init_balloons') && game.includes('ported.balloons.push') && game.includes('balloon.palette * 1000'), 'night_walk: balloon palette namespaces are not applied');
 check(game.includes('drawPortedCell(92 + balloon.palette * 1000, balloon.x, balloon.y, 4)') && game.includes('framesBetweenTicks(pop.tick, tick) >= 2'), 'night_walk: balloon pop cel/lifetime missing');

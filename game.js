@@ -1008,7 +1008,7 @@ const portedModes = {
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
 // Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
 let gbaRandomState = 0;
 function gbaRandom(max) {
@@ -1373,7 +1373,13 @@ function startPortedMode(id) {
       // night_walk_init_balloons(7) consumes the GBA RNG before any random
       // platform decisions. Cache these values once, rather than regenerating
       // positions during every render frame.
-      gbaRandomState = 0; ported.balloons = [];
+      gbaRandomState = 0; ported.balloons = []; ported.nightStars = [];
+      // night_walk_init_stars runs during engine start, before the scripted
+      // balloon event. Consume the same RNG calls for all 32 star sprites.
+      for (let i = 0; i < 32; i++) {
+        const variant = gbaRandom(8), x = gbaRandom(256) - 8 + gbaRandom(256), y = gbaRandom(176) - 8;
+        ported.nightStars.push({ x, y, variant, size: 0 });
+      }
       const count = Number(data.timeline.events.find(e => e.op === 'night_walk_init_balloons')?.args[0] ?? 0);
       for (let i = 0; i < count; i++) {
         const x = gbaRandom(i * 3) + 64 - Math.floor(i * 3 / 2) - i;
@@ -1692,17 +1698,16 @@ function drawPorted(tick, cfg) {
       + ported.timeline.events.filter(e => e.op === 'night_walk_expand_stars' && e.tick <= tick).reduce((sum,e) => sum + Number(e.args[0] ?? 0),0);
     const starLevel = Math.min(4, Math.floor(expandedStars / 32)), nextStar = expandedStars % 32;
     const starCells = [[95,96],[97,98],[99,100],[101,102],[103,104]];
-    for (let i=0;i<32;i++) {
-      // night_walk_init_stars uses a 256x176 wrapping field and scrolls it
-      // left by half a native pixel per rendered frame.
-      let seed=Math.imul(i+17,0x9e3779b1)>>>0;
-      seed^=seed>>>16; seed=Math.imul(seed,0x85ebca6b)>>>0; seed^=seed>>>13;
-      const initialX=-8+(seed&0xffff)*256/65536, initialY=-8+((seed>>>16)&0xffff)*176/65536;
-      const sx=((initialX-.5*starFrames+8)%256+256)%256-8;
-      const sy=((initialY-worldShift/2+8)%176+176)%176-8;
+    for (let i=0;i<ported.nightStars.length;i++) {
+      const star = ported.nightStars[i];
+      // night_walk_scroll_stars advances each persistent star by -0.5 px per
+      // rendered frame and wraps its 256x176 native field.
+      const sx=((star.x-.5*starFrames+8)%256+256)%256-8;
+      const sy=((star.y-worldShift/2+8)%176+176)%176-8;
       const starLevelForCell=Math.min(4,starLevel + (i < nextStar ? 1 : 0));
       const starAnim=starCells[starLevelForCell];
-      drawPortedCell(animationCell([[starAnim[0],28],[starAnim[1],2]],starFrames+i*9,true),sx,sy,4);
+      const initialCel = ported.nightStars[i].variant;
+      drawPortedCell(animationCell([[starAnim[0],28],[starAnim[1],2]],starFrames+i*9+initialCel,true),sx,sy,4);
     }
   }
   if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
