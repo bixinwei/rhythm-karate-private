@@ -32,6 +32,7 @@ for (const id of ['spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy
   check(events(data, 'spawn_cue').length > 0, `${id}: no spawn_cue events`);
   check(events(data, 'play_music').length > 0, `${id}: no play_music events`);
   check(events(data, 'set_tempo').length > 0, `${id}: no set_tempo events`);
+  check(events(data, 'set_tempo').every(event => Number.isFinite(Number(event.args[0])) && Number(event.args[0]) > 0), `${id}: invalid tempo value`);
 }
 
 // Samurai Slice: every demon-create event is paired with the following cue
