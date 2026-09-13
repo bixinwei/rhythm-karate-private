@@ -1516,16 +1516,23 @@ function samuraiFogAt(tick) {
 function nightWalkWorldShift(tick) {
   let completed = 0, active = null;
   for (const cue of ported.cues) {
+    // Only a jump over a gap moves the shared world origin.  Ordinary
+    // stepping-stone/bridge jumps move Yan's sprite in place; applying their
+    // parabola to the stars and bridge makes the whole background appear to
+    // bounce, which is not what the GBA engine does.
     if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
     const elapsed = framesBetweenTicks(cue.actionTick,tick);
     const duration = Math.max(1,framesBetweenTicks(cue.actionTick,cue.actionTick+20));
     if (elapsed < duration && (!active || cue.actionTick > active.actionTick)) active = { cue, elapsed, duration };
     else completed++;
   }
-  if (!active) return completed * 16;
+  // The engine stores the shared origin as a negative vertical offset
+  // (unk3B8.unk6). Stars are then rendered at starY - offset, so they drift
+  // down slightly while Yan clears a gap while the bridge moves upward.
+  if (!active) return -completed * 16;
   const step = 27 * active.elapsed / active.duration - 16;
   const jumpHeight = 32 - (32 * step * step / 256);
-  return completed * 16 + Math.max(0,jumpHeight);
+  return -completed * 16 - Math.max(0,jumpHeight);
 }
 function portedLoop() {
   pumpPortedAudio();
@@ -1792,11 +1799,9 @@ function drawPorted(tick, cfg) {
         : cue.state === 'miss' && !cue.endOfBridge && tick >= cue.hit + 12 ? animationCell(noteAnimation,framesBetweenTicks(cue.hit+12,tick))
         : animation[0][0];
       const x = 320 - 256*p;
-      const gapsSpawnedBefore = ported.cues.filter(c => c.index < cue.index && c.endOfBridge).length;
-      // The GBA stores each post-gap bridge 16 px higher in world space, then
-      // moves every bridge/fish sprite through one shared vertical origin.
-      // During an ascending jump that origin follows the original parabola.
-      const y = 120 - 16 * gapsSpawnedBefore + nightWalkWorldShift(tick);
+      // All bridge/fish sprites share the engine's vertical origin (unk3B8),
+      // the same offset that drives the star field during a gap jump.
+      const y = 120 + nightWalkWorldShift(tick);
       drawPortedCell(cell,x,y,4);
       if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
     }
