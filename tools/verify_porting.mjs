@@ -51,7 +51,7 @@ check(game.includes('192 * 150'), 'samurai: movement is not using source 0xC0 li
 check(game.includes('4 * clamped * (span - clamped) / Math.max(1, span)'), 'samurai: func_08031c68 parabola factor missing');
 check(game.includes('function samuraiHopAt(cue, tick)') && game.includes('const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn))'), 'samurai: hop phase is not evaluated in spawn-tempo frame domain');
 check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.includes('192 * 150'), 'samurai: movement lifetime must lock spawn tempo');
-check(game.includes('if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));') && game.includes('phaseParabola(e - frameAt(120), frameAt(48))'), 'samurai: medium-demon hop segments differ from source');
+check(game.includes('if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));') && game.includes('phaseParabola(e - frameAt(72), frameAt(48))') && game.includes('phaseParabola(e - frameAt(96), frameAt(48))'), 'samurai: medium-demon hop segments differ from source');
 check(game.includes('const start = frameAt(120), active = frameAt(40), waveSpan = frameAt(48)') && game.includes('/ waveSpan * Math.PI * 2'), 'samurai: propeller/winged sine phase differs from source');
 check(game.includes('phaseParabola(e - start, span)') && !game.includes('phaseParabola(48, e - start, span)'), 'samurai: large-demon parabola arguments are reversed');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');

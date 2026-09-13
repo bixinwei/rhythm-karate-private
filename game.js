@@ -1630,8 +1630,8 @@ function samuraiHopAt(cue, tick) {
     // The medium demon uses the source's final 0x30-tick segment rather
     // than repeating the small 0x18-tick hop for its whole lifetime.
     if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));
-    if (e < frameAt(120)) return phaseParabola(e - frameAt(72), frameAt(48));
-    if (e < frameAt(160)) return phaseParabola(e - frameAt(120), frameAt(48));
+    if (e < frameAt(96)) return phaseParabola(e - frameAt(72), frameAt(48));
+    if (e < frameAt(160)) return phaseParabola(e - frameAt(96), frameAt(48));
     return 0;
   }
   if (cue.objectType === 2 || cue.objectType === 3) {
