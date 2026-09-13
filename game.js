@@ -1830,7 +1830,8 @@ function drawPorted(tick, cfg) {
         const poofFrames = framesBetweenTicks(cue.landedAt,tick);
         if (poofFrames < 9) {
           const poof = animationCell([[24,4],[25,3],[26,2]],poofFrames);
-          drawSpaceballEntity(poof,34,52,0,zoom); drawPortedCell(poof,120 + 2/(0-zoom),80 + 52/(0-zoom),4/(0-zoom),0,true);
+          drawSpaceballEntity(poof,34,52,0,zoom);
+          drawSpaceballEntity(poof,2,52,0,zoom);
         }
       }
     } else if (mode === 'samurai_slice') {

@@ -19,6 +19,7 @@ check(game.includes('CUE_LOW_FAST:12') && game.includes('CUE_HIGH:48'), 'spaceba
 check(game.includes('const arcFrames = framesBetweenTicks(cue.spawn, cue.hit)') && game.includes('const landingFrames = 2 * arcFrames'), 'spaceball: flight must use ticks_to_frames-equivalent frame math');
 check(game.includes('function resetSpaceballStar(index, zoom)') && game.includes('updateSpaceballStars(zoom)') && game.includes('star.z -= 8 / 256'), 'spaceball: stars are not persistent GBA z-lifecycle objects');
 check(game.includes('drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 4 * scale)'), 'spaceball: star affine scale is not derived from z');
+check(game.includes('drawSpaceballEntity(poof,34,52,0,zoom)') && game.includes('drawSpaceballEntity(poof,2,52,0,zoom)'), 'spaceball: landing poofs do not share source entity transform');
 const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
 check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
 
