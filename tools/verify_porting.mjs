@@ -20,6 +20,7 @@ check(game.includes('const arcFrames = framesBetweenTicks(cue.spawn, cue.hit)') 
 check(game.includes('function resetSpaceballStar(index, zoom)') && game.includes('updateSpaceballStars(zoom)') && game.includes('star.z -= 8 / 256'), 'spaceball: stars are not persistent GBA z-lifecycle objects');
 check(game.includes('drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 4 * scale)'), 'spaceball: star affine scale is not derived from z');
 check(game.includes('drawSpaceballEntity(poof,34,52,0,zoom)') && game.includes('drawSpaceballEntity(poof,2,52,0,zoom)'), 'spaceball: landing poofs do not share source entity transform');
+check(game.includes('for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZoom)'), 'spaceball: star field amount differs from source');
 const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
 check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
 
