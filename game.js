@@ -1573,19 +1573,22 @@ function samuraiHopAt(cue, tick) {
   const elapsed = framesBetweenTicks(cue.visualSpawn, tick);
   const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn));
   const frameAt = value => value * framePerTick;
-  const phaseParabola = (amplitude, local, span) => {
-    const x = Math.max(0, Math.min(span, local)) / Math.max(1, span);
-    return amplitude * 4 * x * (1 - x);
+  // func_08031c68(r0, r1) returns the fixed-point parabola used by the
+  // original engine: 4 * local * (span - local) / span.  Its peak is the
+  // frame span itself, so using a hard-coded pixel amplitude makes the hop
+  // wrong whenever the song tempo changes.
+  const phaseParabola = (local, span) => {
+    const clamped = Math.max(0, Math.min(span, local));
+    return 4 * clamped * (span - clamped) / Math.max(1, span);
   };
   const e = Math.max(0, elapsed);
   if (cue.objectType === 0) {
     const span = frameAt(24), local = e % span;
-    return e < frameAt(160) ? phaseParabola(24, local, span) : 0;
+    return e < frameAt(160) ? phaseParabola(local, span) : 0;
   }
   if (cue.objectType === 1) {
     const span = frameAt(24), local = e % span;
-    const amp = e < frameAt(48) ? 24 : e < frameAt(72) ? 24 : e < frameAt(96) ? 48 : 0;
-    return e < frameAt(160) ? phaseParabola(amp, local, span) : 0;
+    return e < frameAt(160) ? phaseParabola(local, span) : 0;
   }
   if (cue.objectType === 2 || cue.objectType === 3) {
     const start = frameAt(120), span = frameAt(40);
