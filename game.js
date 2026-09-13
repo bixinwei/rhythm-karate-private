@@ -1800,14 +1800,13 @@ function drawPorted(tick, cfg) {
       // stretch the hop and visibly drift away from the beat.
       const phase = ((tick - cue.visualSpawn) % 24 + 24) % 24 / 24;
       let hop = 0;
-      // func_08031c68 returns a fixed-point parabola whose peak is exactly
-      // the first argument in native pixels (not four times that value).
-      // The previous approximation multiplied these heights by 4, making
-      // small/medium demons jump far above their GBA trajectories.
-      if (cue.objectType === 0) hop = 24 * phase * (1-phase);
-      else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * phase * (1-phase);
+      // func_08031c68 returns 4 * amplitude * phase * (1-phase) in 8.8
+      // fixed-point; the factor of four is required for the parabola's peak
+      // to equal the native-pixel amplitude.
+      if (cue.objectType === 0) hop = 24 * 4 * phase * (1-phase);
+      else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * 4 * phase * (1-phase);
       else if (cue.objectType === 2 || cue.objectType === 3) hop = 8 + 8*Math.sin((tick-cue.visualSpawn)*Math.PI/24);
-      else if (tick-cue.visualSpawn >= 96 && tick-cue.visualSpawn < 144) hop = 48 * (((tick-cue.visualSpawn-96)/48)) * (1-((tick-cue.visualSpawn-96)/48));
+      else if (tick-cue.visualSpawn >= 96 && tick-cue.visualSpawn < 144) hop = 48 * 4 * (((tick-cue.visualSpawn-96)/48)) * (1-((tick-cue.visualSpawn-96)/48));
       const y = baseY - hop;
       if (cue.state === 'hit') {
         const drift = Math.max(0,tick-(cue.actionTick ?? cue.hit));
