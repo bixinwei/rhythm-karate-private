@@ -1006,8 +1006,8 @@ const portedModes = {
   night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [] };
-const PORTED_ASSET_REV = 'gba-ports-7';
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [] };
+const PORTED_ASSET_REV = 'gba-ports-8';
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
 function gameAssetPrefix(id) { return `assets/gba/${id}`; }
@@ -1228,7 +1228,7 @@ function startPortedMode(id) {
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
       return cue;
     });
-    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
@@ -1267,6 +1267,22 @@ function spaceballZoomAt(tick) {
     value = target;
   }
   return value;
+}
+function drawSpaceballBackground(zoom) {
+  // func_08008910() samples the original 256x256 affine tilemap around
+  // (128,176).  The BG matrix advances -zoom source pixels for every screen
+  // pixel, exactly matching the entity perspective calculation below.
+  const step = Math.max(.001, -zoom);
+  const sourceX = 128 - 120 * step, sourceY = 176 - 80 * step;
+  ctx.drawImage(ported.bg, sourceX, sourceY, 240 * step, 160 * step, 0, 0, stage.width, stage.height);
+}
+function drawGbaTilemap(image, offsetX = 0, offsetY = 0) {
+  // Regular 256x256 GBA backgrounds wrap.  Keep native pixels at 4x instead
+  // of stretching the complete map to the 240x160 viewport.
+  const x = ((offsetX % 256) + 256) % 256, y = ((offsetY % 256) + 256) % 256;
+  for (let py = -y; py < 160; py += 256) for (let px = -x; px < 240; px += 256) {
+    ctx.drawImage(image, px * 4, py * 4, 1024, 1024);
+  }
 }
 function drawSpaceballEntity(cell, worldX, worldY, z, zoom, rotation = 0, farCell = null) {
   let scale = 1 / Math.max(.05, z - zoom), selected = cell;
@@ -1324,6 +1340,31 @@ function drawSamuraiScene(tick) {
   drawPortedCell(animationCell([[0,6],[2,6],[1,6]],secondsAtTick(Math.max(0,tick))*60,true),20,120,4);
   drawPortedCell(cell,14,123,4);
 }
+function samuraiFogOffsetsAt(tick) {
+  const effect = latestPortedEvent('samurai_slice_event03',tick);
+  if (!effect) return [0,0];
+  // Event 03 arms the effect; the original cue-hit routine changes state 1
+  // to state 2, after which BG1/BG2 move by +8/-8 px per rendered frame and
+  // clamp at +/-240.  A later Event 03 resets both offsets to zero.
+  const hit = ported.cues.find(cue => cue.perfect && cue.actionTick >= effect.tick && cue.actionTick <= tick);
+  if (!hit) return [0,0];
+  const distance = Math.min(240, Math.max(0,framesBetweenTicks(hit.actionTick,tick)) * 8);
+  return [distance,-distance];
+}
+function nightWalkWorldShift(tick) {
+  let completed = 0, active = null;
+  for (const cue of ported.cues) {
+    if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
+    const elapsed = framesBetweenTicks(cue.actionTick,tick);
+    const duration = Math.max(1,framesBetweenTicks(cue.actionTick,cue.actionTick+20));
+    if (elapsed < duration && (!active || cue.actionTick > active.actionTick)) active = { cue, elapsed, duration };
+    else completed++;
+  }
+  if (!active) return completed * 16;
+  const step = 27 * active.elapsed / active.duration - 16;
+  const jumpHeight = 32 - (32 * step * step / 256);
+  return completed * 16 + Math.max(0,jumpHeight);
+}
 function portedLoop() {
   const tick = portedTick(), cfg = portedModes[mode];
   if (tick > ported.timeline.endTick) return finish();
@@ -1351,8 +1392,10 @@ function portedLoop() {
 }
 function drawPorted(tick, cfg) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
-  if (mode === 'samurai_slice' && ported.overlays[1]) ctx.drawImage(ported.overlays[1], 0, 0, stage.width, stage.height);
+  if (mode === 'spaceball') drawSpaceballBackground(spaceballZoomAt(tick));
+  else ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
+  const samuraiFog = mode === 'samurai_slice' ? samuraiFogOffsetsAt(tick) : [0,0];
+  if (mode === 'samurai_slice' && ported.overlays[1]) drawGbaTilemap(ported.overlays[1],0,samuraiFog[1]);
   const actionFrame = framesBetweenTicks(ported.actionAt, tick);
   let actorCell = animationCell(cfg.action.map(cell => [cell, 2]), actionFrame);
   if (tick < ported.actionAt || actionFrame >= cfg.action.length * 2) actorCell = cfg.idle;
@@ -1360,20 +1403,24 @@ function drawPorted(tick, cfg) {
   if (mode === 'night_walk' && ported.actionAt >= 0) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick), duration = Math.max(1,framesBetweenTicks(ported.actionAt,ported.actionAt+20));
     const age = Math.max(0,elapsed/duration);
-    if (ported.actionHit && age < 1) { actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256; actorCell = 2; }
+    if (ported.actionHit && age < 1) {
+      if (!ported.actionCue?.endOfBridge) actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256;
+      actorCell = 2;
+    }
     else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
   if (mode === 'night_walk' && ported.actionAt < 0) actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   if (mode === 'night_walk' && ported.failedAt >= 0) actorCell = animationCell([[12,4],[13,4],[14,4],[15,4],[14,4]],framesBetweenTicks(ported.failedAt,tick));
   if (mode === 'night_walk') {
+    const worldShift = nightWalkWorldShift(tick);
     const expandedStars = ported.cues.filter(c => c.state === 'hit' && c.perfect && c.hit <= tick).length
       + ported.timeline.events.filter(e => e.op === 'night_walk_expand_stars' && e.tick <= tick).reduce((sum,e) => sum + Number(e.args[0] ?? 0),0);
     const starLevel = Math.min(4, Math.floor(expandedStars / 32)), nextStar = expandedStars % 32;
     const starCells = [95,97,99,101,103];
     for (let i=0;i<32;i++) {
       const sx = (i*73+19)%240, sy = (i*47+11)%112;
-      drawPortedCell(starCells[Math.min(4,starLevel + (i < nextStar ? 1 : 0))],sx,sy,2.4);
+      drawPortedCell(starCells[Math.min(4,starLevel + (i < nextStar ? 1 : 0))],sx,sy+worldShift/2,2.4);
     }
   }
   if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
@@ -1393,6 +1440,25 @@ function drawPorted(tick, cfg) {
     };
     const removals = ported.timeline.events.filter(e => (e.op === 'power_calligraphy_remove_paper' || e.op === 'power_calligraphy_remove_paper_slowly') && e.tick <= tick);
     const removeEvent = removals.at(-1), lastPaper = removeEvent?.tick ?? -1;
+    const paperMotions = {
+      KANA_INPUT_ONORE1:[0,-8], KANA_INPUT_CHIKARA1:[-6,-6], KANA_INPUT_CHIKARA2:[-4,8],
+      KANA_INPUT_SUN1:[-4,-6], KANA_INPUT_SUN2:[4,4], KANA_INPUT_KOKORO1:[-4,-6],
+      KANA_INPUT_KOKORO2:[4,4], KANA_INPUT_KOKORO3:[6,6], KANA_INPUT_RE1:[6,-6],
+      KANA_INPUT_COMMA1:[5,6], KANA_INPUT_FACE1:[6,-1]
+    };
+    let paperX = 0, paperY = 0;
+    for (const event of ported.timeline.events) if (event.op === 'power_calligraphy_offset_paper' && event.tick >= lastPaper && event.tick <= tick) {
+      paperX += Number(event.args[0] ?? 0); paperY += Number(event.args[1] ?? 0);
+    }
+    for (const cue of ported.cues) if (cue.result === 0 && cue.hit >= lastPaper && cue.hit <= tick) {
+      const motion = paperMotions[cue.inputType];
+      if (motion) { paperX -= motion[0]; paperY -= motion[1]; }
+    }
+    // BG_OFS is a source offset: positive values move the visible paper left
+    // and up.  The kana, input strokes and brush use the same origin pointer.
+    const paperScreenX = -paperX, paperScreenY = -paperY;
+    ctx.clearRect(0,0,stage.width,stage.height);
+    ctx.drawImage(ported.bg,71,7,114,153,(71+paperScreenX)*4,(7+paperScreenY)*4,456,612);
     if (removeEvent) {
       const slow = removeEvent.op.endsWith('_slowly'), age = framesBetweenTicks(removeEvent.tick,tick);
       if (age < (slow ? 160 : 20)) {
@@ -1402,37 +1468,24 @@ function drawPorted(tick, cfg) {
           oldX += Number(event.args[0] ?? 0); oldY += Number(event.args[1] ?? 0);
         }
         oldX += (slow ? 0 : -4) * age; oldY += (slow ? -1 : -8) * age;
-        ctx.drawImage(ported.bg,71,7,114,153,(71+oldX)*4,(7+oldY)*4,456,612);
+        const oldScreenX = -oldX, oldScreenY = -oldY;
+        ctx.drawImage(ported.bg,71,7,114,153,(71+oldScreenX)*4,(7+oldScreenY)*4,456,612);
         const oldKana = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana' && e.tick < removeEvent.tick).at(-1);
         const oldCel = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana_cel' && e.tick < removeEvent.tick).at(-1);
-        if (oldKana && oldCel && Number(oldCel.args[0]) >= 0) drawPortedCell(kana[oldKana.args[0]]?.[Number(oldCel.args[0])] ?? 0,120+oldX,84+oldY,4);
+        if (oldKana && oldCel && Number(oldCel.args[0]) >= 0) drawPortedCell(kana[oldKana.args[0]]?.[Number(oldCel.args[0])] ?? 0,120+oldScreenX,84+oldScreenY,4);
         for (const cue of ported.cues) if (cue.result != null && cue.hit >= previousRemove && cue.hit < removeEvent.tick) {
-          drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0,120+oldX,84+oldY,4);
+          drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0,120+oldScreenX,84+oldScreenY,4);
         }
       }
     }
-    let paperX = 0, paperY = 0;
-    for (const event of ported.timeline.events) if (event.op === 'power_calligraphy_offset_paper' && event.tick >= lastPaper && event.tick <= tick) {
-      paperX += Number(event.args[0] ?? 0); paperY += Number(event.args[1] ?? 0);
-    }
-    const paperMotions = {
-      KANA_INPUT_ONORE1:[0,-8], KANA_INPUT_CHIKARA1:[-6,-6], KANA_INPUT_CHIKARA2:[-4,8],
-      KANA_INPUT_SUN1:[-4,-6], KANA_INPUT_SUN2:[4,4], KANA_INPUT_KOKORO1:[-4,-6],
-      KANA_INPUT_KOKORO2:[4,4], KANA_INPUT_KOKORO3:[6,6], KANA_INPUT_RE1:[6,-6],
-      KANA_INPUT_COMMA1:[5,6], KANA_INPUT_FACE1:[6,-1]
-    };
-    for (const cue of ported.cues) if (cue.result === 0 && cue.hit >= lastPaper && cue.hit <= tick) {
-      const motion = paperMotions[cue.inputType];
-      if (motion) { paperX -= motion[0]; paperY -= motion[1]; }
-    }
     const kanaEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana' && e.tick <= tick).at(-1);
     const celEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana_cel' && e.tick <= tick).at(-1);
-    if (kanaEvent && celEvent && Number(celEvent.args[0]) >= 0) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120 + paperX, 84 + paperY, 4);
+    if (kanaEvent && celEvent && Number(celEvent.args[0]) >= 0) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120 + paperScreenX, 84 + paperScreenY, 4);
     for (const cue of ported.cues) if (cue.result != null && cue.hit >= lastPaper && cue.hit <= tick) {
-      drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0, 120 + paperX, 84 + paperY, 4);
+      drawPortedCell(inputCells[cue.inputType]?.[cue.result] ?? 0, 120 + paperScreenX, 84 + paperScreenY, 4);
     }
     const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush(?:_(raised|down))?$/.test(e.op) && e.tick <= tick).at(-1);
-    let brushDrawX = 180, brushDrawY = 100;
+    let brushDrawX = 180 + paperScreenX, brushDrawY = 100 + paperScreenY;
     if (brush) {
       const hitCue = ported.cues.filter(c => c.result != null && c.hit <= tick && c.hit >= lastPaper).at(-1);
       const brushMotions = {
@@ -1448,8 +1501,8 @@ function drawPorted(tick, cfg) {
       const charging = charge && charge.tick >= brush.tick && tick < (nextChargeEnd?.tick ?? Infinity) && (!hitCue || hitCue.hit < charge.tick);
       let brushCell = motion ? 128 + motion[2] : (brush.op.endsWith('_down') ? 129 : 128);
       if (charging) brushCell = charge.op.endsWith('_comma') ? animationCell([[138,3],[139,3],[140,3],[141,3],[142,3],[143,3]],framesBetweenTicks(charge.tick,tick)) : animationCell([[130,1],[131,1],[132,1],[133,2],[134,2],[135,2],[136,2]],framesBetweenTicks(charge.tick,tick));
-      brushDrawX = 120 + (motion?.[0] ?? Number(brush.args[0])) + paperX;
-      brushDrawY = 84 + (motion?.[1] ?? Number(brush.args[1])) + paperY;
+      brushDrawX = 120 + (motion?.[0] ?? Number(brush.args[0])) + paperScreenX;
+      brushDrawY = 84 + (motion?.[1] ?? Number(brush.args[1])) + paperScreenY;
       const raise = latestPortedEvent('power_calligraphy_raise_brush',tick);
       if (raise && raise.tick >= brush.tick) { brushDrawY -= 24; brushCell = 128; }
       drawPortedCell(brushCell,brushDrawX,brushDrawY,4);
@@ -1552,15 +1605,15 @@ function drawPorted(tick, cfg) {
         : animation[0][0];
       const x = 320 - 256*p;
       const gapsSpawnedBefore = ported.cues.filter(c => c.index < cue.index && c.endOfBridge).length;
-      const gapsCompleted = ported.cues.filter(c => c.endOfBridge && c.state === 'hit' && c.hit < tick).length;
       // The GBA stores each post-gap bridge 16 px higher in world space, then
-      // moves their shared origin by the same amount when Play-Yan lands.
-      const y = 120 - 16 * gapsSpawnedBefore + 16 * gapsCompleted;
+      // moves every bridge/fish sprite through one shared vertical origin.
+      // During an ascending jump that origin follows the original parabola.
+      const y = 120 - 16 * gapsSpawnedBefore + nightWalkWorldShift(tick);
       drawPortedCell(cell,x,y,4);
       if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
     }
   }
-  if (mode === 'samurai_slice' && ported.overlays[0]) ctx.drawImage(ported.overlays[0], 0, 0, stage.width, stage.height);
+  if (mode === 'samurai_slice' && ported.overlays[0]) drawGbaTilemap(ported.overlays[0],0,samuraiFog[0]);
   drawTouchScreen();
 }
 function portedPunch() {
@@ -1571,7 +1624,7 @@ function portedPunch() {
     const barelyWindow = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
     return Math.abs(item.hit - tick) <= barelyWindow;
   });
-  ported.actionAt = tick; ported.actionHit = Boolean(cue);
+  ported.actionAt = tick; ported.actionHit = Boolean(cue); ported.actionCue = cue ?? null;
   if (!cue) {
     if (mode === 'night_walk') playPortedSfx('count',tick,128,-0xc00);
     createImpact('empty'); return;
