@@ -27,6 +27,7 @@ check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153
 // start. This catches incomplete exports before a browser run.
 for (const id of ['spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy']) {
   const data = timeline(id);
+  check(data.events.every((event, index) => index === 0 || event.tick >= data.events[index - 1].tick), `${id}: timeline events are not sorted by tick`);
   check(Number.isFinite(data.endTick) && data.endTick > 0, `${id}: invalid endTick`);
   check(events(data, 'spawn_cue').length > 0, `${id}: no spawn_cue events`);
   check(events(data, 'play_music').length > 0, `${id}: no play_music events`);
