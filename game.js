@@ -374,6 +374,7 @@ function songBeat() {
 
 function loop() {
   const beat = songBeat();
+  if (portedModes[mode]) return portedLoop();
   if (mode === 'tweezers') return tweezersLoop(beat);
   if (beat > SONG_END) return finish();
   update(beat);
@@ -996,16 +997,186 @@ function finish() {
   setTimeout(quit, 120);
 }
 
+// Additional GBA games are driven directly from the expanded local
+// BeatScripts.  Their clocks, image manifests and original PCM music all load
+// before the lead-in begins; no render-frame clock is used for judgement.
+const portedModes = {
+  spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events' } },
+  samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100]], sfx: { spawn:'samurai_appear_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
+  night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [100,112], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]] },
+  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 0, action: [1,2,3,4], actor: [120,80], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', miss:'calligraphy_miss_events' } }
+};
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionGood: false, scheduled: new Set(), tempo: [] };
+
+function gameAssetPrefix(id) { return `assets/gba/${id}`; }
+async function loadPortedMode(id) {
+  if (ported.data[id]) return ported.data[id];
+  const prefix = gameAssetPrefix(id);
+  const [timeline, manifest] = await Promise.all([
+    fetch(`assets/gba/${id}_timeline.json`).then(r => { if (!r.ok) throw new Error(`Missing ${id} BeatScript timeline`); return r.json(); }),
+    fetch(`${prefix}/frames.json`).then(r => { if (!r.ok) throw new Error(`Missing ${id} animation manifest`); return r.json(); })
+  ]);
+  const frames = {}, imageLoads = [];
+  for (const [number, meta] of Object.entries(manifest)) {
+    const image = new Image(); image.src = `${prefix}/${meta.file}`; frames[Number(number)] = image; imageLoads.push(waitForImage(image));
+  }
+  const bg = new Image(); bg.src = `${prefix}/${portedModes[id].bg}`; imageLoads.push(waitForImage(bg));
+  const music = await Promise.all(portedModes[id].music.map(async ([name, volume]) => {
+    const result = await fetch(`assets/gba/${name}.json`).then(r => { if (!r.ok) throw new Error(`Missing ${name}`); return r.json(); });
+    return { name, volume: result.volume ?? volume, events: result.events ?? result };
+  }));
+  const sfx = {};
+  await Promise.all(Object.entries(portedModes[id].sfx ?? {}).map(async ([kind,name]) => { const result = await fetch(`assets/gba/${name}.json`).then(r => r.json()); sfx[kind] = result.events ?? result; }));
+  const needed = [...new Set([...music.flatMap(track => track.events), ...Object.values(sfx).flat()].map(event => event.sample).filter(Number.isFinite))];
+  const result = { timeline, manifest: Object.fromEntries(Object.entries(manifest).map(([k,v]) => [Number(k),v])), frames, bg, music, sfx, needed, imageLoads };
+  ported.data[id] = result; return result;
+}
+function setPortedTempo(timeline) {
+  const all = timeline.events.filter(e => e.op === 'set_tempo').map(e => ({ tick: e.tick, bpm: Number(e.args[0]) }));
+  if (!all.length || all[0].tick !== 0) all.unshift({ tick: 0, bpm: 120 });
+  ported.tempo = all;
+}
+function secondsAtTick(tick) {
+  let seconds = 0;
+  for (let i = 0; i < ported.tempo.length; i++) {
+    const segment = ported.tempo[i], next = ported.tempo[i + 1]?.tick ?? tick;
+    if (tick <= segment.tick) break;
+    const span = Math.min(tick, next) - segment.tick;
+    if (span > 0) seconds += span * 60 / (24 * segment.bpm);
+    if (tick <= next) break;
+  }
+  return seconds;
+}
+function portedTick() {
+  const elapsed = Math.max(0, audio().currentTime - audioSongStart);
+  let passed = 0;
+  for (let i = 0; i < ported.tempo.length; i++) {
+    const s = ported.tempo[i], next = ported.tempo[i + 1];
+    const duration = next ? (next.tick - s.tick) * 60 / (24 * s.bpm) : Infinity;
+    if (elapsed <= passed + duration) return s.tick + (elapsed - passed) * 24 * s.bpm / 60;
+    passed += duration;
+  }
+  return 0;
+}
+function portedMusicVolumeAt(tick) {
+  let value = 256;
+  for (const event of ported.timeline.events) {
+    if (event.op === 'set_music_volume' && event.tick <= tick) value = Number(event.args[0]);
+    if (event.op === 'mod_music_volume' && event.tick <= tick) {
+      const target = Number(event.args[0]), span = Number(event.args[1]);
+      const before = value;
+      if (tick < event.tick + span) return before + (target - before) * (tick - event.tick) / span;
+      value = target;
+    }
+  }
+  return value;
+}
+function schedulePortedMusic() {
+  const ac = audio();
+  const starts = ported.timeline.events.filter(e => e.op === 'play_music');
+  const names = { s_shibafu1_bgm_seqData: 'spaceball_bgm_events', s_iai_bgm1_seqData: 'samurai_bgm1_events', s_iai_bgm2_seqData: 'samurai_bgm2_events', s_iai_bgm3_seqData: 'samurai_bgm3_events', s_4beat_bgm_seqData: 'night_walk_bgm_events', s_shuji_bgm1_seqData: 'calligraphy_bgm1_events', s_shuji_bgm2_seqData: 'calligraphy_bgm2_events', s_shuji_bgm3_seqData: 'calligraphy_bgm3_events', s_shuji_bgm_end_seqData: 'calligraphy_end_events' };
+  for (const [startIndex, start] of starts.entries()) {
+    const name = names[start.args[0]], track = ported.music.find(item => item.name === name); if (!track) continue;
+    // `play_music` owns the one GBA music player: the next command replaces
+    // the current sequence rather than layering a second copy over it.
+    const replaceTick = starts[startIndex + 1]?.tick ?? Infinity;
+    for (const note of track.events) {
+      if (!Number.isFinite(note.sample)) continue;
+      const sample = originalSamples[note.sample]; if (!sample) throw new Error(`Unloaded original PCM ${note.sample}`);
+      const atTick = start.tick + note.beat * 24; if (atTick >= replaceTick) continue;
+      const endTick = Math.min(replaceTick, atTick + note.length * 24), when = audioSongStart + secondsAtTick(atTick), duration = Math.max(.02, secondsAtTick(endTick) - secondsAtTick(atTick));
+      const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
+      source.playbackRate.value = note.fixed ? 1 : Math.pow(2, (note.note - 60) / 12);
+      // SongHeader volume and BeatScript music-bus volume are distinct GBA
+      // mixer stages.  Preserve both instead of applying a browser-only boost.
+      gain.gain.value = GBA_MIX_SCALE * (note.velocity / 127) * (track.volume / 256) * (portedMusicVolumeAt(atTick) / 256);
+      source.connect(gain).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
+    }
+  }
+}
+function playPortedSfx(kind, atTick = null) {
+  const events = ported.sfx[kind]; if (!events?.length) return;
+  const ac = audio(), base = atTick == null ? ac.currentTime : audioSongStart + secondsAtTick(atTick);
+  for (const event of events) {
+    const sample = originalSamples[event.sample]; if (!sample) continue;
+    const source = ac.createBufferSource(), gain = ac.createGain(); source.buffer = sample;
+    source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
+    gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127); source.connect(gain).connect(ac.destination);
+    const when = Math.max(ac.currentTime + .005, base + event.beat * 60 / 120);
+    source.start(when); source.stop(when + Math.max(.15, event.length * 60 / 120)); scheduledMusicNodes.push(source);
+  }
+}
+function startPortedMode(id) {
+  mode = id; running = false; const run = ++songRun; audio();
+  for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
+  menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode'); touchFx = [];
+  loadPortedMode(id).then(async data => {
+    await Promise.all(data.imageLoads);
+    if (run !== songRun || mode !== id) return;
+    // Render the fully decoded original art right away.  PCM still preloads
+    // before the lead-in, but a first visit never shows an empty game panel.
+    ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.music = data.music; ported.sfx = data.sfx; ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map(event => ({ spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' }));
+    ported.cueIndex = 0; ported.actionAt = -99; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    await loadOriginalSamples(data.needed);
+    if (run !== songRun || mode !== id) return;
+    audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic();
+    for (const cue of ported.cues) { const sound = mode === 'spaceball' && cue.kind === 'CUE_HIGH' ? 'high' : 'spawn'; if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn); }
+    cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+  }).catch(error => { console.error(`Unable to start ${id}:`, error); quit(); });
+}
+function drawPortedCell(cell, x, y, scale = 4, rotation = 0) {
+  const image = ported.frames[cell], meta = ported.manifest[cell]; if (!image || !meta) return;
+  ctx.save(); ctx.translate(x * scale, y * scale); ctx.rotate(rotation); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(image, -meta.originX * scale, -meta.originY * scale, image.naturalWidth * scale, image.naturalHeight * scale); ctx.restore();
+}
+function portedLoop() {
+  const tick = portedTick(), cfg = portedModes[mode];
+  if (tick > ported.timeline.endTick) return finish();
+  for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > 5) cue.state = 'miss';
+  drawPorted(tick, cfg); frame = requestAnimationFrame(loop);
+}
+function drawPorted(tick, cfg) {
+  ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
+  const age = (tick - ported.actionAt) / 30; const frames = age >= 0 && age < cfg.action.length / 30 ? cfg.action[Math.floor(age * 30)] : [cfg.idle];
+  drawPortedCell(frames[0], cfg.actor[0], cfg.actor[1]);
+  if (mode === 'power_calligraphy') {
+    const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
+    if (brush) drawPortedCell(brush.op.endsWith('_down') ? 1 : 0, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
+  }
+  for (const cue of ported.cues) {
+    if (cue.state === 'done' || tick < cue.spawn || tick > cue.hit + 30) continue;
+    const p = Math.max(0, Math.min(1, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
+    if (mode === 'spaceball') {
+      const x = 70 + 68 * p, y = 120 - (90 - 360 * (p-.5) * (p-.5)); drawPortedCell(cfg.object, x, y, 4 * (.4 + p * .7), tick * .05);
+    } else if (mode === 'samurai_slice') drawPortedCell(cfg.object, 210 - 110 * p, 98 - 24 * Math.sin(p * Math.PI), 4);
+    else if (mode === 'night_walk') drawPortedCell(cfg.object, 165 + 36 * Math.sin(tick / 16), 124, 4);
+  }
+  drawTouchScreen();
+}
+function portedPunch() {
+  if (!running) return; const tick = portedTick(), cue = ported.cues.find(item => item.state === 'fresh' && Math.abs(item.hit - tick) <= 5);
+  ported.actionAt = tick;
+  if (!cue) { createImpact('empty'); return; }
+  cue.state = 'hit'; const perfect = Math.abs(cue.hit - tick) <= 3;
+  playPortedSfx(perfect ? (mode === 'samurai_slice' && cue.kind === 'CUE_SECOND' ? 'hit2' : 'hit') : 'barely');
+  createImpact(perfect ? 'perfect' : 'normal');
+}
+
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
 $('#tweezersBtn').onclick = tweezersStart;
-stage.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
-touch.addEventListener('pointerdown', () => mode === 'tweezers' ? tweezersPunch() : punch());
+$('#spaceballBtn').onclick = () => startPortedMode('spaceball');
+$('#samuraiBtn').onclick = () => startPortedMode('samurai_slice');
+$('#nightWalkBtn').onclick = () => startPortedMode('night_walk');
+$('#calligraphyBtn').onclick = () => startPortedMode('power_calligraphy');
+stage.addEventListener('pointerdown', () => portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch());
+touch.addEventListener('pointerdown', () => portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds
 // even with viewport constraints.  The game owns touch-end on both screens.
 for (const canvas of [stage, touch]) canvas.addEventListener('touchend', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 window.addEventListener('keydown', (event) => {
-  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); if (game.classList.contains('hidden')) start(); else mode === 'tweezers' ? tweezersPunch() : punch(); }
+  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); if (game.classList.contains('hidden')) start(); else portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch(); }
   if (event.code === 'F1' && !game.classList.contains('hidden')) { event.preventDefault(); mode === 'tweezers' ? tweezersStart() : start(); }
   if (event.code === 'F2') cheat = !cheat;
 });

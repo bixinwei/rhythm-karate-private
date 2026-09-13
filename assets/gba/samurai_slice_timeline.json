@@ -1,0 +1,2173 @@
+{
+  "entry": "script_samurai_slice_main",
+  "endTick": 5880,
+  "events": [
+    {
+      "tick": 0,
+      "op": "set_results_header",
+      "args": [
+        "D_0805bdb8"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "import_marking_criteria",
+      "args": [
+        "samurai_slice_marking_criteria"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "samurai_slice_event07",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "enable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 24,
+      "op": "set_music_volume",
+      "args": [
+        "100"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "mod_music_volume",
+      "args": [
+        "256",
+        "144"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm1_seqData"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "mute_music_track",
+      "args": [
+        "MIDI_TRACK_4"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 48,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 72,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 96,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 120,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bd68"
+      ]
+    },
+    {
+      "tick": 120,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 144,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 168,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 192,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 216,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 240,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 264,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 288,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 312,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 336,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 360,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 384,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 408,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bcc4"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "start_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 408,
+      "op": "start_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 408,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 432,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 456,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 480,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 504,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 528,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 528,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 552,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 576,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 600,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 600,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 600,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 624,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 648,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 672,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 696,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 720,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 720,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 744,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 768,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 792,
+      "op": "set_tempo",
+      "args": [
+        "140"
+      ]
+    },
+    {
+      "tick": 792,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 792,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 816,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 840,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 864,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 888,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 912,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 912,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 936,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 960,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 984,
+      "op": "set_tempo",
+      "args": [
+        "160"
+      ]
+    },
+    {
+      "tick": 984,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 984,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1008,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1032,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1056,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1080,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1104,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 1104,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1128,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1152,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1176,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm2_seqData"
+      ]
+    },
+    {
+      "tick": 1176,
+      "op": "set_tempo",
+      "args": [
+        "160"
+      ]
+    },
+    {
+      "tick": 1176,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1176,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1200,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1224,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1248,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1272,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1296,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 1296,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1320,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1344,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1368,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1368,
+      "op": "set_tempo",
+      "args": [
+        "180"
+      ]
+    },
+    {
+      "tick": 1368,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1368,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1392,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1416,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1440,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1464,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1488,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 1488,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1512,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1536,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1560,
+      "op": "set_tempo",
+      "args": [
+        "200"
+      ]
+    },
+    {
+      "tick": 1560,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1560,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1584,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1608,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1632,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1656,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1680,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 1680,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1704,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1728,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1752,
+      "op": "set_tempo",
+      "args": [
+        "220"
+      ]
+    },
+    {
+      "tick": 1752,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1752,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1776,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1800,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1824,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1848,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1872,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 1872,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1896,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1920,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1944,
+      "op": "set_marking_criteria",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm3_seqData"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "set_tempo",
+      "args": [
+        "80"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "samurai_slice_event03",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1968,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bd7c"
+      ]
+    },
+    {
+      "tick": 1968,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1992,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2016,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2040,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bd88"
+      ]
+    },
+    {
+      "tick": 2040,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2064,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2088,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2112,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2136,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bcc4"
+      ]
+    },
+    {
+      "tick": 2136,
+      "op": "samurai_slice_event02",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2136,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2160,
+      "op": "samurai_slice_event03",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 2160,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2184,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2208,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2232,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2256,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 2256,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2280,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2304,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2328,
+      "op": "samurai_slice_event04",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2328,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm1_seqData"
+      ]
+    },
+    {
+      "tick": 2328,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 2328,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2352,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2376,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2400,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2424,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2448,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2472,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2496,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2520,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bd7c"
+      ]
+    },
+    {
+      "tick": 2520,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2544,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2568,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2592,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2616,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bda4"
+      ]
+    },
+    {
+      "tick": 2616,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2640,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2664,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2688,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2712,
+      "op": "samurai_slice_event05",
+      "args": [
+        "D_0805bcc4"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2736,
+      "op": "samurai_slice_event02",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2736,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2760,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2784,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2808,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2832,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 2832,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2856,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 2856,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2880,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2904,
+      "op": "set_tempo",
+      "args": [
+        "140"
+      ]
+    },
+    {
+      "tick": 2904,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2904,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2928,
+      "op": "samurai_slice_event02",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2928,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2952,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2976,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3000,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3024,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3024,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3048,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 3048,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3072,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3096,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3096,
+      "op": "set_tempo",
+      "args": [
+        "160"
+      ]
+    },
+    {
+      "tick": 3096,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3096,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3120,
+      "op": "samurai_slice_event02",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3120,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3144,
+      "op": "samurai_slice_event03",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 3144,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3168,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3192,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3216,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3216,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3240,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 3240,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3264,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3288,
+      "op": "set_tempo",
+      "args": [
+        "180"
+      ]
+    },
+    {
+      "tick": 3288,
+      "op": "samurai_slice_event02",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3288,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3312,
+      "op": "samurai_slice_event02",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3312,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3336,
+      "op": "samurai_slice_event03",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 3336,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3360,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3384,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3408,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3408,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3432,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 3432,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3456,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3480,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm2_seqData"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "set_tempo",
+      "args": [
+        "180"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3528,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3552,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3576,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3600,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3600,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3624,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 3624,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3648,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3672,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3672,
+      "op": "set_tempo",
+      "args": [
+        "200"
+      ]
+    },
+    {
+      "tick": 3672,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3672,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3696,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 3696,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3696,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3720,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3744,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3768,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3792,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3792,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3816,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 3816,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3840,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3864,
+      "op": "set_tempo",
+      "args": [
+        "210"
+      ]
+    },
+    {
+      "tick": 3864,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3864,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3888,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 3888,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3888,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3912,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3936,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3960,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3984,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 3984,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4008,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4008,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4032,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4056,
+      "op": "set_tempo",
+      "args": [
+        "220"
+      ]
+    },
+    {
+      "tick": 4056,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4056,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4080,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 4080,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4080,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4104,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4128,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4152,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4176,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 4176,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4200,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4200,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4224,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4248,
+      "op": "set_tempo",
+      "args": [
+        "230"
+      ]
+    },
+    {
+      "tick": 4248,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4248,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4272,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 4272,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4272,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4296,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4320,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4344,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4368,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 4368,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4392,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4392,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4416,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4440,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4440,
+      "op": "set_tempo",
+      "args": [
+        "240"
+      ]
+    },
+    {
+      "tick": 4440,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4440,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4464,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 4464,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4464,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4488,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4512,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4536,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4560,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 4560,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4584,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4584,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4608,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4632,
+      "op": "set_tempo",
+      "args": [
+        "250"
+      ]
+    },
+    {
+      "tick": 4632,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4632,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4656,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 4656,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4656,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4680,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4704,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4728,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4752,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 4752,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4776,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4776,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4800,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4824,
+      "op": "set_tempo",
+      "args": [
+        "260"
+      ]
+    },
+    {
+      "tick": 4824,
+      "op": "samurai_slice_event02",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4824,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4848,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 4848,
+      "op": "samurai_slice_event02",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4848,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4872,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4896,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4920,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4944,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 4944,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4968,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 4968,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4992,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5016,
+      "op": "set_marking_criteria",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 5016,
+      "op": "play_music",
+      "args": [
+        "s_iai_bgm3_seqData"
+      ]
+    },
+    {
+      "tick": 5016,
+      "op": "set_tempo",
+      "args": [
+        "70"
+      ]
+    },
+    {
+      "tick": 5016,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5040,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5064,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5088,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5112,
+      "op": "samurai_slice_event03",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 5112,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5136,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5160,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5184,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5208,
+      "op": "samurai_slice_event02",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 5208,
+      "op": "samurai_slice_event03",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 5208,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5232,
+      "op": "samurai_slice_event02",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 5232,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5256,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5280,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5304,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5328,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_FIRST"
+      ]
+    },
+    {
+      "tick": 5328,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5352,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SECOND"
+      ]
+    },
+    {
+      "tick": 5352,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5376,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 5400,
+      "op": "mod_music_volume",
+      "args": [
+        "0",
+        "72"
+      ]
+    },
+    {
+      "tick": 5496,
+      "op": "set_tempo",
+      "args": [
+        "140"
+      ]
+    },
+    {
+      "tick": 5496,
+      "op": "play_music",
+      "args": [
+        "s_iai_result_seqData"
+      ]
+    },
+    {
+      "tick": 5496,
+      "op": "set_music_volume",
+      "args": [
+        "256"
+      ]
+    },
+    {
+      "tick": 5496,
+      "op": "stop_tracking_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 5496,
+      "op": "samurai_slice_event06",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 5544,
+      "op": "samurai_slice_event06",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 5568,
+      "op": "samurai_slice_event06",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 5640,
+      "op": "samurai_slice_event06",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 5856,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 5880,
+      "op": ".end",
+      "args": []
+    }
+  ]
+}

@@ -1,0 +1,1810 @@
+{
+  "entry": "script_night_walk_main",
+  "endTick": 4704,
+  "events": [
+    {
+      "tick": 0,
+      "op": "set_results_header",
+      "args": [
+        "D_0805b1f4"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "import_marking_criteria",
+      "args": [
+        "night_walk_marking_criteria"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "night_walk_set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "night_walk_set_end_script",
+      "args": [
+        "script_night_walk_end"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_tempo",
+      "args": [
+        "128"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "start_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 0,
+      "op": "run",
+      "args": [
+        "gameplay_assess_irrelevant_inputs",
+        "FALSE"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 0,
+      "op": "night_walk_init_balloons",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "start_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 24,
+      "op": "enable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 96,
+      "op": "play_music",
+      "args": [
+        "s_4beat_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "print_text_s",
+      "args": [
+        "D_0805b1fc"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "run",
+      "args": [
+        "scene_show_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 120,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 144,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 144,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 144,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 168,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 192,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 192,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 192,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 216,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 216,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 216,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 240,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 240,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 240,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 264,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 264,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 264,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 264,
+      "op": "night_walk_play_drumtech_note",
+      "args": [
+        "38",
+        "256",
+        "0"
+      ]
+    },
+    {
+      "tick": 264,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 284,
+      "op": "night_walk_pop_balloon",
+      "args": []
+    },
+    {
+      "tick": 284,
+      "op": "enable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 288,
+      "op": "clear_text_s",
+      "args": []
+    },
+    {
+      "tick": 288,
+      "op": "run",
+      "args": [
+        "scene_hide_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 288,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 288,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 288,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 312,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 336,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 360,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 384,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 432,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 456,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 456,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 456,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 480,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 480,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 480,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 504,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 528,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 552,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 576,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 600,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 624,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 648,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 648,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 648,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 672,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 672,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 672,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 696,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 720,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 744,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 768,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 792,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 816,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROLL"
+      ]
+    },
+    {
+      "tick": 840,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 840,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 840,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_CYMBAL"
+      ]
+    },
+    {
+      "tick": 864,
+      "op": "night_walk_set_platform",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 864,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 864,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 888,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 912,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 936,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 960,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 984,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1008,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1032,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1056,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1080,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1104,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1128,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1152,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1176,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1200,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1224,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1248,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1272,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1296,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1320,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1344,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1368,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1392,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1416,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1440,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1464,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1488,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1512,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1536,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1536,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1560,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1584,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROLL"
+      ]
+    },
+    {
+      "tick": 1608,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_CYMBAL"
+      ]
+    },
+    {
+      "tick": 1632,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1632,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1656,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1680,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1704,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1728,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1752,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1776,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1800,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1824,
+      "op": "print_text_s",
+      "args": [
+        "D_0805b220"
+      ]
+    },
+    {
+      "tick": 1824,
+      "op": "run",
+      "args": [
+        "scene_show_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 1824,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1848,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1872,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1896,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1920,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 1968,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 1992,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2016,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2040,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2064,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2088,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2112,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2136,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2160,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2184,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2208,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2232,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2256,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2280,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2304,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2328,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2376,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2400,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2400,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2424,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2448,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2472,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_CYMBAL"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2520,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2544,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2568,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2592,
+      "op": "clear_text_s",
+      "args": []
+    },
+    {
+      "tick": 2592,
+      "op": "run",
+      "args": [
+        "scene_hide_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 2592,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2616,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2640,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2664,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2688,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2736,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2760,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2784,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2784,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2808,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2832,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2856,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2880,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2880,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2904,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2928,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 2952,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2952,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 2976,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2976,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3000,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3024,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3048,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3048,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3072,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3072,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3096,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3120,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3144,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3168,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3192,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3216,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3240,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3264,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3264,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3264,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3288,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3312,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3336,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_CYMBAL"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "night_walk_set_platform",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3384,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3408,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3432,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3456,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3528,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "print_text_s",
+      "args": [
+        "D_0805b250"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "run",
+      "args": [
+        "scene_show_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3576,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3600,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3624,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3648,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3672,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3696,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3720,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3744,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3768,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3792,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3816,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3840,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3864,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3888,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3912,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3912,
+      "op": "clear_text_s",
+      "args": []
+    },
+    {
+      "tick": 3912,
+      "op": "run",
+      "args": [
+        "scene_hide_bg_layer",
+        "1"
+      ]
+    },
+    {
+      "tick": 3936,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3936,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 3960,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 3984,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 4008,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 4032,
+      "op": "night_walk_set_platform",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4032,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4032,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 4056,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 4080,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 4104,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SNARE"
+      ]
+    },
+    {
+      "tick": 4128,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4128,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_STAR_WAND"
+      ]
+    },
+    {
+      "tick": 4152,
+      "op": "night_walk_set_platform",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4152,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_KICK"
+      ]
+    },
+    {
+      "tick": 4332,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 4416,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4440,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4464,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4488,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4512,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4536,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4560,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4584,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4608,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4632,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 4680,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 4704,
+      "op": ".end",
+      "args": []
+    },
+    {
+      "tick": 4704,
+      "op": ".include",
+      "args": [
+        "\"include/beatscript.inc\""
+      ]
+    },
+    {
+      "tick": 4704,
+      "op": ".include",
+      "args": [
+        "\"games/night_walk/macros.inc\""
+      ]
+    },
+    {
+      "tick": 4704,
+      "op": ".section",
+      "args": [
+        ".script.entry"
+      ]
+    }
+  ]
+}

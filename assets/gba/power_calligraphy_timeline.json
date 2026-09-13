@@ -1,0 +1,9642 @@
+{
+  "entry": "script_power_calligraphy_main",
+  "endTick": 5502,
+  "events": [
+    {
+      "tick": 0,
+      "op": "set_music_volume",
+      "args": [
+        "256"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_tempo",
+      "args": [
+        "127"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "play_music",
+      "args": [
+        "s_shuji_bgm1_seqData"
+      ]
+    },
+    {
+      "tick": 54,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 78,
+      "op": "print_text_f",
+      "args": [
+        "D_0805d2dc"
+      ]
+    },
+    {
+      "tick": 270,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 294,
+      "op": "start_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 294,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 294,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 294,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 294,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 294,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 294,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "set_results_header",
+      "args": [
+        "D_0805d2f0"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "import_marking_criteria",
+      "args": [
+        "power_calligraphy_marking_criteria"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "run",
+      "args": [
+        "gameplay_set_mercy_count",
+        "2"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "start_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 390,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 390,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 392,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 394,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 438,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 438,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 438,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 438,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 461,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 461,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 461,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 461,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 462,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 462,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 462,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 462,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 463,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 463,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 463,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 463,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 486,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 486,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 510,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 510,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 510,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 534,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 558,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 558,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 558,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 558,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 582,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 582,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 582,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha1_seqData"
+      ]
+    },
+    {
+      "tick": 582,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 584,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 586,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 630,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 630,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 632,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 634,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 654,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 654,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 656,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 658,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 678,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-48"
+      ]
+    },
+    {
+      "tick": 678,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha3_seqData"
+      ]
+    },
+    {
+      "tick": 702,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 702,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 702,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 702,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_COMMA1"
+      ]
+    },
+    {
+      "tick": 702,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 726,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 742,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "12",
+        "-20"
+      ]
+    },
+    {
+      "tick": 750,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 750,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 750,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 750,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 750,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 750,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 774,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 774,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 774,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 774,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 776,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 778,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 822,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 822,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 822,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 822,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 845,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 845,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 845,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 845,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 846,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 846,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 846,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 846,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 847,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 847,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 847,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 847,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 870,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 870,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 894,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 894,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 894,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 918,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 942,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 942,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 942,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 942,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-21",
+        "-48"
+      ]
+    },
+    {
+      "tick": 942,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 942,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 966,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 976,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 976,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "10",
+        "-33"
+      ]
+    },
+    {
+      "tick": 976,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 976,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 978,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 978,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "35",
+        "-35"
+      ]
+    },
+    {
+      "tick": 978,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 978,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 986,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 986,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "33",
+        "-28"
+      ]
+    },
+    {
+      "tick": 986,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 986,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 988,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 988,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "-27"
+      ]
+    },
+    {
+      "tick": 988,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 988,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 990,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 990,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "10"
+      ]
+    },
+    {
+      "tick": 990,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 990,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1014,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 1014,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "1",
+        "-22"
+      ]
+    },
+    {
+      "tick": 1014,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "3",
+        "3"
+      ]
+    },
+    {
+      "tick": 1014,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 1026,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 1026,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "9",
+        "-72"
+      ]
+    },
+    {
+      "tick": 1026,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1026,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1038,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 1038,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "13",
+        "-48"
+      ]
+    },
+    {
+      "tick": 1038,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 1038,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1062,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1062,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 1086,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1086,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_CHIKARA2"
+      ]
+    },
+    {
+      "tick": 1086,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 1110,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1134,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 1134,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 1134,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1134,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 1134,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1134,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1158,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1158,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 1158,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1158,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 1160,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 1162,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 1206,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1206,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 1206,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 1206,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1229,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1229,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 1229,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1229,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 1230,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 1230,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 1230,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1230,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1231,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 1231,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 1231,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 1231,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1254,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1254,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 1278,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1278,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 1278,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 1302,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1326,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 1326,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 1326,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1326,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 1350,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1350,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 1350,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha1_seqData"
+      ]
+    },
+    {
+      "tick": 1350,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 1352,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 1354,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 1398,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 1398,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 1400,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 1402,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 1422,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 1422,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 1424,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 1426,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 1446,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-48"
+      ]
+    },
+    {
+      "tick": 1446,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha3_seqData"
+      ]
+    },
+    {
+      "tick": 1470,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 1470,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 1470,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1470,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_COMMA1"
+      ]
+    },
+    {
+      "tick": 1470,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 1494,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1510,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "12",
+        "-20"
+      ]
+    },
+    {
+      "tick": 1518,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 1518,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 1518,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1518,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 1518,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1518,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1542,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1542,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 1542,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1542,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 1544,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 1546,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 1590,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1590,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 1590,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 1590,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1613,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1613,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 1613,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1613,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 1614,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 1614,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 1614,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1614,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1615,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 1615,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 1615,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 1615,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1638,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1638,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 1662,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1662,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 1662,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 1686,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1710,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 1710,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 1710,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1710,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-15",
+        "-57"
+      ]
+    },
+    {
+      "tick": 1710,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1710,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "-38"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 1734,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1758,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1758,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "9",
+        "-40"
+      ]
+    },
+    {
+      "tick": 1758,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 1758,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 1759,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 1759,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "25",
+        "-39"
+      ]
+    },
+    {
+      "tick": 1759,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1759,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1770,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 1770,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "-32"
+      ]
+    },
+    {
+      "tick": 1770,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 1770,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 1771,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 1771,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 1771,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1771,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1782,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 1782,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-7",
+        "-19"
+      ]
+    },
+    {
+      "tick": 1782,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 1782,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1806,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 1806,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "7",
+        "-23"
+      ]
+    },
+    {
+      "tick": 1806,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 1806,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 1807,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 1807,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 1807,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1807,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1830,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 1830,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 1830,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "10"
+      ]
+    },
+    {
+      "tick": 1830,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 1830,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 1831,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "10"
+      ]
+    },
+    {
+      "tick": 1831,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-16",
+        "2"
+      ]
+    },
+    {
+      "tick": 1831,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1831,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1832,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 1832,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-14",
+        "12"
+      ]
+    },
+    {
+      "tick": 1832,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1832,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1833,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 1833,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-12",
+        "19"
+      ]
+    },
+    {
+      "tick": 1833,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1833,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1834,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 1834,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-6",
+        "20"
+      ]
+    },
+    {
+      "tick": 1834,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1834,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1835,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 1835,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "18"
+      ]
+    },
+    {
+      "tick": 1835,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1835,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1836,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "15"
+      ]
+    },
+    {
+      "tick": 1836,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "20"
+      ]
+    },
+    {
+      "tick": 1836,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 1836,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1836,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 1854,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_ONORE1"
+      ]
+    },
+    {
+      "tick": 1854,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1854,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 1878,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 1902,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 1902,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 1902,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1902,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-21",
+        "-48"
+      ]
+    },
+    {
+      "tick": 1902,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1902,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 1926,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 1936,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1936,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "10",
+        "-33"
+      ]
+    },
+    {
+      "tick": 1936,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1936,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 1938,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 1938,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "35",
+        "-35"
+      ]
+    },
+    {
+      "tick": 1938,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 1938,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1946,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 1946,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "33",
+        "-28"
+      ]
+    },
+    {
+      "tick": 1946,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1946,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1948,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 1948,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "-27"
+      ]
+    },
+    {
+      "tick": 1948,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1948,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 1950,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 1950,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "10"
+      ]
+    },
+    {
+      "tick": 1950,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 1950,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1974,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 1974,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "1",
+        "-22"
+      ]
+    },
+    {
+      "tick": 1974,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "3",
+        "3"
+      ]
+    },
+    {
+      "tick": 1974,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 1986,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 1986,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "9",
+        "-72"
+      ]
+    },
+    {
+      "tick": 1986,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 1986,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 1998,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 1998,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "13",
+        "-48"
+      ]
+    },
+    {
+      "tick": 1998,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 1998,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2022,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2022,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 2046,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2046,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_CHIKARA2"
+      ]
+    },
+    {
+      "tick": 2046,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2070,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2094,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 2094,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 2094,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2094,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-15",
+        "-57"
+      ]
+    },
+    {
+      "tick": 2094,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2094,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "-38"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 2118,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2142,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2142,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "9",
+        "-40"
+      ]
+    },
+    {
+      "tick": 2142,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 2142,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2143,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2143,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "25",
+        "-39"
+      ]
+    },
+    {
+      "tick": 2143,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2143,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2154,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2154,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "-32"
+      ]
+    },
+    {
+      "tick": 2154,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 2154,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2155,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 2155,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2155,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2155,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2166,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 2166,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-7",
+        "-19"
+      ]
+    },
+    {
+      "tick": 2166,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2166,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2190,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 2190,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "7",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2190,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 2190,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 2191,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 2191,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2191,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2191,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2214,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2214,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 2214,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "10"
+      ]
+    },
+    {
+      "tick": 2214,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 2214,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 2215,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "10"
+      ]
+    },
+    {
+      "tick": 2215,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-16",
+        "2"
+      ]
+    },
+    {
+      "tick": 2215,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2215,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2216,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 2216,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-14",
+        "12"
+      ]
+    },
+    {
+      "tick": 2216,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2216,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2217,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 2217,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-12",
+        "19"
+      ]
+    },
+    {
+      "tick": 2217,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2217,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2218,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 2218,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-6",
+        "20"
+      ]
+    },
+    {
+      "tick": 2218,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2218,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2219,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 2219,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "18"
+      ]
+    },
+    {
+      "tick": 2219,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2219,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2220,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "15"
+      ]
+    },
+    {
+      "tick": 2220,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "20"
+      ]
+    },
+    {
+      "tick": 2220,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 2220,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2220,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 2238,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_ONORE1"
+      ]
+    },
+    {
+      "tick": 2238,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2238,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2262,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2286,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 2286,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 2286,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2286,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 2286,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2286,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2310,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2310,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 2310,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2310,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 2312,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 2314,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 2358,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2358,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 2358,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 2358,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2381,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2381,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 2381,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2381,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 2382,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2382,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 2382,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2382,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2383,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2383,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 2383,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 2383,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2406,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2406,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 2430,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2430,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 2430,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2454,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2478,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 2478,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_SUN"
+      ]
+    },
+    {
+      "tick": 2478,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2478,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-25",
+        "-47"
+      ]
+    },
+    {
+      "tick": 2478,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2478,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_SUN"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "-25"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2502,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2514,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2514,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 2514,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 2514,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2515,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2515,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "5",
+        "-29"
+      ]
+    },
+    {
+      "tick": 2515,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2515,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2516,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2516,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "39",
+        "-28"
+      ]
+    },
+    {
+      "tick": 2516,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2516,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2524,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 2526,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 2526,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "15",
+        "-48"
+      ]
+    },
+    {
+      "tick": 2526,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2526,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2538,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 2538,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "-43"
+      ]
+    },
+    {
+      "tick": 2538,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-4"
+      ]
+    },
+    {
+      "tick": 2538,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2539,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 2539,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "-22"
+      ]
+    },
+    {
+      "tick": 2539,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2539,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2540,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 2540,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "21"
+      ]
+    },
+    {
+      "tick": 2540,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2540,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2550,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2550,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 2574,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_SUN1"
+      ]
+    },
+    {
+      "tick": 2574,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2574,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2598,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2622,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-11",
+        "-27"
+      ]
+    },
+    {
+      "tick": 2622,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 2622,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 2622,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2622,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_SUN2"
+      ]
+    },
+    {
+      "tick": 2622,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2646,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2658,
+      "op": "power_calligraphy_raise_brush",
+      "args": []
+    },
+    {
+      "tick": 2670,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 2670,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 2670,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2670,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-21",
+        "-48"
+      ]
+    },
+    {
+      "tick": 2670,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2670,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2694,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2704,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2704,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "10",
+        "-33"
+      ]
+    },
+    {
+      "tick": 2704,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2704,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 2706,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2706,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "35",
+        "-35"
+      ]
+    },
+    {
+      "tick": 2706,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 2706,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2714,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2714,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "33",
+        "-28"
+      ]
+    },
+    {
+      "tick": 2714,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2714,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2716,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 2716,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "-27"
+      ]
+    },
+    {
+      "tick": 2716,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2716,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 2718,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 2718,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "10"
+      ]
+    },
+    {
+      "tick": 2718,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 2718,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2742,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 2742,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "1",
+        "-22"
+      ]
+    },
+    {
+      "tick": 2742,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "3",
+        "3"
+      ]
+    },
+    {
+      "tick": 2742,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2754,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 2754,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "9",
+        "-72"
+      ]
+    },
+    {
+      "tick": 2754,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2754,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2766,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 2766,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "13",
+        "-48"
+      ]
+    },
+    {
+      "tick": 2766,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2766,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2790,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2790,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 2814,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2814,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_CHIKARA2"
+      ]
+    },
+    {
+      "tick": 2814,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 2838,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 2862,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 2862,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 2862,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2862,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-15",
+        "-57"
+      ]
+    },
+    {
+      "tick": 2862,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2862,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "-38"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 2886,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2910,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2910,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "9",
+        "-40"
+      ]
+    },
+    {
+      "tick": 2910,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 2910,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2911,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2911,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "25",
+        "-39"
+      ]
+    },
+    {
+      "tick": 2911,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2911,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2922,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 2922,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "-32"
+      ]
+    },
+    {
+      "tick": 2922,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 2922,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 2923,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 2923,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2923,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2923,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2934,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 2934,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-7",
+        "-19"
+      ]
+    },
+    {
+      "tick": 2934,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 2934,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 2958,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 2958,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "7",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2958,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 2958,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 2959,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 2959,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 2959,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2959,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2982,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 2982,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 2982,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "10"
+      ]
+    },
+    {
+      "tick": 2982,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 2982,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 2983,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "10"
+      ]
+    },
+    {
+      "tick": 2983,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-16",
+        "2"
+      ]
+    },
+    {
+      "tick": 2983,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2983,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2984,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 2984,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-14",
+        "12"
+      ]
+    },
+    {
+      "tick": 2984,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2984,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2985,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 2985,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-12",
+        "19"
+      ]
+    },
+    {
+      "tick": 2985,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2985,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2986,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 2986,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-6",
+        "20"
+      ]
+    },
+    {
+      "tick": 2986,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2986,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2987,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 2987,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "18"
+      ]
+    },
+    {
+      "tick": 2987,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 2987,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2988,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "15"
+      ]
+    },
+    {
+      "tick": 2988,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "20"
+      ]
+    },
+    {
+      "tick": 2988,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 2988,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 2988,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 3006,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_ONORE1"
+      ]
+    },
+    {
+      "tick": 3006,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3006,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3030,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3054,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 3054,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 3054,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3054,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3078,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3078,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 3078,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha1_seqData"
+      ]
+    },
+    {
+      "tick": 3078,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3080,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3082,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3126,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 3126,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3128,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3130,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3150,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 3150,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3152,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3154,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3174,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-48"
+      ]
+    },
+    {
+      "tick": 3174,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha3_seqData"
+      ]
+    },
+    {
+      "tick": 3198,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 3198,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 3198,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3198,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_COMMA1"
+      ]
+    },
+    {
+      "tick": 3198,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3222,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3238,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "12",
+        "-20"
+      ]
+    },
+    {
+      "tick": 3246,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 3246,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_KOKORO"
+      ]
+    },
+    {
+      "tick": 3246,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3246,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-24",
+        "-40"
+      ]
+    },
+    {
+      "tick": 3246,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3246,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_KOKORO"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-26",
+        "-13"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-2"
+      ]
+    },
+    {
+      "tick": 3270,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 3271,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3271,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-31",
+        "-2"
+      ]
+    },
+    {
+      "tick": 3271,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3271,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3272,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3272,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-37",
+        "5"
+      ]
+    },
+    {
+      "tick": 3272,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3272,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3282,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3282,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-7",
+        "-55"
+      ]
+    },
+    {
+      "tick": 3282,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "2"
+      ]
+    },
+    {
+      "tick": 3282,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3292,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 3294,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 3294,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 3294,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-7"
+      ]
+    },
+    {
+      "tick": 3294,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 3294,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3295,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 3295,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "8",
+        "4"
+      ]
+    },
+    {
+      "tick": 3295,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3295,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3296,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 3296,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "20",
+        "6"
+      ]
+    },
+    {
+      "tick": 3296,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3296,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3297,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 3297,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "30",
+        "7"
+      ]
+    },
+    {
+      "tick": 3297,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3297,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3298,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 3298,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "40",
+        "7"
+      ]
+    },
+    {
+      "tick": 3298,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3298,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3299,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 3299,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "46",
+        "6"
+      ]
+    },
+    {
+      "tick": 3299,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-3",
+        "0"
+      ]
+    },
+    {
+      "tick": 3299,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3306,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 3318,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3318,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_KOKORO1"
+      ]
+    },
+    {
+      "tick": 3318,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3342,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3354,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "7",
+        "-68"
+      ]
+    },
+    {
+      "tick": 3366,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 3366,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "17",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3366,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 3366,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 3378,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 3378,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "31",
+        "-69"
+      ]
+    },
+    {
+      "tick": 3378,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "2"
+      ]
+    },
+    {
+      "tick": 3378,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_furi_seqData",
+        "128"
+      ]
+    },
+    {
+      "tick": 3390,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 3390,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 3390,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3390,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_KOKORO3"
+      ]
+    },
+    {
+      "tick": 3390,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3414,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_set_people_state",
+      "args": [
+        "LITTLE_PEOPLE_DANCE"
+      ]
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 3438,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3438,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "set_tempo",
+      "args": [
+        "161"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "play_music",
+      "args": [
+        "s_shuji_bgm2_seqData"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 3462,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 3464,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 3466,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 3510,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3510,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 3510,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 3510,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 3533,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3533,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 3533,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3533,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 3534,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3534,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 3534,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3534,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3535,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 3535,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 3535,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 3535,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3558,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 3558,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 3582,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3582,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 3582,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3606,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3630,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 3630,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 3630,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3630,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3654,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3654,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 3654,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha1_seqData"
+      ]
+    },
+    {
+      "tick": 3654,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3656,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3658,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3702,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 3702,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3704,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3706,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3726,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 3726,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 3728,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3730,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 3750,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-48"
+      ]
+    },
+    {
+      "tick": 3750,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha3_seqData"
+      ]
+    },
+    {
+      "tick": 3774,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 3774,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 3774,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3774,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_COMMA1"
+      ]
+    },
+    {
+      "tick": 3774,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3798,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3814,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "12",
+        "-20"
+      ]
+    },
+    {
+      "tick": 3822,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 3822,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 3822,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3822,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-21",
+        "-48"
+      ]
+    },
+    {
+      "tick": 3822,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3822,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_CHIKARA"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 3846,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 3856,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3856,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "10",
+        "-33"
+      ]
+    },
+    {
+      "tick": 3856,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3856,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 3858,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 3858,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "35",
+        "-35"
+      ]
+    },
+    {
+      "tick": 3858,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 3858,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3866,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 3866,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "33",
+        "-28"
+      ]
+    },
+    {
+      "tick": 3866,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3866,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3868,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 3868,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "-27"
+      ]
+    },
+    {
+      "tick": 3868,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3868,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 3870,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 3870,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "10"
+      ]
+    },
+    {
+      "tick": 3870,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 3870,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3894,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 3894,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "1",
+        "-22"
+      ]
+    },
+    {
+      "tick": 3894,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "3",
+        "3"
+      ]
+    },
+    {
+      "tick": 3894,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 3906,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 3906,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "9",
+        "-72"
+      ]
+    },
+    {
+      "tick": 3906,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 3906,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 3918,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 3918,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "13",
+        "-48"
+      ]
+    },
+    {
+      "tick": 3918,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 3918,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 3942,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 3942,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 3966,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 3966,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_CHIKARA2"
+      ]
+    },
+    {
+      "tick": 3966,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 3990,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4014,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 4014,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_SUN"
+      ]
+    },
+    {
+      "tick": 4014,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4014,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-25",
+        "-47"
+      ]
+    },
+    {
+      "tick": 4014,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4014,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_SUN"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "-25"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 4038,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 4050,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4050,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-8",
+        "-25"
+      ]
+    },
+    {
+      "tick": 4050,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 4050,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 4051,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4051,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "5",
+        "-29"
+      ]
+    },
+    {
+      "tick": 4051,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4051,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4052,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 4052,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "39",
+        "-28"
+      ]
+    },
+    {
+      "tick": 4052,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4052,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4060,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 4062,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 4062,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "15",
+        "-48"
+      ]
+    },
+    {
+      "tick": 4062,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 4062,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4074,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 4074,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "-43"
+      ]
+    },
+    {
+      "tick": 4074,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-4"
+      ]
+    },
+    {
+      "tick": 4074,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 4075,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 4075,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "-22"
+      ]
+    },
+    {
+      "tick": 4075,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4075,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4076,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 4076,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "21"
+      ]
+    },
+    {
+      "tick": 4076,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4076,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4086,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 4086,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 4110,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_SUN1"
+      ]
+    },
+    {
+      "tick": 4110,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4110,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4134,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4158,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-11",
+        "-27"
+      ]
+    },
+    {
+      "tick": 4158,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 4158,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 4158,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4158,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_SUN2"
+      ]
+    },
+    {
+      "tick": 4158,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4182,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4194,
+      "op": "power_calligraphy_raise_brush",
+      "args": []
+    },
+    {
+      "tick": 4206,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 4206,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 4206,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4206,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 4206,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4206,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4230,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4230,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_RE"
+      ]
+    },
+    {
+      "tick": 4230,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_shuji_ho_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 4230,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-62"
+      ]
+    },
+    {
+      "tick": 4232,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-63"
+      ]
+    },
+    {
+      "tick": 4234,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-64"
+      ]
+    },
+    {
+      "tick": 4278,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4278,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-2",
+        "-32"
+      ]
+    },
+    {
+      "tick": 4278,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4278,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 4301,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4301,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-24"
+      ]
+    },
+    {
+      "tick": 4301,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4301,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 4302,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4302,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-8"
+      ]
+    },
+    {
+      "tick": 4302,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4302,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4303,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 4303,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "18"
+      ]
+    },
+    {
+      "tick": 4303,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-5"
+      ]
+    },
+    {
+      "tick": 4303,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4326,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 4326,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 4350,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4350,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_RE1"
+      ]
+    },
+    {
+      "tick": 4350,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4374,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4398,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 4398,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 4398,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4398,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 4422,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4422,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_COMMA"
+      ]
+    },
+    {
+      "tick": 4422,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha1_seqData"
+      ]
+    },
+    {
+      "tick": 4422,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 4424,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 4426,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 4470,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 4470,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 4472,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 4474,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 4494,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha2_seqData"
+      ]
+    },
+    {
+      "tick": 4494,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-34"
+      ]
+    },
+    {
+      "tick": 4496,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-35"
+      ]
+    },
+    {
+      "tick": 4498,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-36"
+      ]
+    },
+    {
+      "tick": 4518,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-2",
+        "-48"
+      ]
+    },
+    {
+      "tick": 4518,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_v_ha3_seqData"
+      ]
+    },
+    {
+      "tick": 4542,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 4542,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 4542,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4542,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_COMMA1"
+      ]
+    },
+    {
+      "tick": 4542,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4566,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4582,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "12",
+        "-20"
+      ]
+    },
+    {
+      "tick": 4590,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 4590,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 4590,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4590,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-15",
+        "-57"
+      ]
+    },
+    {
+      "tick": 4590,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4590,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_ONORE"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-5",
+        "-38"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4614,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 4638,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4638,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "9",
+        "-40"
+      ]
+    },
+    {
+      "tick": 4638,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 4638,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 4639,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4639,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "25",
+        "-39"
+      ]
+    },
+    {
+      "tick": 4639,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4639,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4650,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 4650,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "23",
+        "-32"
+      ]
+    },
+    {
+      "tick": 4650,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 4650,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 4651,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 4651,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 4651,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4651,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4662,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 4662,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-7",
+        "-19"
+      ]
+    },
+    {
+      "tick": 4662,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 4662,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 4686,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 4686,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "7",
+        "-23"
+      ]
+    },
+    {
+      "tick": 4686,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 4686,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 4687,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 4687,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "21",
+        "-23"
+      ]
+    },
+    {
+      "tick": 4687,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4687,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4710,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 4710,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 4710,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "10"
+      ]
+    },
+    {
+      "tick": 4710,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4710,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 4711,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "10"
+      ]
+    },
+    {
+      "tick": 4711,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-16",
+        "2"
+      ]
+    },
+    {
+      "tick": 4711,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4711,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4712,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 4712,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-14",
+        "12"
+      ]
+    },
+    {
+      "tick": 4712,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4712,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4713,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 4713,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-12",
+        "19"
+      ]
+    },
+    {
+      "tick": 4713,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4713,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4714,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 4714,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-6",
+        "20"
+      ]
+    },
+    {
+      "tick": 4714,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4714,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4715,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 4715,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "14",
+        "18"
+      ]
+    },
+    {
+      "tick": 4715,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4715,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4716,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "15"
+      ]
+    },
+    {
+      "tick": 4716,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "31",
+        "20"
+      ]
+    },
+    {
+      "tick": 4716,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 4716,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4716,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 4734,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_ONORE1"
+      ]
+    },
+    {
+      "tick": 4734,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4734,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4758,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4782,
+      "op": "power_calligraphy_remove_paper",
+      "args": []
+    },
+    {
+      "tick": 4782,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_KOKORO"
+      ]
+    },
+    {
+      "tick": 4782,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4782,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-24",
+        "-40"
+      ]
+    },
+    {
+      "tick": 4782,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4782,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_KOKORO"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-26",
+        "-13"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4806,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 4807,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 4807,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-31",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4807,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4807,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4808,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4808,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-37",
+        "5"
+      ]
+    },
+    {
+      "tick": 4808,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4808,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4818,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4818,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-7",
+        "-55"
+      ]
+    },
+    {
+      "tick": 4818,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "2"
+      ]
+    },
+    {
+      "tick": 4818,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4828,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 4830,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 4830,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 4830,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-4",
+        "-7"
+      ]
+    },
+    {
+      "tick": 4830,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4830,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4831,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 4831,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "8",
+        "4"
+      ]
+    },
+    {
+      "tick": 4831,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4831,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4832,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 4832,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "20",
+        "6"
+      ]
+    },
+    {
+      "tick": 4832,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4832,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4833,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 4833,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "30",
+        "7"
+      ]
+    },
+    {
+      "tick": 4833,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4833,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4834,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 4834,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "40",
+        "7"
+      ]
+    },
+    {
+      "tick": 4834,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4834,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4835,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 4835,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "46",
+        "6"
+      ]
+    },
+    {
+      "tick": 4835,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-3",
+        "0"
+      ]
+    },
+    {
+      "tick": 4835,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4842,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 4854,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4854,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_KOKORO1"
+      ]
+    },
+    {
+      "tick": 4854,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4878,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4890,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "7",
+        "-68"
+      ]
+    },
+    {
+      "tick": 4902,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 4902,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "17",
+        "-34"
+      ]
+    },
+    {
+      "tick": 4902,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 4902,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 4914,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 4914,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "31",
+        "-69"
+      ]
+    },
+    {
+      "tick": 4914,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "2"
+      ]
+    },
+    {
+      "tick": 4914,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_furi_seqData",
+        "128"
+      ]
+    },
+    {
+      "tick": 4926,
+      "op": "power_calligraphy_charge_brush_comma",
+      "args": []
+    },
+    {
+      "tick": 4926,
+      "op": "play_sfx_vol_pitch",
+      "args": [
+        "s_rabbit_break2_seqData",
+        "160",
+        "-512"
+      ]
+    },
+    {
+      "tick": 4926,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4926,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_KOKORO3"
+      ]
+    },
+    {
+      "tick": 4926,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 4950,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_remove_paper_slowly",
+      "args": []
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_set_people_state",
+      "args": [
+        "LITTLE_PEOPLE_END_BOW"
+      ]
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_FACE"
+      ]
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-29",
+        "-60"
+      ]
+    },
+    {
+      "tick": 4974,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 4974,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 4998,
+      "op": "set_tempo",
+      "args": [
+        "98"
+      ]
+    },
+    {
+      "tick": 4998,
+      "op": "play_music",
+      "args": [
+        "s_shuji_bgm3_seqData"
+      ]
+    },
+    {
+      "tick": 4998,
+      "op": "power_calligraphy_set_people_state",
+      "args": [
+        "LITTLE_PEOPLE_BOW"
+      ]
+    },
+    {
+      "tick": 4998,
+      "op": "set_marking_criteria",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 4998,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_FACE"
+      ]
+    },
+    {
+      "tick": 5092,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5094,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 5094,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "2",
+        "-61"
+      ]
+    },
+    {
+      "tick": 5094,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5094,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5095,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 5095,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "18",
+        "-67"
+      ]
+    },
+    {
+      "tick": 5095,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5095,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5096,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 5096,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "32",
+        "-65"
+      ]
+    },
+    {
+      "tick": 5096,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5096,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5097,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 5097,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "37",
+        "-57"
+      ]
+    },
+    {
+      "tick": 5097,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 5097,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5116,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 5118,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 5118,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "5",
+        "-49"
+      ]
+    },
+    {
+      "tick": 5118,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "4",
+        "1"
+      ]
+    },
+    {
+      "tick": 5118,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5136,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "5"
+      ]
+    },
+    {
+      "tick": 5136,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "14",
+        "-31"
+      ]
+    },
+    {
+      "tick": 5136,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5136,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5142,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "6"
+      ]
+    },
+    {
+      "tick": 5142,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "32",
+        "-33"
+      ]
+    },
+    {
+      "tick": 5142,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5142,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 5154,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "7"
+      ]
+    },
+    {
+      "tick": 5154,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "22",
+        "-22"
+      ]
+    },
+    {
+      "tick": 5154,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5154,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 5164,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5166,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "8"
+      ]
+    },
+    {
+      "tick": 5166,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "37",
+        "-18"
+      ]
+    },
+    {
+      "tick": 5166,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5166,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5170,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 5170,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "26",
+        "-16"
+      ]
+    },
+    {
+      "tick": 5170,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5170,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5174,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "10"
+      ]
+    },
+    {
+      "tick": 5174,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "31",
+        "-21"
+      ]
+    },
+    {
+      "tick": 5174,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5174,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5178,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 5178,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "32",
+        "-15"
+      ]
+    },
+    {
+      "tick": 5178,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5178,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5184,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "11"
+      ]
+    },
+    {
+      "tick": 5184,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-23",
+        "-48"
+      ]
+    },
+    {
+      "tick": 5184,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "2",
+        "2"
+      ]
+    },
+    {
+      "tick": 5184,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5188,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5190,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "12"
+      ]
+    },
+    {
+      "tick": 5190,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-6",
+        "-48"
+      ]
+    },
+    {
+      "tick": 5190,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5190,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5191,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 5191,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "4",
+        "-49"
+      ]
+    },
+    {
+      "tick": 5191,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 5191,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5196,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "13"
+      ]
+    },
+    {
+      "tick": 5196,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-28",
+        "-39"
+      ]
+    },
+    {
+      "tick": 5196,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5196,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5200,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "14"
+      ]
+    },
+    {
+      "tick": 5200,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-10",
+        "-40"
+      ]
+    },
+    {
+      "tick": 5200,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5200,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5201,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "15"
+      ]
+    },
+    {
+      "tick": 5201,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "0",
+        "-40"
+      ]
+    },
+    {
+      "tick": 5201,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5201,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5202,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 5202,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "11",
+        "-40"
+      ]
+    },
+    {
+      "tick": 5202,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "0"
+      ]
+    },
+    {
+      "tick": 5202,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5206,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "16"
+      ]
+    },
+    {
+      "tick": 5206,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-17",
+        "-39"
+      ]
+    },
+    {
+      "tick": 5206,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5206,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5212,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "17"
+      ]
+    },
+    {
+      "tick": 5212,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-32",
+        "-22"
+      ]
+    },
+    {
+      "tick": 5212,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5212,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 5218,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "17"
+      ]
+    },
+    {
+      "tick": 5218,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-4",
+        "-41"
+      ]
+    },
+    {
+      "tick": 5218,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "1"
+      ]
+    },
+    {
+      "tick": 5218,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5224,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "18"
+      ]
+    },
+    {
+      "tick": 5224,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "21",
+        "-27"
+      ]
+    },
+    {
+      "tick": 5224,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-2",
+        "-2"
+      ]
+    },
+    {
+      "tick": 5224,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing2_seqData"
+      ]
+    },
+    {
+      "tick": 5230,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "18"
+      ]
+    },
+    {
+      "tick": 5230,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-16",
+        "-14"
+      ]
+    },
+    {
+      "tick": 5230,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5230,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5236,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "19"
+      ]
+    },
+    {
+      "tick": 5236,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-20",
+        "-21"
+      ]
+    },
+    {
+      "tick": 5236,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 5236,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5237,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "20"
+      ]
+    },
+    {
+      "tick": 5237,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-15",
+        "-23"
+      ]
+    },
+    {
+      "tick": 5237,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "tick": 5237,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5238,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "21"
+      ]
+    },
+    {
+      "tick": 5238,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-10",
+        "-22"
+      ]
+    },
+    {
+      "tick": 5238,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5238,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5239,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "22"
+      ]
+    },
+    {
+      "tick": 5239,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-24",
+        "-11"
+      ]
+    },
+    {
+      "tick": 5239,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5239,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5242,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "22"
+      ]
+    },
+    {
+      "tick": 5242,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "1",
+        "-14"
+      ]
+    },
+    {
+      "tick": 5242,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5242,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5248,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "23"
+      ]
+    },
+    {
+      "tick": 5248,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "0",
+        "-22"
+      ]
+    },
+    {
+      "tick": 5248,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "tick": 5248,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_swing1_seqData"
+      ]
+    },
+    {
+      "tick": 5249,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "24"
+      ]
+    },
+    {
+      "tick": 5249,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "5",
+        "-23"
+      ]
+    },
+    {
+      "tick": 5249,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "tick": 5249,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5250,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "25"
+      ]
+    },
+    {
+      "tick": 5250,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "9",
+        "-21"
+      ]
+    },
+    {
+      "tick": 5250,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5250,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5251,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "26"
+      ]
+    },
+    {
+      "tick": 5251,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-10",
+        "-13"
+      ]
+    },
+    {
+      "tick": 5251,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5251,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5260,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "27"
+      ]
+    },
+    {
+      "tick": 5260,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-18",
+        "0"
+      ]
+    },
+    {
+      "tick": 5260,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "1",
+        "-1"
+      ]
+    },
+    {
+      "tick": 5260,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5262,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 5266,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "28"
+      ]
+    },
+    {
+      "tick": 5266,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-5",
+        "-2"
+      ]
+    },
+    {
+      "tick": 5266,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "0"
+      ]
+    },
+    {
+      "tick": 5266,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5268,
+      "op": "play_sfx",
+      "args": [
+        "s_furi_seqData"
+      ]
+    },
+    {
+      "tick": 5269,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "28"
+      ]
+    },
+    {
+      "tick": 5269,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-7",
+        "-8"
+      ]
+    },
+    {
+      "tick": 5269,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "0"
+      ]
+    },
+    {
+      "tick": 5269,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5272,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "29"
+      ]
+    },
+    {
+      "tick": 5272,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-1",
+        "1"
+      ]
+    },
+    {
+      "tick": 5272,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "-1",
+        "-3"
+      ]
+    },
+    {
+      "tick": 5272,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5274,
+      "op": "play_sfx",
+      "args": [
+        "s_f_shuji_start_seqData"
+      ]
+    },
+    {
+      "tick": 5278,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "29"
+      ]
+    },
+    {
+      "tick": 5278,
+      "op": "power_calligraphy_set_brush_raised",
+      "args": [
+        "-17",
+        "2"
+      ]
+    },
+    {
+      "tick": 5278,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "2",
+        "3"
+      ]
+    },
+    {
+      "tick": 5278,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "30"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "power_calligraphy_set_brush_down",
+      "args": [
+        "-13",
+        "16"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "power_calligraphy_offset_paper",
+      "args": [
+        "0",
+        "-4"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "play_sfx",
+      "args": [
+        "NULL"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "play_sfx_vol",
+      "args": [
+        "s_f_shuji_v_funuue_seqData",
+        "256"
+      ]
+    },
+    {
+      "tick": 5286,
+      "op": "power_calligraphy_charge_brush",
+      "args": []
+    },
+    {
+      "tick": 5310,
+      "op": "power_calligraphy_start_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 5310,
+      "op": "power_calligraphy_set_next_input",
+      "args": [
+        "KANA_INPUT_FACE1"
+      ]
+    },
+    {
+      "tick": 5310,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_DEFAULT"
+      ]
+    },
+    {
+      "tick": 5334,
+      "op": "power_calligraphy_end_charge_effect",
+      "args": []
+    },
+    {
+      "tick": 5382,
+      "op": "mod_music_volume",
+      "args": [
+        "0",
+        "84"
+      ]
+    },
+    {
+      "tick": 5430,
+      "op": "power_calligraphy_remove_paper_slowly",
+      "args": []
+    },
+    {
+      "tick": 5430,
+      "op": "power_calligraphy_set_kana",
+      "args": [
+        "KANA_END_KANJI"
+      ]
+    },
+    {
+      "tick": 5430,
+      "op": "power_calligraphy_set_kana_cel",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 5430,
+      "op": "power_calligraphy_set_brush",
+      "args": [
+        "60",
+        "16",
+        "0"
+      ]
+    },
+    {
+      "tick": 5454,
+      "op": "run",
+      "args": [
+        "scene_stop_music"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "set_music_volume",
+      "args": [
+        "256"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "stop_tracking_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 5478,
+      "op": "play_music",
+      "args": [
+        "s_shuji_bgm_end_seqData"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "rest_beats",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "power_calligraphy_set_people_state",
+      "args": [
+        "LITTLE_PEOPLE_END_BOW"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "rest_beats",
+      "args": [
+        "9"
+      ]
+    },
+    {
+      "tick": 5478,
+      "op": "disable_pause_menu",
+      "args": []
+    }
+  ]
+}

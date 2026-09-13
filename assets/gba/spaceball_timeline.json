@@ -1,0 +1,1230 @@
+{
+  "entry": "script_spaceball_main",
+  "endTick": 3504,
+  "events": [
+    {
+      "tick": 0,
+      "op": "set_results_header",
+      "args": [
+        "D_0805bff8"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "import_marking_criteria",
+      "args": [
+        "spaceball_marking_criteria"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "run",
+      "args": [
+        "gameplay_set_mercy_count",
+        "1"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "stop_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 0,
+      "op": "set_tempo",
+      "args": [
+        "105"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_music_volume",
+      "args": [
+        "240"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "96"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_music_volume",
+      "args": [
+        "60"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "mod_music_volume",
+      "args": [
+        "180",
+        "192"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "play_music",
+      "args": [
+        "s_shibafu1_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 24,
+      "op": "enable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 72,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 75,
+      "op": "run",
+      "args": [
+        "scene_stop_music"
+      ]
+    },
+    {
+      "tick": 96,
+      "op": "play_music",
+      "args": [
+        "s_shibafu1_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 168,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 171,
+      "op": "run",
+      "args": [
+        "scene_stop_music"
+      ]
+    },
+    {
+      "tick": 192,
+      "op": "play_music",
+      "args": [
+        "s_shibafu1_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 192,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 216,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 240,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 264,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 267,
+      "op": "run",
+      "args": [
+        "scene_stop_music"
+      ]
+    },
+    {
+      "tick": 288,
+      "op": "play_music",
+      "args": [
+        "s_shibafu1_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 288,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 312,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 336,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 360,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 363,
+      "op": "run",
+      "args": [
+        "scene_stop_music"
+      ]
+    },
+    {
+      "tick": 384,
+      "op": "spaceball_exit_loop_if_no_miss",
+      "args": []
+    },
+    {
+      "tick": 384,
+      "op": "play_music",
+      "args": [
+        "s_shibafu1_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 384,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfe00",
+        "70"
+      ]
+    },
+    {
+      "tick": 384,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 408,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 432,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 456,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 468,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "12"
+      ]
+    },
+    {
+      "tick": 480,
+      "op": "start_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 528,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 552,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 576,
+      "op": "start_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 576,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 576,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 600,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 624,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 648,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 672,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 696,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 720,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "96"
+      ]
+    },
+    {
+      "tick": 720,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 744,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 768,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 792,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 816,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 840,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 864,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 864,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 936,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 960,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "96"
+      ]
+    },
+    {
+      "tick": 960,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 960,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 984,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1008,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1032,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1056,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1080,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1104,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1128,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1152,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1176,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1200,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1224,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1248,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "24"
+      ]
+    },
+    {
+      "tick": 1248,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1248,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 1320,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1344,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "96"
+      ]
+    },
+    {
+      "tick": 1344,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1344,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1368,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1392,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1416,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1440,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "24"
+      ]
+    },
+    {
+      "tick": 1440,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 1512,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "24"
+      ]
+    },
+    {
+      "tick": 1512,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1536,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1560,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1584,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1608,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1632,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "24"
+      ]
+    },
+    {
+      "tick": 1632,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1632,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 1704,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1728,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "96"
+      ]
+    },
+    {
+      "tick": 1728,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1728,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1752,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1776,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1800,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1824,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1848,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1872,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1896,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1896,
+      "op": "spaceball_set_ufo_anim",
+      "args": [
+        "UFO_SWAY"
+      ]
+    },
+    {
+      "tick": 1920,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff40",
+        "24"
+      ]
+    },
+    {
+      "tick": 1920,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1944,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1968,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff80",
+        "24"
+      ]
+    },
+    {
+      "tick": 1968,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 1968,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 1992,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 1992,
+      "op": "spaceball_set_ufo_anim",
+      "args": [
+        "UFO_OPEN"
+      ]
+    },
+    {
+      "tick": 2016,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "24"
+      ]
+    },
+    {
+      "tick": 2016,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2016,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 2064,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "48"
+      ]
+    },
+    {
+      "tick": 2088,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2112,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2112,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2136,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2136,
+      "op": "spaceball_set_ufo_anim",
+      "args": [
+        "UFO_SWAY"
+      ]
+    },
+    {
+      "tick": 2160,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff38",
+        "24"
+      ]
+    },
+    {
+      "tick": 2160,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2184,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2208,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff6a",
+        "24"
+      ]
+    },
+    {
+      "tick": 2208,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2208,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2232,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2256,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff9c",
+        "24"
+      ]
+    },
+    {
+      "tick": 2256,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2280,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2304,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2328,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2328,
+      "op": "spaceball_set_ufo_anim",
+      "args": [
+        "UFO_OPEN"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "spaceball_set_batter_sprite",
+      "args": [
+        "BATTER_PINK"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "24"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2376,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2400,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xf000",
+        "96"
+      ]
+    },
+    {
+      "tick": 2400,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2400,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 2472,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2496,
+      "op": "spaceball_set_batter_sprite",
+      "args": [
+        "BATTER_RED"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2520,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2544,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2568,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2592,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2616,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2640,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2664,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2688,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2712,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2736,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2760,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2784,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 2856,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2880,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "192"
+      ]
+    },
+    {
+      "tick": 2880,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2904,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2928,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 2952,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 2976,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 3000,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 3024,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 3048,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 3072,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3072,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 3096,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 3120,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LOW"
+      ]
+    },
+    {
+      "tick": 3144,
+      "op": "spaceball_prep_pitcher",
+      "args": []
+    },
+    {
+      "tick": 3168,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd00",
+        "24"
+      ]
+    },
+    {
+      "tick": 3168,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3168,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 3254,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfd80",
+        "10"
+      ]
+    },
+    {
+      "tick": 3280,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfe00",
+        "8"
+      ]
+    },
+    {
+      "tick": 3306,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xfe80",
+        "6"
+      ]
+    },
+    {
+      "tick": 3332,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xff00",
+        "4"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "spaceball_zoom_camera",
+      "args": [
+        "0xe000",
+        "132"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "spaceball_set_ball_sprite",
+      "args": [
+        "RICE_BALL"
+      ]
+    },
+    {
+      "tick": 3360,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_HIGH"
+      ]
+    },
+    {
+      "tick": 3480,
+      "op": "stop_tracking_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 3480,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": ".end",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": ".include",
+      "args": [
+        "\"include/beatscript.inc\""
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": ".include",
+      "args": [
+        "\"games/spaceball/macros.inc\""
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": ".section",
+      "args": [
+        ".script.entry"
+      ]
+    }
+  ]
+}
