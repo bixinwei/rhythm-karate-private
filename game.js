@@ -1872,6 +1872,13 @@ touch.addEventListener('pointerdown', () => portedModes[mode] ? portedPunch() : 
 // even with viewport constraints.  The game owns touch-end on both screens.
 for (const canvas of [stage, touch]) canvas.addEventListener('touchend', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+// Prevent iOS/Android long-press selection, callout menus and image dragging
+// while interacting with either game screen.
+for (const eventName of ['contextmenu', 'selectstart', 'dragstart']) {
+  document.addEventListener(eventName, (event) => {
+    if (event.target instanceof HTMLCanvasElement || event.target.closest?.('#game')) event.preventDefault();
+  }, { passive: false });
+}
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); if (game.classList.contains('hidden')) start(); else portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch(); }
   if (event.code === 'F1' && !game.classList.contains('hidden')) { event.preventDefault(); mode === 'tweezers' ? tweezersStart() : start(); }
