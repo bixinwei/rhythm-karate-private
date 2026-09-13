@@ -1,1 +1,1 @@
-{"volume":110,"events":[{"beat":0.0,"length":0.5,"note":74,"velocity":127,"program":127,"channel":0,"sample":470,"fixed":true}]}
+{"volume":110,"events":[{"beat":0.0,"length":0.5,"note":74,"velocity":127,"program":127,"channel":0,"sample":470,"fixed":true,"playNote":60,"baseNote":60,"sampleRate":13379}]}
