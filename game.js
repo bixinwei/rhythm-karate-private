@@ -1040,6 +1040,7 @@ function animationCell(sequence, elapsedFrames, loop = false) {
   return sequence.at(-1)[0];
 }
 function framesBetweenTicks(from, to) { return Math.max(0, (secondsAtTick(to) - secondsAtTick(from)) * 60); }
+function signedFramesBetweenTicks(from, to) { return (secondsAtTick(to) - secondsAtTick(from)) * 60; }
 async function loadPortedMode(id) {
   if (ported.data[id]) return ported.data[id];
   const prefix = gameAssetPrefix(id);
@@ -1522,7 +1523,8 @@ function nightWalkWorldShift(tick) {
     // bounce, which is not what the GBA engine does.
     if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
     const elapsed = framesBetweenTicks(cue.actionTick,tick);
-    const duration = Math.max(1,framesBetweenTicks(cue.actionTick,cue.actionTick+20));
+    const timingOffset = signedFramesBetweenTicks(cue.hit, cue.actionTick);
+    const duration = Math.max(1, framesBetweenTicks(cue.hit, cue.hit + 20) + timingOffset);
     if (elapsed < duration && (!active || cue.actionTick > active.actionTick)) active = { cue, elapsed, duration };
     else completed++;
   }
@@ -1574,7 +1576,10 @@ function drawPorted(tick, cfg) {
   if (tick < ported.actionAt || actionFrame >= cfg.action.length * 2) actorCell = cfg.idle;
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
   if (mode === 'night_walk' && ported.actionAt >= 0) {
-    const elapsed = framesBetweenTicks(ported.actionAt,tick), duration = Math.max(1,framesBetweenTicks(ported.actionAt,ported.actionAt+20));
+    const elapsed = framesBetweenTicks(ported.actionAt,tick);
+    const actionOffset = ported.actionCue ? signedFramesBetweenTicks(ported.actionCue.hit, ported.actionAt) : 0;
+    const actionBase = ported.actionCue?.hit ?? ported.actionAt;
+    const duration = Math.max(1, framesBetweenTicks(actionBase, actionBase + 20) + actionOffset);
     const age = Math.max(0,elapsed/duration);
     if (ported.actionHit && age < 1) {
       if (!ported.actionCue?.endOfBridge) actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256;
