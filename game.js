@@ -90,6 +90,9 @@ let judgement = '';
 let active = [];
 let touchFx = [];
 let frame = 0;
+// No-op in normal gameplay. Local audit mode replaces this with a publisher
+// so a browser replay can sample state without changing the visible UI.
+let auditStatePublisher = () => {};
 let audioCtx;
 let lastMusicBeat = -99;
 let originalBgmEvents = [];
@@ -379,6 +382,7 @@ function loop() {
   if (beat > SONG_END) return finish();
   update(beat);
   render(beat);
+  auditStatePublisher();
   frame = requestAnimationFrame(loop);
 }
 
@@ -440,7 +444,7 @@ function tweezersStart() {
 }
 function tweezersLoop(beat) {
   if (beat > 120) return finish();
-  tweezersUpdate(beat); tweezersRender(beat); frame = requestAnimationFrame(loop);
+  tweezersUpdate(beat); tweezersRender(beat); auditStatePublisher(); frame = requestAnimationFrame(loop);
 }
 function tweezersUpdate(beat) {
   if (tweezers.verticalOffset > 0) tweezers.verticalOffset = Math.max(0, tweezers.verticalOffset - 1 / 37.5);
@@ -999,6 +1003,7 @@ function drawTouchScreen() {
 
 function finish() {
   running = false;
+  auditStatePublisher();
   setTimeout(quit, 120);
 }
 
@@ -1011,7 +1016,7 @@ const portedModes = {
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, cueSpawningDisabled: false, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
 // Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
 let gbaRandomState = 0;
 function gbaRandom(max) {
@@ -1438,7 +1443,7 @@ function startPortedMode(id) {
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
       return cue;
     });
-    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.starWandAt = -1; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.cueSpawningDisabled = false; ported.starWandAt = -1; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
@@ -1681,7 +1686,9 @@ function portedLoop() {
     cue.state = 'miss';
     if (mode === 'power_calligraphy') playPortedSfx('miss');
     if (mode === 'night_walk' && cue.endOfBridge && ported.failedAt < 0) {
-      ported.failedAt = tick; ported.failedCue = cue; playPortedSfx('fall', tick);
+      ported.failedAt = tick; ported.failedCue = cue; ported.cueSpawningDisabled = true;
+      for (const future of ported.cues) if (future.spawn > tick && future.state === 'fresh') future.state = 'disabled';
+      playPortedSfx('fall', tick);
     }
   }
   if (mode === 'night_walk') for (const cue of ported.cues) {
@@ -1702,7 +1709,7 @@ function portedLoop() {
     const fadeTicks = 12 * tempoAtTick(ported.failedAt) / 150;
     if (tick - ported.failedAt > 192 + fadeTicks + 48) return finish();
   }
-  drawPorted(tick, cfg); frame = requestAnimationFrame(loop);
+  drawPorted(tick, cfg); auditStatePublisher(); frame = requestAnimationFrame(loop);
 }
 function drawPorted(tick, cfg) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
@@ -1900,7 +1907,7 @@ function drawPorted(tick, cfg) {
   for (const cue of ported.cues) {
     const tail = mode === 'night_walk' ? 96 : mode === 'spaceball' ? 180 : mode === 'samurai_slice' ? 60 : 30;
     const visibleFrom = mode === 'samurai_slice' ? cue.visualSpawn : cue.spawn;
-    if (cue.state === 'done' || tick < visibleFrom || tick > cue.hit + tail) continue;
+    if (cue.state === 'done' || cue.state === 'disabled' || tick < visibleFrom || tick > cue.hit + tail) continue;
     const p = Math.max(0, Math.min(1, (tick - cue.spawn) / Math.max(1, cue.hit - cue.spawn)));
     if (mode === 'spaceball') {
       const flight = spaceballFlight(cue,tick), { landingTicks, x, y } = flight;
@@ -2042,6 +2049,13 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
   };
   window.__rhythmAudit = audit;
+  auditStatePublisher = () => {
+    const value = audit.state();
+    value.nextCue = audit.nextCue();
+    value.cueSpawningDisabled = ported.cueSpawningDisabled;
+    value.cueStates = ported.cues.map(cue => ({ spawn: cue.spawn, hit: cue.hit, state: cue.state, perfect: cue.perfect ?? null }));
+    document.body.dataset.auditState = JSON.stringify(value);
+  };
   document.addEventListener('rhythm-audit', () => {
     const [command, value] = (document.body.dataset.auditCommand ?? 'state').split(':');
     if (command === 'jump') audit.jumpToTick(Number(value));
