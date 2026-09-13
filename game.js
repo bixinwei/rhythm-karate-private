@@ -1146,6 +1146,10 @@ function drawPorted(tick, cfg) {
   }
   drawPortedCell(frames[0], actorX, actorY);
   if (mode === 'power_calligraphy') {
+    const kanaEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana' && e.tick <= tick).at(-1);
+    const celEvent = ported.timeline.events.filter(e => e.op === 'power_calligraphy_set_kana_cel' && e.tick <= tick).at(-1);
+    const kana = { KANA_ONORE:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], KANA_CHIKARA:[21,22,23,24,25,26,27,28,29,30,31,32], KANA_SUN:[39,40,41,42,43,44,45,46,47,48,49], KANA_KOKORO:[56,57,58,59,60,61,62,63,64,65,66,67,68,69], KANA_RE:[80,81,82,83,84,85], KANA_COMMA:[88,89], KANA_FACE:[92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123], KANA_END_KANJI:[127] };
+    if (kanaEvent && celEvent) drawPortedCell(kana[kanaEvent.args[0]]?.[Number(celEvent.args[0])] ?? 0, 120, 84, 4);
     const brush = ported.timeline.events.filter(e => /^power_calligraphy_set_brush_(raised|down)$/.test(e.op) && e.tick <= tick).at(-1);
     if (brush) drawPortedCell(brush.op.endsWith('_down') ? 129 : 128, 120 + Number(brush.args[0]), 84 + Number(brush.args[1]), 4);
   }
