@@ -49,6 +49,9 @@ check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.i
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
 check(game.includes('samuraiSpawns.find(item => item.tick === expectedSpawnTick)') && !game.includes('samuraiSpawns.filter(item => item.tick <= event.tick)'), 'samurai: visual spawn must use exact event02 pairing');
 check(game.includes('tempoAtTick(event.tick)/120'), 'samurai: phrase SFX tempo conversion mismatch');
+const samuraiResultEvents = events(samurai, 'samurai_slice_event06');
+check(samuraiResultEvents.length === 4 && samuraiResultEvents.every((event, i) => Number(event.args[0]) === i + 1), 'samurai: result-phase event06 sequence differs from source');
+check(samuraiResultEvents[0]?.tick > samuraiCues.at(-1)?.tick, 'samurai: result-phase event06 begins before final gameplay cue');
 
 // Night Walk: gap jumps are the only operation allowed to move the shared
 // world origin; ordinary jumps must remain actor-only.
