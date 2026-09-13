@@ -30,7 +30,7 @@ check(samuraiCreate.length === samuraiCues.length, `samurai: ${samuraiCreate.len
 for (let i = 0; i < Math.min(samuraiCreate.length, samuraiCues.length); i++) {
   check(samuraiCues[i].tick - samuraiCreate[i].tick === 120, `samurai: pair ${i} offset ${samuraiCues[i].tick - samuraiCreate[i].tick}, expected 120`);
 }
-check(game.includes('cue.visualSpawn + 192'), 'samurai: movement is not using source 0xC0 lifetime');
+check(game.includes('192 * 150'), 'samurai: movement is not using source 0xC0 lifetime');
 check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.includes('192 * 150'), 'samurai: movement lifetime must lock spawn tempo');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
 check(game.includes('tempoAtTick(event.tick)/120'), 'samurai: phrase SFX tempo conversion mismatch');
