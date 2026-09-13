@@ -406,6 +406,9 @@ function tweezersStart() {
   const context = audio();
   const audioContextReady = context.state === 'suspended' ? context.resume() : Promise.resolve();
   mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
+  // Falling-hair rotation is driven by the GBA engine RNG, so reset the
+  // standalone level to a deterministic stream for reproducible replays.
+  tweezersRandomState = 0;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode');
   // `rhythm_tweezers_init_tweezers` creates one visible sprite at -0x200.
@@ -483,7 +486,7 @@ function tweezersUpdate(beat) {
       // Falling hairs preserve the plucker's orbit angle and use the same
       // base -0x200 affine rotation as the GBA engine.
       tweezers.falling.push({ x: pos.x, y: pos.y, spawnedAt: beat, orbitRotation: pos.rotation,
-        rotationSpeed: Math.floor(Math.random() * 31) - 15 });
+        rotationSpeed: tweezersRandom(0x1f) - 15 });
     }
     // The long-cue updater keeps the cue sprite alive until duration * 2,
     // just like the short-cue updater. Pull completion only changes the cel
@@ -1014,6 +1017,11 @@ let gbaRandomState = 0;
 function gbaRandom(max) {
   gbaRandomState = (gbaRandomState * 109 + 1021) & 0xffff;
   return Math.floor((gbaRandomState * max) / 0x10000);
+}
+let tweezersRandomState = 0;
+function tweezersRandom(max) {
+  tweezersRandomState = (tweezersRandomState * 109 + 1021) & 0xffff;
+  return Math.floor((tweezersRandomState * max) / 0x10000);
 }
 let spaceballRandomState = 0, spaceballStars = [];
 function spaceballRandom(max) {

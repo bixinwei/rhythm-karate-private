@@ -67,6 +67,7 @@ check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset')
 check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') && game.includes('framesBetweenTicks(actionBase, actionBase + 20) - actionOffset'), 'night_walk: jump timing offset sign differs from source');
 check(game.includes('const timingOffset = cue.actionTick - cue.hit') && game.includes('const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit'), 'night_walk: hit offset must remain in source tick units');
 check(game.includes('const hitOffsetTicks = (beat - hair.hitBeat) * 24'), 'tweezers: pull timing offset must use source tick units');
+check(game.includes('tweezersRandom(0x1f) - 15') && !game.includes('rotationSpeed: Math.floor(Math.random()'), 'tweezers: falling-hair rotation must use deterministic GBA RNG');
 check(game.includes('tempoAtTick(event.tick) / 120') && game.includes('Calligraphy changes tempo mid-song'), 'calligraphy: timeline SFX ignore active tempo');
 check(game.includes('const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120'), 'audio: ported SFX sequence offsets ignore trigger tempo');
 check(game.includes('192 + fadeTicks + 48'), 'night_walk: end script duration is shorter than source');
