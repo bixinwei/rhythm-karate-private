@@ -60,6 +60,10 @@ check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'ni
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
 check(game.includes('night_walk_init_balloons') && game.includes('ported.balloons.push') && game.includes('balloon.palette * 1000'), 'night_walk: balloon palette namespaces are not applied');
 check(game.includes('drawPortedCell(92 + balloon.palette * 1000, balloon.x, balloon.y, 4)') && game.includes('framesBetweenTicks(pop.tick, tick) >= 2'), 'night_walk: balloon pop cel/lifetime missing');
+const nightManifest = readJson('night_walk/frames.json');
+for (const palette of [1, 2, 3, 4]) for (const cel of [89, 90, 91, 92]) {
+  check(nightManifest[String(cel + palette * 1000)] != null, `night_walk: missing exported palette cel ${cel + palette * 1000}`);
+}
 
 // Verify every configured music/SFX JSON exists, preventing silent cues.
 for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)\}/g)) {
