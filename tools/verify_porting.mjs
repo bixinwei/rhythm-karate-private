@@ -21,6 +21,7 @@ check(game.includes('function resetSpaceballStar(index, zoom)') && game.includes
 check(game.includes('drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 4 * scale)'), 'spaceball: star affine scale is not derived from z');
 check(game.includes('drawSpaceballEntity(poof,34,52,0,zoom)') && game.includes('drawSpaceballEntity(poof,2,52,0,zoom)'), 'spaceball: landing poofs do not share source entity transform');
 check(game.includes('for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZoom)'), 'spaceball: star field amount differs from source');
+check(game.includes('const closeSeq = [[close[1],3],[close[2],3],[close[3],3],[close[4],20]]') && game.includes('const farSeq = [[far[1],3],[far[2],3],[far[3],3],[far[4],20]]'), 'spaceball: batter animation cel durations differ from source');
 const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
 check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
 

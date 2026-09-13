@@ -1517,14 +1517,17 @@ function drawSpaceballScene(tick) {
   const close = [[1,2,3,4,5],[9,10,11,12,13],[30,31,32,33,34]][batterType] ?? [1,2,3,4,5];
   const far = [[44,44,45,45,46],[47,47,48,48,49],[50,50,51,51,52]][batterType] ?? [44,44,45,45,46];
   const swingFrames = framesBetweenTicks(ported.actionAt,tick);
-  const swingStep = swingFrames < 9 ? Math.min(3, Math.floor(swingFrames/3)+1) : swingFrames < 20 ? 4 : 0;
+  const closeSeq = [[close[1],3],[close[2],3],[close[3],3],[close[4],20]];
+  const farSeq = [[far[1],3],[far[2],3],[far[3],3],[far[4],20]];
   const ufoEvent = latestPortedEvent('spaceball_set_ufo_anim',tick);
   const ufoOpen = ufoEvent && portedEnum(ufoEvent.args[0], { UFO_OPEN:1, UFO_SWAY:0 });
   const ufoCell = ufoOpen ? animationCell([[55,4],[60,20],[59,10],[58,10],[55,10]],framesBetweenTicks(ufoEvent.tick,tick)) : animationCell([[55,4],[54,4],[53,4],[54,4],[55,4],[56,4],[57,4],[56,4]],frame,true);
   drawSpaceballEntity(ufoCell,0,9,0,zoom);
   const pitcherThrow = ported.cues.find(c => tick >= c.spawn && tick < c.spawn + 6);
   drawSpaceballEntity(pitcherThrow ? animationCell([[16,4],[14,2]],framesBetweenTicks(pitcherThrow.spawn,tick)) : 15,-50,48,0,zoom);
-  drawSpaceballEntity(close[swingStep],50,0,0,zoom,0,far[swingStep]);
+  const swinging = ported.actionAt >= 0 && swingFrames < 29;
+  drawSpaceballEntity(swinging ? animationCell(closeSeq,swingFrames) : close[0],50,0,0,zoom,0,
+    swinging ? animationCell(farSeq,swingFrames) : far[0]);
 }
 function samuraiPowerAt(tick) {
   let hits = 0;
