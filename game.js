@@ -1525,7 +1525,8 @@ function drawSpaceballScene(tick) {
   drawSpaceballEntity(ufoCell,0,9,0,zoom);
   const pitcherThrow = ported.cues.find(c => tick >= c.spawn && tick < c.spawn + 6);
   drawSpaceballEntity(pitcherThrow ? animationCell([[16,4],[14,2]],framesBetweenTicks(pitcherThrow.spawn,tick)) : 15,-50,48,0,zoom);
-  const swinging = ported.actionAt >= 0 && swingFrames < 29;
+  const swingDuration = ported.actionAt >= 0 ? framesBetweenTicks(ported.actionAt, ported.actionAt + 10) : 0;
+  const swinging = ported.actionAt >= 0 && swingFrames < swingDuration;
   drawSpaceballEntity(swinging ? animationCell(closeSeq,swingFrames) : close[0],50,0,0,zoom,0,
     swinging ? animationCell(farSeq,swingFrames) : far[0]);
 }
