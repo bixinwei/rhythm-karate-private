@@ -1758,7 +1758,10 @@ function drawPorted(tick, cfg) {
       // demon short of the player (and desynchronised its hop animation).
       const travel = Math.max(0, Math.min(1, (tick - cue.visualSpawn) / Math.max(1, cue.hit - cue.visualSpawn)));
       const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
-      const phase = travel;
+      // Demon hop/hover cels loop independently of horizontal travel in the
+      // original sprite engine; tying this phase to travel made paired cues
+      // stretch the hop and visibly drift away from the beat.
+      const phase = ((tick - cue.visualSpawn) % 24 + 24) % 24 / 24;
       let hop = 0;
       if (cue.objectType === 0) hop = 24 * 4 * phase * (1-phase);
       else if (cue.objectType === 1) hop = (tick-cue.visualSpawn < 96 ? 24 : 48) * 4 * phase * (1-phase);
