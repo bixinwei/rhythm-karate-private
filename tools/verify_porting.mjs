@@ -32,6 +32,7 @@ for (let i = 0; i < Math.min(samuraiCreate.length, samuraiCues.length); i++) {
 }
 check(game.includes('cue.visualSpawn + 192'), 'samurai: movement is not using source 0xC0 lifetime');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
+check(game.includes('tempoAtTick(event.tick)/120'), 'samurai: phrase SFX tempo conversion mismatch');
 
 // Night Walk: gap jumps are the only operation allowed to move the shared
 // world origin; ordinary jumps must remain actor-only.
