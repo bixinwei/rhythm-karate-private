@@ -1664,15 +1664,17 @@ function drawPorted(tick, cfg) {
     // the characteristic pop animation.
     for (let i=0; i<Math.max(0,ported.balloons.length-popped); i++) {
       const balloon = ported.balloons[i];
-      // The palette is part of the original sprite state; exported cels are
-      // shared, so never fabricate a cell index from the palette number.
-      const cell = [89,90,91,92][(balloon.variant + balloonFrame + i * 2) % 4];
+      // export_game_frames.py bakes the runtime OBJ palette offsets into
+      // numeric namespaces (1000, 2000, ...). Select the same palette bank
+      // that night_walk_init_balloons assigns to each sprite.
+      const baseCell = [89,90,91,92][(balloon.variant + balloonFrame + i * 2) % 4];
+      const cell = baseCell + balloon.palette * 1000;
       drawPortedCell(cell, balloon.x, balloon.y, 4);
     }
     for (let j = 0; j < popped; j++) {
       const pop = popEvents[j], balloon = ported.balloons[ported.balloons.length - 1 - j];
       if (!balloon || framesBetweenTicks(pop.tick, tick) >= 2) continue;
-      drawPortedCell(92, balloon.x, balloon.y, 4);
+      drawPortedCell(92 + balloon.palette * 1000, balloon.x, balloon.y, 4);
     }
   }
   if (mode === 'spaceball') drawSpaceballScene(tick);
