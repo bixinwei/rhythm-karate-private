@@ -507,10 +507,12 @@ function tweezersPunch() {
   const perfectWindow = hair.fast || hair.type === 'long' ? 4 / 24 : 3 / 24;
   const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
   if (hair.type === 'long') {
-    const hitOffsetFrames = (beat - hair.hitBeat) * 37.5;
+    // gameplay_get_last_hit_offset() is in ticks; at 96 BPM one beat is 24
+    // ticks. The engine subtracts that tick offset from the frame duration.
+    const hitOffsetTicks = (beat - hair.hitBeat) * 24;
     hair.pull = true; hair.pullAt = beat; hair.pullRotation = tweezersOrbitAt(beat).rotation;
     // Source: ticks_to_frames(0x0C) - gameplay_get_last_hit_offset().
-    hair.pullDuration = Math.max(1, 18.75 - hitOffsetFrames) / 37.5;
+    hair.pullDuration = Math.max(1, 18.75 - hitOffsetTicks) / 37.5;
     tweezers.tweezerAction = { kind: 'hidden', at: beat };
   }
   else tweezers.tweezerAction = { kind: perfect ? 'hit' : 'barely', at: beat };
@@ -1579,7 +1581,9 @@ function nightWalkWorldShift(tick) {
     // bounce, which is not what the GBA engine does.
     if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
     const elapsed = framesBetweenTicks(cue.actionTick,tick);
-    const timingOffset = signedFramesBetweenTicks(cue.hit, cue.actionTick);
+    // gameplay_get_last_hit_offset() is reported in BeatScript ticks, while
+    // the base jump duration is ticks_to_frames(0x14), exactly as in GBA.
+    const timingOffset = cue.actionTick - cue.hit;
     // night_walk_play_yan_jump uses ticks_to_frames(0x14) - timingOffset.
     // An early hit (negative offset) therefore lengthens the jump, while a
     // late hit shortens it, exactly as in the GBA engine.
@@ -1642,7 +1646,7 @@ function drawPorted(tick, cfg) {
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
   if (mode === 'night_walk' && ported.actionAt >= 0) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick);
-    const actionOffset = ported.actionCue ? signedFramesBetweenTicks(ported.actionCue.hit, ported.actionAt) : 0;
+    const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit : 0;
     const actionBase = ported.actionCue?.hit ?? ported.actionAt;
     const duration = Math.max(1, framesBetweenTicks(actionBase, actionBase + 20) - actionOffset);
     const age = Math.max(0,elapsed/duration);
