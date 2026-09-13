@@ -59,6 +59,7 @@ check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset')
 check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') && game.includes('framesBetweenTicks(actionBase, actionBase + 20) - actionOffset'), 'night_walk: jump timing offset sign differs from source');
 check(game.includes('const timingOffset = cue.actionTick - cue.hit') && game.includes('const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit'), 'night_walk: hit offset must remain in source tick units');
 check(game.includes('const hitOffsetTicks = (beat - hair.hitBeat) * 24'), 'tweezers: pull timing offset must use source tick units');
+check(game.includes('tempoAtTick(event.tick) / 120') && game.includes('Calligraphy changes tempo mid-song'), 'calligraphy: timeline SFX ignore active tempo');
 check(game.includes('192 + fadeTicks + 48'), 'night_walk: end script duration is shorter than source');
 check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'night_walk: screen fade phase missing');
 check(game.includes('28 * fallFrames * (fallFrames + 1) / 2') && game.includes('actorY += Math.min(110'), 'night_walk: fall state does not advance yDistance');

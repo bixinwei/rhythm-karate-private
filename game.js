@@ -1352,7 +1352,10 @@ function schedulePortedTimelineSfx() {
     if (event.op === 'night_walk_play_drumtech_note' && Number(event.args[0]) === 38) playPortedSfx('count',event.tick,Number(event.args[1]),Number(event.args[2]));
     if (!/^play_sfx(?:_vol(?:_pitch)?)?$/.test(event.op) || event.args[0] === 'NULL') continue;
     const kind = calligraphy[event.args[0]]; if (!kind) continue;
-    playPortedSfx(kind,event.tick,Number(event.args[1] ?? 256),Number(event.args[2] ?? 0));
+    // Calligraphy changes tempo mid-song (127/161/98 BPM). The original
+    // sequence player scales note offsets with the active tempo; using the
+    // fixed 120-BPM WebAudio default shifts voice/swing sounds in those bars.
+    playPortedSfx(kind,event.tick,Number(event.args[1] ?? 256),Number(event.args[2] ?? 0),tempoAtTick(event.tick) / 120);
   }
 }
 function startPortedMode(id) {
