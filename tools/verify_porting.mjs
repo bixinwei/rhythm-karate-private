@@ -11,6 +11,14 @@ const readJson = name => JSON.parse(fs.readFileSync(path.join(assets, name), 'ut
 const timeline = id => readJson(`${id}_timeline.json`);
 const events = (data, op) => data.events.filter(event => event.op === op);
 
+// Source cue definitions use these exact total durations (ticks). Keep the
+// browser configuration from silently drifting during later visual tweaks.
+check(game.includes('CUE_FIRST:24') && game.includes('CUE_SECOND:24'), 'samurai: cue duration differs from source');
+check(game.includes('CUE_KICK:192') && game.includes('CUE_STAR_WAND:192'), 'night_walk: cue duration differs from source');
+check(game.includes('CUE_LOW_FAST:12') && game.includes('CUE_HIGH:48'), 'spaceball: cue duration differs from source');
+const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
+check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
+
 // Every ported game must have a deterministic timeline and at least one music
 // start. This catches incomplete exports before a browser run.
 for (const id of ['spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy']) {
