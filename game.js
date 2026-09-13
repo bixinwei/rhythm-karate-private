@@ -1001,13 +1001,13 @@ function finish() {
 // BeatScripts.  Their clocks, image manifests and original PCM music all load
 // before the lead-in begins; no render-frame clock is used for judgement.
 const portedModes = {
-  spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
-  samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', overlays: ['samurai_slice_bg_map_fog_bottom.png','samurai_slice_bg_map_fog_top.png'], idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100],['samurai_result_events',100]], sfx: { spawn:'samurai_appear_events', phrase1a:'samurai_phrase1a_events', phrase2a:'samurai_phrase2a_events', phrase3a:'samurai_phrase3a_events', phrase1b:'samurai_phrase1b_events', phrase2b:'samurai_phrase2b_events', phrase3b:'samurai_phrase3b_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
-  night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
-  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
+  spaceball: { label: 'Air Batter', bg: 'spaceball_bg_map.png', backdrop: '#000070', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
+  samurai_slice: { label: 'Samurai Slice', bg: 'samurai_slice_bg_map.png', backdrop: '#f8f8f8', overlays: ['samurai_slice_bg_map_fog_bottom.png','samurai_slice_bg_map_fog_top.png'], idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100],['samurai_result_events',100]], sfx: { spawn:'samurai_appear_events', phrase1a:'samurai_phrase1a_events', phrase2a:'samurai_phrase2a_events', phrase3a:'samurai_phrase3a_events', phrase1b:'samurai_phrase1b_events', phrase2b:'samurai_phrase2b_events', phrase3b:'samurai_phrase3b_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
+  night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
+  power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
 const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [] };
-const PORTED_ASSET_REV = 'gba-ports-10';
+const PORTED_ASSET_REV = 'gba-ports-11';
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
 function gameAssetPrefix(id) { return `assets/gba/${id}`; }
@@ -1294,8 +1294,8 @@ function drawSpaceballBackground(zoom) {
   const step = Math.max(.001, -zoom);
   const sourceX = 128 - 120 * step, sourceY = 176 - 80 * step;
   // Affine overflow is disabled in the original BGCNT; pixels outside the
-  // 256x256 map reveal the black backdrop instead of the page's grey canvas.
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,stage.width,stage.height);
+  // 256x256 map reveal BG palette entry 0 instead of the page canvas.
+  ctx.fillStyle = portedModes.spaceball.backdrop; ctx.fillRect(0,0,stage.width,stage.height);
   ctx.drawImage(ported.bg, sourceX, sourceY, 240 * step, 160 * step, 0, 0, stage.width, stage.height);
 }
 function drawGbaTilemap(image, offsetX = 0, offsetY = 0) {
@@ -1307,9 +1307,13 @@ function drawGbaTilemap(image, offsetX = 0, offsetY = 0) {
   }
 }
 function drawSpaceballEntity(cell, worldX, worldY, z, zoom, rotation = 0, farCell = null) {
-  let scale = 1 / Math.max(.05, z - zoom), selected = cell;
-  if (farCell != null && scale <= .5) { scale *= 2; selected = farCell; }
-  drawPortedCell(selected, 120 + worldX * scale, 80 + worldY * scale, 4 * scale, rotation);
+  const positionScale = 1 / Math.max(.05, z - zoom);
+  let spriteScale = positionScale, selected = cell;
+  // spaceball_update_batter calculates screen x/y with the perspective scale,
+  // then doubles only the far cel's affine size.  Reusing the doubled scale
+  // for x/y makes the batter jump toward the right wall at the cel switch.
+  if (farCell != null && positionScale <= .5) { spriteScale *= 2; selected = farCell; }
+  drawPortedCell(selected, 120 + worldX * positionScale, 80 + worldY * positionScale, 4 * spriteScale, rotation);
 }
 function spaceballFlight(cue, tick) {
   const arcTicks = cue.hit - cue.spawn;
@@ -1422,9 +1426,9 @@ function portedLoop() {
 }
 function drawPorted(tick, cfg) {
   ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle=cfg.backdrop; ctx.fillRect(0,0,stage.width,stage.height);
   if (mode === 'spaceball') drawSpaceballBackground(spaceballZoomAt(tick));
-  else if (mode === 'night_walk') { ctx.fillStyle='#000'; ctx.fillRect(0,0,stage.width,stage.height); }
-  else ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
+  else if (mode !== 'night_walk') ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
   const samuraiFog = mode === 'samurai_slice' ? samuraiFogAt(tick) : { offsets:[0,0], alpha:0 };
   if (mode === 'samurai_slice' && ported.overlays[1] && samuraiFog.alpha > 0) {
     ctx.save(); ctx.globalAlpha=samuraiFog.alpha; drawGbaTilemap(ported.overlays[1],0,samuraiFog.offsets[1]); ctx.restore();
