@@ -41,6 +41,7 @@ for (let i = 0; i < Math.min(samuraiCreate.length, samuraiCues.length); i++) {
 check(game.includes('192 * 150'), 'samurai: movement is not using source 0xC0 lifetime');
 check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.includes('192 * 150'), 'samurai: movement lifetime must lock spawn tempo');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
+check(game.includes('samuraiSpawns.find(item => item.tick === expectedSpawnTick)') && !game.includes('samuraiSpawns.filter(item => item.tick <= event.tick)'), 'samurai: visual spawn must use exact event02 pairing');
 check(game.includes('tempoAtTick(event.tick)/120'), 'samurai: phrase SFX tempo conversion mismatch');
 
 // Night Walk: gap jumps are the only operation allowed to move the shared
@@ -51,6 +52,7 @@ check(game.includes('const y = 120 + nightWalkWorldShift(tick)'), 'night_walk: b
 check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset'), 'night_walk: jump timing offset is not applied');
 check(game.includes('192 + fadeTicks + 48'), 'night_walk: end script duration is shorter than source');
 check(game.includes('framesBetweenTicks(ported.failedAt + 192, tick) / 12'), 'night_walk: screen fade phase missing');
+check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
 
 // Verify every configured music/SFX JSON exists, preventing silent cues.
 for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)\}/g)) {

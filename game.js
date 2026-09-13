@@ -1007,6 +1007,12 @@ const portedModes = {
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
 const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+// Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
+let gbaRandomState = 0;
+function gbaRandom(max) {
+  gbaRandomState = (gbaRandomState * 109 + 1021) & 0xffff;
+  return Math.floor((gbaRandomState * max) / 0x10000);
+}
 const PORTED_ASSET_REV = 'gba-ports-13';
 const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
@@ -1338,6 +1344,7 @@ function startPortedMode(id) {
     // before the lead-in, but a first visit never shows an empty game panel.
     ported.mode = id; ported.timeline = data.timeline; ported.frames = data.frames; ported.manifest = data.manifest; ported.bg = data.bg; ported.overlays = data.overlays; ported.peopleFrames = data.peopleFrames; ported.peopleManifest = data.peopleManifest; ported.music = data.music; ported.sfx = data.sfx;
     const samuraiSpawns = id === 'samurai_slice' ? data.timeline.events.filter(event => event.op === 'samurai_slice_event02') : [];
+    if (id === 'night_walk') gbaRandomState = 0;
     ported.cues = data.timeline.events.filter(event => event.op === 'spawn_cue').map((event, index) => {
       const cue = { index, spawn: event.tick, hit: event.tick + (portedModes[id].duration[event.args[0]] ?? 24), kind: event.args[0], state: 'fresh' };
       if (id === 'spaceball') cue.objectType = portedEnum(latestPortedEvent('spaceball_set_ball_sprite', event.tick)?.args[0], { BASEBALL:0, RICE_BALL:1, STAR_BALL:2 });
@@ -1347,14 +1354,16 @@ function startPortedMode(id) {
         // tempo changes, so array-index pairing is not reliable.  Resolve the
         // command immediately preceding this cue, exactly as the engine does.
         const expectedSpawnTick = event.tick - 120;
-        const visualSpawn = samuraiSpawns.find(item => item.tick === expectedSpawnTick)
-          ?? samuraiSpawns.filter(item => item.tick <= event.tick).at(-1);
+        const visualSpawn = samuraiSpawns.find(item => item.tick === expectedSpawnTick);
+        // The decomp guarantees this exact 120-tick pairing. Do not fall back
+        // to an older create event, which makes a demon appear too early when
+        // a timeline export is incomplete.
         cue.visualSpawn = visualSpawn?.tick ?? event.tick;
         cue.objectType = Number(visualSpawn?.args[0] ?? 0);
       }
       if (id === 'night_walk') {
         cue.platformType = Number(latestPortedEvent('night_walk_set_platform', event.tick)?.args[0] ?? 0);
-        cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && ((index * 1103515245 + 12345) >>> 30) === 0);
+        cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
         cue.hasFish = cue.platformType === 3;
       }
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
