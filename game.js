@@ -1766,7 +1766,11 @@ function drawPorted(tick, cfg) {
       // func_08031c94 advances the demon for ticks_to_frames(0xC0), i.e. a
       // 192-tick engine lifetime, independent of the cue's 24-tick judging
       // window.  Using cue.hit as the endpoint made demons rush 25% too fast.
-      const moveDuration = Math.max(1, framesBetweenTicks(cue.visualSpawn, cue.visualSpawn + 192));
+      // ticks_to_frames() is evaluated when the demon is created and keeps
+      // that tempo for the whole sprite lifetime. Re-integrating across later
+      // tempo changes incorrectly compresses demons in the fast sections.
+      const spawnTempo = tempoAtTick(cue.visualSpawn);
+      const moveDuration = Math.max(1, 192 * 150 / Math.max(1, spawnTempo));
       const travel = Math.max(0, Math.min(1, framesBetweenTicks(cue.visualSpawn, tick) / moveDuration));
       const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
       // Demon hop/hover cels loop independently of horizontal travel in the
