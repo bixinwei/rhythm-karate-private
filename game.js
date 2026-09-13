@@ -1006,7 +1006,7 @@ const portedModes = {
   night_walk: { label: 'Night Walk', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: 'Power Calligraphy', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
 const PORTED_ASSET_REV = 'gba-ports-13';
 const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
@@ -1353,10 +1353,11 @@ function startPortedMode(id) {
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
       return cue;
     });
-    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.starWandAt = -1; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
-    audioSongStart = audio().currentTime + 2.2; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
+    // BeatScript rests provide the original lead-in; there is no extra web countdown.
+    audioSongStart = audio().currentTime + 0.05; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
     if (id === 'samurai_slice') {
       for (const event of data.timeline.events.filter(item => item.op === 'samurai_slice_event02')) {
         const variant = Number(event.args[0]) <= 1 ? 1 : Number(event.args[0]) <= 3 ? 2 : 3;
@@ -1570,6 +1571,11 @@ function drawPorted(tick, cfg) {
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
   if (mode === 'night_walk' && ported.actionAt < 0) actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
+  if (mode === 'night_walk' && ported.starWandAt >= 0) {
+    const riseFrames = framesBetweenTicks(ported.starWandAt,tick);
+    actorCell = animationCell([[111,30],[112,2],[111,10],[112,2]],riseFrames,true);
+    actorY -= Math.min(110, riseFrames * 0.5);
+  }
   if (mode === 'night_walk' && ported.failedAt >= 0) actorCell = animationCell([[12,4],[13,4],[14,4],[15,4],[14,4]],framesBetweenTicks(ported.failedAt,tick));
   if (mode === 'night_walk') {
     const worldShift = nightWalkWorldShift(tick);
@@ -1577,7 +1583,7 @@ function drawPorted(tick, cfg) {
     const expandedStars = ported.cues.filter(c => c.state === 'hit' && c.perfect && c.hit <= tick).length
       + ported.timeline.events.filter(e => e.op === 'night_walk_expand_stars' && e.tick <= tick).reduce((sum,e) => sum + Number(e.args[0] ?? 0),0);
     const starLevel = Math.min(4, Math.floor(expandedStars / 32)), nextStar = expandedStars % 32;
-    const starCells = [95,97,99,101,103];
+    const starCells = [[95,96],[97,98],[99,100],[101,102],[103,104]];
     for (let i=0;i<32;i++) {
       // night_walk_init_stars uses a 256x176 wrapping field and scrolls it
       // left by half a native pixel per rendered frame.
@@ -1586,7 +1592,9 @@ function drawPorted(tick, cfg) {
       const initialX=-8+(seed&0xffff)*256/65536, initialY=-8+((seed>>>16)&0xffff)*176/65536;
       const sx=((initialX-.5*starFrames+8)%256+256)%256-8;
       const sy=((initialY-worldShift/2+8)%176+176)%176-8;
-      drawPortedCell(starCells[Math.min(4,starLevel + (i < nextStar ? 1 : 0))],sx,sy,4);
+      const starLevelForCell=Math.min(4,starLevel + (i < nextStar ? 1 : 0));
+      const starAnim=starCells[starLevelForCell];
+      drawPortedCell(animationCell([[starAnim[0],28],[starAnim[1],2]],starFrames+i*9,true),sx,sy,4);
     }
   }
   if (mode !== 'power_calligraphy' && mode !== 'spaceball' && mode !== 'samurai_slice') drawPortedCell(actorCell, actorX, actorY);
@@ -1807,6 +1815,11 @@ function portedPunch() {
   const perfectWindow = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
   const perfect = Math.abs(offset) <= perfectWindow;
   cue.perfect = perfect;
+  if (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND' && perfect) {
+    const priorHits = ported.cues.filter(item => item !== cue && item.state === 'hit' && item.perfect && item.hit <= cue.hit).length;
+    const expanded = priorHits + ported.timeline.events.filter(event => event.op === 'night_walk_expand_stars' && event.tick <= cue.hit).reduce((sum,event) => sum + Number(event.args[0] ?? 0), 0);
+    if (Math.floor(expanded / 32) >= 4) ported.starWandAt = tick;
+  }
   if (mode === 'power_calligraphy') cue.result = perfect ? 0 : offset < 0 ? 1 : 2;
   if (mode === 'power_calligraphy' && !perfect) ported.peopleStumbleAt = tick;
   let sound = perfect ? (mode === 'samurai_slice' && cue.kind === 'CUE_SECOND' ? 'hit2' : 'hit') : 'barely';
