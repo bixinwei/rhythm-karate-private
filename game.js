@@ -1450,11 +1450,18 @@ function drawSpaceballEntity(cell, worldX, worldY, z, zoom, rotation = 0, farCel
   drawPortedCell(selected, 120 + worldX * positionScale, 80 + worldY * positionScale, 4 * spriteScale, rotation);
 }
 function spaceballFlight(cue, tick) {
+  // spaceball_cue_spawn converts the cue arc from ticks to rendered frames
+  // before calculating endTime. Keep the same frame-domain math; advancing by
+  // raw ticks makes the ball visibly too fast at the normal 120 BPM tempo.
   const arcTicks = cue.hit - cue.spawn;
   const arc = arcTicks >= 24 ? 90 * arcTicks / 24 : 90;
-  const landingTicks = arc <= 48 ? arcTicks : 2 * arcTicks / (Math.sqrt((arc - 48) / arc) + 1);
-  const q = Math.max(0, Math.min(1, (tick - cue.spawn) / landingTicks));
-  return { arc, landingTicks, x: 70 + 68*q, y: 120 - (arc - arc * Math.pow(2*q-1,2)) };
+  const arcFrames = framesBetweenTicks(cue.spawn, cue.hit);
+  const temp = Math.max(0, arc - 48);
+  const div = Math.sqrt(temp / Math.max(1, arc));
+  const landingFrames = 2 * arcFrames / (div + 1);
+  const elapsedFrames = framesBetweenTicks(cue.spawn, tick);
+  const q = Math.max(0, Math.min(1, elapsedFrames / Math.max(1, landingFrames)));
+  return { arc, landingFrames, landingTicks: landingFrames, x: 70 + 68*q, y: 120 - (arc - arc * Math.pow(2*q-1,2)) };
 }
 function drawSpaceballScene(tick) {
   const zoom = spaceballZoomAt(tick), frame = Math.max(0, secondsAtTick(Math.max(0,tick)) * 60);

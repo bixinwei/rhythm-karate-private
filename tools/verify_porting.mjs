@@ -16,6 +16,7 @@ const events = (data, op) => data.events.filter(event => event.op === op);
 check(game.includes('CUE_FIRST:24') && game.includes('CUE_SECOND:24'), 'samurai: cue duration differs from source');
 check(game.includes('CUE_KICK:192') && game.includes('CUE_STAR_WAND:192'), 'night_walk: cue duration differs from source');
 check(game.includes('CUE_LOW_FAST:12') && game.includes('CUE_HIGH:48'), 'spaceball: cue duration differs from source');
+check(game.includes('const arcFrames = framesBetweenTicks(cue.spawn, cue.hit)') && game.includes('const landingFrames = 2 * arcFrames'), 'spaceball: flight must use ticks_to_frames-equivalent frame math');
 const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
 check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
 
