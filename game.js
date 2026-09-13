@@ -1664,7 +1664,15 @@ function drawPorted(tick, cfg) {
     else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
-  if (mode === 'night_walk' && ported.actionAt < 0) actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
+  if (mode === 'night_walk' && ported.actionAt < 0) {
+    // night_walk_init_balloons sets anim_play_yan_jump immediately; the
+    // sprite then settles into its walking animation after the 20-frame
+    // one-shot, even though the logical state remains WALKING.
+    const openingFrames = secondsAtTick(Math.max(0, tick)) * 60;
+    actorCell = openingFrames < 20
+      ? animationCell([[3,4],[4,4],[5,4],[4,4],[3,4]], openingFrames)
+      : animationCell([[7,4],[8,4],[9,4],[10,4]], openingFrames, true);
+  }
   if (mode === 'night_walk' && ported.starWandAt >= 0) {
     const riseFrames = framesBetweenTicks(ported.starWandAt,tick);
     actorCell = animationCell([[111,30],[112,2],[111,10],[112,2]],riseFrames,true);
