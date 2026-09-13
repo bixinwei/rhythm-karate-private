@@ -1294,13 +1294,16 @@ function pumpPortedAudio() {
 }
 function playPortedSfx(kind, atTick = null, eventVolume = 256, eventPitch = 0, rateScale = 1) {
   const entry = ported.sfx[kind], events = entry?.events; if (!events?.length) return;
+  // GBA sequence offsets are authored at the local song tempo. Derive the
+  // scale from the trigger tick unless a caller explicitly supplies one.
+  const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120;
   const ac = audio(), base = atTick == null ? ac.currentTime : audioSongStart + secondsAtTick(atTick);
   for (const event of events) {
     if (!originalSamples[event.sample]) continue;
     const level = GBA_MIX_SCALE * (event.velocity / 127) * (entry.volume / 256) * (eventVolume / 256);
-    const when = Math.max(ac.currentTime + .005, base + event.beat * 60 / (120*rateScale));
-    const duration=Math.max(.15,event.length*60/(120*rateScale));
-    const item={ type:'sfx', event, when, duration, level, pitchSemitones:eventPitch/256, rateScale, automationSecondsPerBeat:60/(120*rateScale) };
+    const when = Math.max(ac.currentTime + .005, base + event.beat * 60 / (120*effectiveRateScale));
+    const duration=Math.max(.15,event.length*60/(120*effectiveRateScale));
+    const item={ type:'sfx', event, when, duration, level, pitchSemitones:eventPitch/256, rateScale:effectiveRateScale, automationSecondsPerBeat:60/(120*effectiveRateScale) };
     if (atTick == null) startPortedAudioItem(item); else queuePortedAudio(item);
   }
 }
