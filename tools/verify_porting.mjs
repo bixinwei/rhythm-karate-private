@@ -38,6 +38,7 @@ check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: 
 check(game.includes('if (!cue.endOfBridge || cue.state !== \'hit\''), 'night_walk: jump world-offset guard missing');
 check(game.includes('return -completed * 16'), 'night_walk: shared origin sign does not match GBA');
 check(game.includes('const y = 120 + nightWalkWorldShift(tick)'), 'night_walk: bridge does not use shared origin');
+check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset'), 'night_walk: jump timing offset is not applied');
 
 // Verify every configured music/SFX JSON exists, preventing silent cues.
 for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)\}/g)) {
