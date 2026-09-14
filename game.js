@@ -1196,7 +1196,10 @@ function tempoAtTick(tick) {
   return bpm;
 }
 function portedTick() {
-  const elapsed = Math.max(0, audio().currentTime - audioSongStart);
+  return portedTickAtAudioTime(audio().currentTime);
+}
+function portedTickAtAudioTime(audioTime) {
+  const elapsed = Math.max(0, audioTime - audioSongStart);
   let passed = 0;
   for (let i = 0; i < ported.tempo.length; i++) {
     const s = ported.tempo[i], next = ported.tempo[i + 1];
@@ -1365,7 +1368,10 @@ function playPortedSfx(kind, atTick = null, eventVolume = 256, eventPitch = 0, r
   const entry = ported.sfx[kind], events = entry?.events; if (!events?.length) return;
   // GBA sequence offsets are authored at the local song tempo. Derive the
   // scale from the trigger tick unless a caller explicitly supplies one.
-  const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120;
+  // Night Walk's main script sets 128 BPM at tick 0. Its drumtech sequences
+  // (kick/snare/cymbal/count/offbeat) use local quarter-beat offsets, so they
+  // must use that same tempo instead of the generic 120-BPM helper default.
+  const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120; // trigger-tempo sequence timing
   const ac = audio(), base = atTick == null ? ac.currentTime : audioSongStart + secondsAtTick(atTick);
   for (const event of events) {
     if (!originalSamples[event.sample]) continue;
@@ -2101,8 +2107,21 @@ function drawPorted(tick, cfg) {
   }
   drawTouchScreen();
 }
-function portedPunch() {
-  if (!running) return; const tick = portedTick();
+function eventAudioTime(event) {
+  const ac = audio();
+  if (!event || !Number.isFinite(event.timeStamp)) return ac.currentTime;
+  // DOMHighResTimeStamp is normally relative to performance.timeOrigin; old
+  // Safari versions exposed epoch milliseconds instead. Convert both forms
+  // and subtract delivery latency from the shared AudioContext clock.
+  const eventPerf = event.timeStamp > 1e12 ? event.timeStamp - performance.timeOrigin : event.timeStamp;
+  const age = performance.now() - eventPerf;
+  if (!Number.isFinite(age) || age < -50 || age > 1000) return ac.currentTime;
+  return ac.currentTime - age / 1000;
+}
+function portedPunch(inputEvent = null) {
+  if (!running) return;
+  const inputAudioTime = eventAudioTime(inputEvent);
+  const tick = inputEvent ? portedTickAtAudioTime(inputAudioTime) : portedTick();
   const cue = ported.cues.find(item => {
     if (item.state !== 'fresh') return false;
     if (mode === 'power_calligraphy') return tick-item.hit >= -24 && tick-item.hit <= 12;
@@ -2188,8 +2207,8 @@ $('#spaceballBtn').onclick = () => startPortedMode('spaceball');
 $('#samuraiBtn').onclick = () => startPortedMode('samurai_slice');
 $('#nightWalkBtn').onclick = () => startPortedMode('night_walk');
 $('#calligraphyBtn').onclick = () => startPortedMode('power_calligraphy');
-stage.addEventListener('pointerdown', () => portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch());
-touch.addEventListener('pointerdown', () => portedModes[mode] ? portedPunch() : mode === 'tweezers' ? tweezersPunch() : punch());
+stage.addEventListener('pointerdown', (event) => portedModes[mode] ? portedPunch(event) : mode === 'tweezers' ? tweezersPunch() : punch());
+touch.addEventListener('pointerdown', (event) => portedModes[mode] ? portedPunch(event) : mode === 'tweezers' ? tweezersPunch() : punch());
 // iOS Safari still recognises a double-tap zoom gesture on some canvas builds
 // even with viewport constraints.  The game owns touch-end on both screens.
 for (const canvas of [stage, touch]) canvas.addEventListener('touchend', (event) => event.preventDefault(), { passive: false });

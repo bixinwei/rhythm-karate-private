@@ -37,6 +37,9 @@ check(game.includes('const TWEEZERS_AUDIO_LOOKAHEAD_BEATS = 3'), 'tweezers: audi
 check(game.includes('event.beat > nowBeat + TWEEZERS_AUDIO_LOOKAHEAD_BEATS'), 'tweezers: future event queue is unbounded');
 check(game.includes('startTweezersAudioScheduler(run)'), 'tweezers: source-timed audio scheduler is not started');
 check(game.includes('audioSongStart + eventBeat * 60 / 96'), 'tweezers: cue sound is not derived from the shared audio clock');
+check(game.includes('function eventAudioTime(event)'), 'input: event timestamp compensation missing');
+check(game.includes('portedTickAtAudioTime(inputAudioTime)'), 'input: ported judgement is not based on input-time audio clock');
+check(game.includes("pointerdown', (event) => portedModes[mode] ? portedPunch(event)"), 'input: pointerdown timestamp is not passed to ported gameplay');
 
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,
