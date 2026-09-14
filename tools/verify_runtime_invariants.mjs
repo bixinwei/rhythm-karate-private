@@ -41,7 +41,7 @@ check(game.includes('function eventAudioTime(event)'), 'input: event timestamp c
 check(game.includes('portedTickAtAudioTime(inputAudioTime)'), 'input: ported judgement is not based on input-time audio clock');
 check(game.includes("pointerdown', (event) => portedModes[mode] ? portedPunch(event)"), 'input: pointerdown timestamp is not passed to ported gameplay');
 check(game.includes('audit.perfectSweep') && game.includes('results.filter(item => !item.perfect'), 'night_walk: deterministic perfect-tick browser sweep missing');
-check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') && game.includes('Night Walk sweep'), 'night_walk: browser sweep route missing');
+check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') && game.includes('sweep ${result.ok'), 'night_walk: browser sweep route missing');
 
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,
