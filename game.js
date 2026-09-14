@@ -1459,7 +1459,7 @@ function startPortedMode(id) {
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
       return cue;
     });
-    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.cueSpawningDisabled = false; ported.starWandAt = -1; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.cueSpawningDisabled = false; ported.starWandAt = -1; ported.nightWalkBaseY = 120; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
@@ -1662,11 +1662,8 @@ function samuraiFogAt(tick) {
   return { offsets:[distance,-distance], alpha:Math.max(0,hitAlpha-afterFrames*fadePerFrame)/16 };
 }
 function nightWalkWorldShift(tick) {
-  let spawnedGaps = 0, completed = 0, active = null;
+  let completed = 0, active = null;
   for (const cue of ported.cues) {
-    // night_walk_cue_spawn subtracts 16 from unk8 immediately for every
-    // gap platform, before the player reaches its judgment point.
-    if (cue.endOfBridge && cue.spawn <= tick) spawnedGaps++;
     // Only a jump over a gap moves the shared world origin.  Ordinary
     // stepping-stone/bridge jumps move Yan's sprite in place; applying their
     // parabola to the stars and bridge makes the whole background appear to
@@ -1686,7 +1683,10 @@ function nightWalkWorldShift(tick) {
   // The engine stores the shared origin as a negative vertical offset
   // (unk3B8.unk6). Stars are then rendered at starY - offset, so they drift
   // down slightly while Yan clears a gap while the bridge moves upward.
-  const baseShift = -(spawnedGaps + completed) * 16;
+  // The source keeps unk4 (the future platform baseline) separate from unk8
+  // / unk6 (the active jump origin). Gap spawning changes only unk4; this
+  // function therefore models the dynamic jump origin alone.
+  const baseShift = -completed * 16;
   if (!active) return baseShift;
   const step = 27 * active.elapsed / active.duration - 16;
   const jumpHeight = 32 - (32 * step * step / 256);
@@ -1702,6 +1702,9 @@ function portedLoop() {
     for (const cue of ported.cues) {
       if (cue.platformResolved || cue.spawn > tick) continue;
       cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
+      cue.baseY = ported.nightWalkBaseY ?? 120;
+      // night_walk_cue_spawn decrements unk4 after capturing this cue's y.
+      if (cue.endOfBridge) ported.nightWalkBaseY = cue.baseY - 16;
       cue.platformResolved = true;
     }
   }
@@ -2020,7 +2023,7 @@ function drawPorted(tick, cfg) {
       const x = 320 - 256*p;
       // All bridge/fish sprites share the engine's vertical origin (unk3B8),
       // the same offset that drives the star field during a gap jump.
-      const y = 120 + nightWalkWorldShift(tick);
+      const y = (cue.baseY ?? 120) + nightWalkWorldShift(tick);
       drawPortedCell(cell,x,y,4);
       if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
     }
