@@ -65,9 +65,9 @@ check(samuraiResultEvents[0]?.tick > samuraiCues.at(-1)?.tick, 'samurai: result-
 // world origin; ordinary jumps must remain actor-only.
 check(game.includes('if (!cue.endOfBridge || cue.state !== \'hit\''), 'night_walk: jump world-offset guard missing');
 check(game.includes('const baseShift = -completed * 16') && game.includes('return baseShift'), 'night_walk: shared origin sign does not match GBA');
-check(game.includes('cue.baseY = ported.nightWalkBaseY ?? 120') && game.includes('ported.nightWalkBaseY = cue.baseY - 16') && game.includes('(cue.baseY ?? 120) + nightWalkWorldShift(tick)'), 'night_walk: platform baseline and jump origin are not separated');
-check(game.includes('const y = (cue.baseY ?? 120) + nightWalkWorldShift(tick)'), 'night_walk: bridge does not use shared origin');
-check(game.includes('function nightWalkCommittedShift(tick)') && game.includes('actorY += nightWalkCommittedShift(tick)'), 'night_walk: actor does not retain committed origin between bridges');
+check(game.includes('cue.baseY = ported.nightWalkBaseY ?? 120') && game.includes('ported.nightWalkBaseY = cue.baseY - 16') && game.includes('(cue.baseY ?? 120) - nightWalkWorldShift(tick)'), 'night_walk: platform baseline and jump origin are not separated');
+check(game.includes('const y = (cue.baseY ?? 120) - nightWalkWorldShift(tick)'), 'night_walk: bridge does not use source origin direction');
+check(!game.includes('nightWalkCommittedShift(tick)'), 'night_walk: actor incorrectly applies platform origin to sprite Y');
 check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset'), 'night_walk: jump timing offset is not applied');
 check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') && game.includes('framesBetweenTicks(actionBase, actionBase + 20) - actionOffset'), 'night_walk: jump timing offset sign differs from source');
 check(game.includes('const timingOffset = cue.actionTick - cue.hit') && game.includes('const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit'), 'night_walk: hit offset must remain in source tick units');

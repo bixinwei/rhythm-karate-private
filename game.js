@@ -1692,16 +1692,6 @@ function nightWalkWorldShift(tick) {
   const jumpHeight = 32 - (32 * step * step / 256);
   return baseShift - Math.max(0,jumpHeight);
 }
-function nightWalkCommittedShift(tick) {
-  let completed = 0;
-  for (const cue of ported.cues) {
-    if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
-    const timingOffset = cue.actionTick - cue.hit;
-    const duration = Math.max(1, framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset);
-    if (framesBetweenTicks(cue.actionTick, tick) >= duration) completed++;
-  }
-  return -completed * 16;
-}
 function portedLoop() {
   pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
@@ -1770,7 +1760,6 @@ function drawPorted(tick, cfg) {
   let actorCell = animationCell(cfg.action.map(cell => [cell, 2]), actionFrame);
   if (tick < ported.actionAt || actionFrame >= cfg.action.length * 2) actorCell = cfg.idle;
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
-  if (mode === 'night_walk') actorY += nightWalkCommittedShift(tick);
   if (mode === 'night_walk' && ported.actionAt >= 0) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick);
     const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit : 0;
@@ -2038,7 +2027,9 @@ function drawPorted(tick, cfg) {
       const x = 320 - 256*p;
       // All bridge/fish sprites share the engine's vertical origin (unk3B8),
       // the same offset that drives the star field during a gap jump.
-      const y = (cue.baseY ?? 120) + nightWalkWorldShift(tick);
+      // sprite_set_origin_x_y applies unk6 as an origin subtraction in the
+      // GBA sprite system: visibleY = captured unk4 - current unk6.
+      const y = (cue.baseY ?? 120) - nightWalkWorldShift(tick);
       drawPortedCell(cell,x,y,4);
       if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
     }

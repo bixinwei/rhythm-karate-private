@@ -37,8 +37,8 @@ check(deterministic.some(c => c.tick === 456 && c.type === 1 && c.baseY === 104)
 // Yan receives the committed unk6 only after a completed gap jump.
 check(game.includes('cue.baseY = ported.nightWalkBaseY ?? 120'), 'night_walk: cue baseline capture missing');
 check(game.includes('if (cue.endOfBridge) ported.nightWalkBaseY = cue.baseY - 16'), 'night_walk: unk4 decrement missing');
-check(game.includes('(cue.baseY ?? 120) + nightWalkWorldShift(tick)'), 'night_walk: platform does not use captured baseline');
-check(game.includes('function nightWalkCommittedShift(tick)') && game.includes('actorY += nightWalkCommittedShift(tick)'), 'night_walk: committed actor landing offset missing');
+check(game.includes('(cue.baseY ?? 120) - nightWalkWorldShift(tick)'), 'night_walk: platform does not use captured baseline and source origin direction');
+check(!game.includes('nightWalkCommittedShift(tick)'), 'night_walk: actor incorrectly receives platform origin offset');
 check(game.includes('const baseShift = -completed * 16'), 'night_walk: jump origin is incorrectly coupled to spawned gaps');
 
 // Every ported timeline must have a one-to-one cue stream and a terminating
