@@ -1692,6 +1692,16 @@ function nightWalkWorldShift(tick) {
   const jumpHeight = 32 - (32 * step * step / 256);
   return baseShift - Math.max(0,jumpHeight);
 }
+function nightWalkCommittedShift(tick) {
+  let completed = 0;
+  for (const cue of ported.cues) {
+    if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
+    const timingOffset = cue.actionTick - cue.hit;
+    const duration = Math.max(1, framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset);
+    if (framesBetweenTicks(cue.actionTick, tick) >= duration) completed++;
+  }
+  return -completed * 16;
+}
 function portedLoop() {
   pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
@@ -1760,6 +1770,7 @@ function drawPorted(tick, cfg) {
   let actorCell = animationCell(cfg.action.map(cell => [cell, 2]), actionFrame);
   if (tick < ported.actionAt || actionFrame >= cfg.action.length * 2) actorCell = cfg.idle;
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
+  if (mode === 'night_walk') actorY += nightWalkCommittedShift(tick);
   if (mode === 'night_walk' && ported.actionAt >= 0) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick);
     const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit : 0;
@@ -1774,9 +1785,6 @@ function drawPorted(tick, cfg) {
     // the shared origin (unk6) is committed when the jump completes. Apply
     // that committed origin only after landing; applying it during ascent
     // would move Yan twice because the bridge already uses unk6.
-    else if (ported.actionHit && ported.actionCue?.endOfBridge) {
-      actorY += nightWalkWorldShift(tick);
-    }
     else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
