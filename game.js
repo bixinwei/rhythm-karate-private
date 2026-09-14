@@ -2220,6 +2220,19 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     if (command === 'hit') audit.hitNext();
     document.body.dataset.auditState = JSON.stringify(audit.state());
   });
+  if (new URLSearchParams(location.search).has('auditSweep')) {
+    const sweepStart = () => {
+      if (mode !== 'night_walk') startPortedMode('night_walk');
+      const wait = () => {
+        if (!running || mode !== 'night_walk' || !ported.cues.length) return setTimeout(wait, 50);
+        const result = audit.perfectSweep();
+        document.body.dataset.auditSweep = JSON.stringify(result);
+        document.title = `Night Walk sweep ${result.ok ? 'PASS' : 'FAIL'} (${result.count ?? 0}/${ported.cues.length})`;
+      };
+      wait();
+    };
+    setTimeout(sweepStart, 0);
+  }
 }
 
 $('#startBtn').onclick = () => { mode = 'karate'; start(); };
