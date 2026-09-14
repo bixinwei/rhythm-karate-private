@@ -117,6 +117,10 @@ let audioSongStart = 0;
 let scheduledMusicNodes = [];
 let scheduledTweezersEvents = new Set();
 let scheduledTweezersCueEvents = new Set();
+let tweezersAudioScheduler = 0;
+// Keep a short Web Audio future queue. This avoids Safari rendering stalls
+// from inserting an entire song at once while preserving audio-clock timing.
+const TWEEZERS_AUDIO_LOOKAHEAD_BEATS = 3;
 let songRun = 0;
 const bgmLoadPromise = fetch('assets/gba/karate_bgm_events.json').then((response) => response.json()).then((events) => { originalBgmEvents = events; }).catch(() => []);
 const fanLoadPromise = fetch('assets/gba/karate_fan_events.json').then((response) => response.json()).then((events) => { originalFanEvents = events; }).catch(() => []);
@@ -227,7 +231,7 @@ function scheduleTweezersMusic() {
     // Samples may finish decoding after gameplay has begun.  Never attempt
     // to schedule a note already in the past; future notes are added as soon
     // as their shared sample bank is ready.
-    if (event.beat > 116 || event.beat < nowBeat - .04 || scheduledTweezersEvents.has(index)) continue;
+    if (event.beat > 116 || event.beat > nowBeat + TWEEZERS_AUDIO_LOOKAHEAD_BEATS || event.beat < nowBeat - .04 || scheduledTweezersEvents.has(index)) continue;
     const sample = originalSamples[event.sample];
     const when = audioSongStart + event.beat * 60 / 96;
     const duration = Math.max(.025, event.length * 60 / 96);
@@ -281,16 +285,33 @@ function playTweezersSfx(name, eventBeat = null) {
 // The GBA beat-script invokes cue_spawn and the vegetable transition event
 // from its tick scheduler. Pre-schedule those same events against the audio
 // clock so a dropped render frame cannot make a sound disappear or drift.
-function scheduleTweezersEventAudio(currentBeat) {
-  // All tweezers samples are decoded before the clock starts. Schedule the
-  // complete cue timeline here so a delayed/backgrounded render frame cannot
-  // make a visual hair appear before its sound is inserted.
+function scheduleTweezersEventAudio() {
+  const nowBeat = Math.max(0, (audio().currentTime - audioSongStart) * 96 / 60);
+  // The source script emits the sound on the cue tick. Queue a small future
+  // window from an audio scheduler, never from requestAnimationFrame.
   for (const [index, event] of tweezers.events.entries()) {
     if (scheduledTweezersCueEvents.has(index)) continue;
+    if (event.beat > nowBeat + TWEEZERS_AUDIO_LOOKAHEAD_BEATS) continue;
     if (event.kind === 'cue') playTweezersSfx(event.cue === 'long' ? 'long_appear' : 'appear', event.beat);
     else if (event.kind === 'veg') playTweezersSfx('next', event.beat);
     scheduledTweezersCueEvents.add(index);
   }
+}
+
+function startTweezersAudioScheduler(run) {
+  stopTweezersAudioScheduler();
+  const queue = () => {
+    if (run !== songRun || !running || mode !== 'tweezers') return;
+    scheduleTweezersEventAudio();
+    scheduleTweezersMusic();
+  };
+  queue();
+  tweezersAudioScheduler = setInterval(queue, 40);
+}
+
+function stopTweezersAudioScheduler() {
+  if (tweezersAudioScheduler) clearInterval(tweezersAudioScheduler);
+  tweezersAudioScheduler = 0;
 }
 
 function playOriginalSfx(name) {
@@ -374,6 +395,7 @@ function start() {
 function quit() {
   running = false;
   songRun += 1;
+  stopTweezersAudioScheduler();
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
   cancelAnimationFrame(frame);
@@ -428,6 +450,7 @@ function tweezersStart() {
   const context = audio();
   const audioContextReady = context.state === 'suspended' ? context.resume() : Promise.resolve();
   mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
+  stopTweezersAudioScheduler();
   // Falling-hair rotation is driven by the GBA engine RNG, so reset the
   // standalone level to a deterministic stream for reproducible replays.
   tweezersRandomState = 0;
@@ -451,8 +474,7 @@ function tweezersStart() {
       startAt = performance.now() + tweezersBeatMs * 3; audioSongStart = audio().currentTime + tweezersBeatMs * 3 / 1000;
       running = true;
       scheduledTweezersCueEvents = new Set();
-      scheduleTweezersEventAudio();
-      scheduleTweezersMusic();
+      startTweezersAudioScheduler(run);
       cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
     });
   }).catch((error) => {
@@ -1036,6 +1058,7 @@ function drawTouchScreen() {
 
 function finish() {
   running = false;
+  stopTweezersAudioScheduler();
   auditStatePublisher();
   setTimeout(quit, 120);
 }

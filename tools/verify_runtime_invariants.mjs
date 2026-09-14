@@ -8,6 +8,36 @@ const read = name => JSON.parse(fs.readFileSync(path.join(root, 'assets', 'gba',
 const fail = [];
 const check = (ok, message) => { if (!ok) fail.push(message); };
 
+// Rhythm Tweezers: regenerate the cue stream from the source BeatScript so
+// every phrase (including the first cue after a vegetable transition) remains
+// tied to its original script tick. Then assert the browser queues cue audio
+// from the same AudioContext clock instead of from render frames.
+const tweezersSource = fs.readFileSync(path.join(root, 'reference', 'rhythmtengoku-upstream', 'games', 'rhythm_tweezers', 'rhythm_tweezers.bs'), 'utf8').split(/\r?\n/);
+let inTweezersMain = false, tweezersTick = 0, nextVeg = 'onion';
+const expectedTweezers = [];
+for (const raw of tweezersSource) {
+  const line = raw.trim();
+  if (line === 'script script_rhythm_tweezers_main') { inTweezersMain = true; continue; }
+  if (!inTweezersMain) continue;
+  if (line === 'return') break;
+  const rest = /^rest (\d+)$/.exec(line);
+  if (rest) { tweezersTick += Number(rest[1]); continue; }
+  const cue = /^spawn_cue CUE_(\w+)$/.exec(line);
+  if (cue) { expectedTweezers.push({ beat: tweezersTick / 24, kind: 'cue', cue: cue[1].toLowerCase() }); continue; }
+  if (line === 'rhythm_tweezers_start_hair_cycle') { expectedTweezers.push({ beat: tweezersTick / 24, kind: 'cycle' }); continue; }
+  if (line === 'rhythm_tweezers_spawn_tweezers') { expectedTweezers.push({ beat: tweezersTick / 24, kind: 'tweezers' }); continue; }
+  const veg = /^rhythm_tweezers_set_next_veg VEG_(\w+)$/.exec(line);
+  if (veg) { nextVeg = veg[1].toLowerCase(); continue; }
+  if (line.startsWith('rhythm_tweezers_scroll_veg')) expectedTweezers.push({ beat: tweezersTick / 24, kind: 'veg', veg: nextVeg });
+}
+const actualTweezers = read('tweezers/chart.json');
+check(JSON.stringify(actualTweezers) === JSON.stringify(expectedTweezers), 'tweezers: chart differs from source BeatScript');
+check(actualTweezers.filter(event => event.kind === 'cue').length === 88, 'tweezers: source cue count changed or is incomplete');
+check(game.includes('const TWEEZERS_AUDIO_LOOKAHEAD_BEATS = 3'), 'tweezers: audio look-ahead window missing');
+check(game.includes('event.beat > nowBeat + TWEEZERS_AUDIO_LOOKAHEAD_BEATS'), 'tweezers: future event queue is unbounded');
+check(game.includes('startTweezersAudioScheduler(run)'), 'tweezers: source-timed audio scheduler is not started');
+check(game.includes('audioSongStart + eventBeat * 60 / 96'), 'tweezers: cue sound is not derived from the shared audio clock');
+
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,
 // then decrements unk4 for the next cue; it never mutates unk6 until a jump
