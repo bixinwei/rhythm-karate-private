@@ -2190,7 +2190,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
   // comparing JSON charts.
   audit.perfectSweep = () => {
     if (!running || !ported.timeline) return { ok: false, reason: 'not-running' };
-    if (mode !== 'night_walk') return { ok: false, reason: 'wrong-mode' };
+    if (!portedModes[mode]) return { ok: false, reason: 'wrong-mode' };
     cancelAnimationFrame(frame);
     const results = [];
     for (const cue of ported.cues) {
@@ -2222,12 +2222,14 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
   });
   if (new URLSearchParams(location.search).has('auditSweep')) {
     const sweepStart = () => {
-      if (mode !== 'night_walk') startPortedMode('night_walk');
+      const requested = new URLSearchParams(location.search).get('auditSweep');
+      const target = ['spaceball','samurai_slice','night_walk','power_calligraphy'].includes(requested) ? requested : 'night_walk';
+      if (mode !== target) startPortedMode(target);
       const wait = () => {
-        if (!running || mode !== 'night_walk' || !ported.cues.length) return setTimeout(wait, 50);
+        if (!running || mode !== target || !ported.cues.length) return setTimeout(wait, 50);
         const result = audit.perfectSweep();
         document.body.dataset.auditSweep = JSON.stringify(result);
-        document.title = `Night Walk sweep ${result.ok ? 'PASS' : 'FAIL'} (${result.count ?? 0}/${ported.cues.length})`;
+        document.title = `${portedModes[target].label} sweep ${result.ok ? 'PASS' : 'FAIL'} (${result.count ?? 0}/${ported.cues.length})`;
       };
       wait();
     };
