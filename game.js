@@ -1770,6 +1770,13 @@ function drawPorted(tick, cfg) {
       if (!ported.actionCue?.endOfBridge) actorY -= 32 - 32 * Math.pow(age * 32 - 16, 2) / 256;
       actorCell = 2;
     }
+    // For a gap jump the GBA keeps Yan at sprite Y=120 while ascending, then
+    // the shared origin (unk6) is committed when the jump completes. Apply
+    // that committed origin only after landing; applying it during ascent
+    // would move Yan twice because the bridge already uses unk6.
+    else if (ported.actionHit && ported.actionCue?.endOfBridge) {
+      actorY += nightWalkWorldShift(tick);
+    }
     else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
