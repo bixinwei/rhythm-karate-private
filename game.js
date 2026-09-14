@@ -1460,6 +1460,10 @@ function startPortedMode(id) {
         // timeline so input-time RNG calls retain their original order.
         cue.endOfBridge = cue.platformType === 1;
         cue.platformResolved = cue.platformType !== 2;
+        // Every cue still executes night_walk_cue_spawn even when its type is
+        // explicit; that captures the bridge baseline and advances it after a
+        // gap. Keep lifecycle state separate from type resolution.
+        cue.platformSpawned = false;
         cue.hasFish = cue.platformType === 3;
       }
       if (id === 'power_calligraphy') cue.inputType = latestPortedEvent('power_calligraphy_set_next_input', event.tick)?.args[0] ?? null;
@@ -1706,12 +1710,19 @@ function portedLoop() {
     // Match the engine's cue-spawn order. Pre-resolving every random platform
     // at startup lets later input RNG calls change the wrong cue.
     for (const cue of ported.cues) {
-      if (cue.platformResolved || cue.spawn > tick) continue;
-      cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
+      // `platformResolved` only says that the type is known. It is not the
+      // same as `night_walk_cue_spawn` having run: explicit bridge/gap types
+      // are known when the chart is loaded, but the source still captures
+      // unk4 and advances it for every actual gap at its spawn tick.
+      if (cue.platformSpawned || cue.spawn > tick) continue;
+      if (!cue.platformResolved) {
+        cue.endOfBridge = cue.platformType === 1 || (cue.platformType === 2 && gbaRandom(4) === 0);
+        cue.platformResolved = true;
+      }
       cue.baseY = ported.nightWalkBaseY ?? 120;
       // night_walk_cue_spawn decrements unk4 after capturing this cue's y.
       if (cue.endOfBridge) ported.nightWalkBaseY = cue.baseY - 16;
-      cue.platformResolved = true;
+      cue.platformSpawned = true;
     }
   }
   if (localAuditPerfect) {
@@ -2025,7 +2036,11 @@ function drawPorted(tick, cfg) {
       };
       const animation = (cue.endOfBridge ? boxAnimations : bridgeAnimations)[cue.kind] ?? bridgeAnimations.CUE_KICK;
       const noteAnimation = [[30,40],[31,1],[32,2],[33,2],[34,3],[35,6],[34,3],[33,6]];
-      const cell = cue.state === 'hit' ? animationCell(animation,40+framesBetweenTicks(cue.hit,tick))
+      // night_walk_cue_hit seeks directly to animation cel 1, leaving cel 0
+      // as the unopened box.  The opened cels carry their own origins, so
+      // treating the cel index as elapsed-frame 40 shifts the platform after
+      // a gap instead of preserving the original standing height.
+      const cell = cue.state === 'hit' ? animationCell(animation.slice(1),framesBetweenTicks(cue.actionTick ?? cue.hit,tick))
         : cue.state === 'miss' && !cue.endOfBridge && tick >= cue.hit + 12 ? animationCell(noteAnimation,framesBetweenTicks(cue.hit+12,tick))
         : animation[0][0];
       const x = 320 - 256*p;
@@ -2096,7 +2111,16 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         active: tweezers.active.map(hair => ({ beat: hair.beat, hitBeat: hair.hitBeat, type: hair.type, state: hair.state, pullComplete: Boolean(hair.pullComplete) })),
         scrolling: tweezers.scrollStart >= 0
       };
-      if (portedModes[mode]) return { mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length, failedAt: ported.failedAt, actionAt: ported.actionAt, actionHit: ported.actionHit };
+      if (portedModes[mode]) return {
+        mode, running, tick: ported.timeline ? portedTick() : null,
+        cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length,
+        failedAt: ported.failedAt, actionAt: ported.actionAt, actionHit: ported.actionHit,
+        ...(mode === 'night_walk' ? {
+          worldShift: nightWalkWorldShift(portedTick()),
+          nextBridgeBaseY: ported.nightWalkBaseY,
+          firstBridges: ported.cues.slice(0, 10).map(cue => ({ spawn: cue.spawn, endOfBridge: cue.endOfBridge, baseY: cue.baseY, spawned: cue.platformSpawned }))
+        } : {})
+      };
       return { mode, running, beat: songBeat() };
     },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },

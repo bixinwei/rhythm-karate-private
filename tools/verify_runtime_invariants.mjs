@@ -37,6 +37,7 @@ check(deterministic.some(c => c.tick === 456 && c.type === 1 && c.baseY === 104)
 // Yan has no origin pointer and remains at sprite Y=120.
 check(game.includes('cue.baseY = ported.nightWalkBaseY ?? 120'), 'night_walk: cue baseline capture missing');
 check(game.includes('if (cue.endOfBridge) ported.nightWalkBaseY = cue.baseY - 16'), 'night_walk: unk4 decrement missing');
+check(game.includes('cue.platformSpawned') && game.includes('if (!cue.platformResolved)'), 'night_walk: explicit platform cues skip source spawn lifecycle');
 check(game.includes('(cue.baseY ?? 120) - nightWalkWorldShift(tick)'), 'night_walk: platform does not use captured baseline and source origin direction');
 check(!game.includes('if (mode === \'night_walk\') actorY += nightWalkWorldShift(tick)'), 'night_walk: actor incorrectly receives platform origin offset');
 check(game.includes('const baseShift = -completed * 16'), 'night_walk: jump origin is incorrectly coupled to spawned gaps');
