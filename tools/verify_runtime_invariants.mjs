@@ -34,11 +34,11 @@ check(deterministic.some(c => c.tick === 288 && c.baseY === 104), 'night_walk: p
 check(deterministic.some(c => c.tick === 456 && c.type === 1 && c.baseY === 104), 'night_walk: second gap baseline is not source 104');
 
 // Geometry wiring: platform sprites use their captured baseline plus unk6;
-// Yan receives the committed unk6 only after a completed gap jump.
+// Yan has no origin pointer and remains at sprite Y=120.
 check(game.includes('cue.baseY = ported.nightWalkBaseY ?? 120'), 'night_walk: cue baseline capture missing');
 check(game.includes('if (cue.endOfBridge) ported.nightWalkBaseY = cue.baseY - 16'), 'night_walk: unk4 decrement missing');
 check(game.includes('(cue.baseY ?? 120) - nightWalkWorldShift(tick)'), 'night_walk: platform does not use captured baseline and source origin direction');
-check(!game.includes('nightWalkCommittedShift(tick)'), 'night_walk: actor incorrectly receives platform origin offset');
+check(!game.includes('if (mode === \'night_walk\') actorY += nightWalkWorldShift(tick)'), 'night_walk: actor incorrectly receives platform origin offset');
 check(game.includes('const baseShift = -completed * 16'), 'night_walk: jump origin is incorrectly coupled to spawned gaps');
 
 // Every ported timeline must have a one-to-one cue stream and a terminating

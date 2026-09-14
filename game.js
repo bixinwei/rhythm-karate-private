@@ -1681,8 +1681,8 @@ function nightWalkWorldShift(tick) {
     else completed++;
   }
   // The engine stores the shared origin as a negative vertical offset
-  // (unk3B8.unk6). Stars are then rendered at starY - offset, so they drift
-  // down slightly while Yan clears a gap while the bridge moves upward.
+  // (unk3B8.unk6). Sprite positions are composed with that origin, so a
+  // negative value moves the shared scene upward while Yan clears a gap.
   // The source keeps unk4 (the future platform baseline) separate from unk8
   // / unk6 (the active jump origin). Gap spawning changes only unk4; this
   // function therefore models the dynamic jump origin alone.
@@ -1771,9 +1771,7 @@ function drawPorted(tick, cfg) {
       actorCell = 2;
     }
     // For a gap jump the GBA keeps Yan at sprite Y=120 while ascending, then
-    // the shared origin (unk6) is committed when the jump completes. Apply
-    // that committed origin only after landing; applying it during ascent
-    // would move Yan twice because the bridge already uses unk6.
+    // the shared origin affects the bridge sprites; Yan has no origin pointer.
     else if (!ported.actionHit && elapsed < 19) actorCell = animationCell([[3,1],[4,1],[5,3],[4,1],[3,1],[7,4],[8,4],[9,4],[10,4]],elapsed);
     else actorCell = animationCell([[7,4],[8,4],[9,4],[10,4]],secondsAtTick(Math.max(0,tick))*60,true);
   }
@@ -2027,8 +2025,7 @@ function drawPorted(tick, cfg) {
       const x = 320 - 256*p;
       // All bridge/fish sprites share the engine's vertical origin (unk3B8),
       // the same offset that drives the star field during a gap jump.
-      // sprite_set_origin_x_y applies unk6 as an origin subtraction in the
-      // GBA sprite system: visibleY = captured unk4 - current unk6.
+      // sprite_set_origin_x_y composes visibleY = captured unk4 - current unk6.
       const y = (cue.baseY ?? 120) - nightWalkWorldShift(tick);
       drawPortedCell(cell,x,y,4);
       if (cue.hasFish) drawPortedCell(animationCell([[21,4],[22,4],[23,4],[24,4],[25,4],[26,4]],framesBetweenTicks(cue.spawn,tick),true),x,y,4);
