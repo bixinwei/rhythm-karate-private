@@ -2182,7 +2182,28 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
     nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,
-    hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
+      hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
+  };
+  // Deterministic source-tick replay used by the local audit. It advances to
+  // each cue's spawn tick, then injects the input exactly at its hit tick.
+  // This verifies the actual browser judgement path rather than merely
+  // comparing JSON charts.
+  audit.perfectSweep = () => {
+    if (!running || !ported.timeline) return { ok: false, reason: 'not-running' };
+    if (mode !== 'night_walk') return { ok: false, reason: 'wrong-mode' };
+    cancelAnimationFrame(frame);
+    const results = [];
+    for (const cue of ported.cues) {
+      if (cue.state !== 'fresh') continue;
+      audioSongStart = audio().currentTime - secondsAtTick(cue.spawn);
+      portedLoop();
+      audioSongStart = audio().currentTime - secondsAtTick(cue.hit);
+      portedPunch();
+      results.push({ tick: cue.hit, state: cue.state, perfect: cue.perfect === true, actionTick: cue.actionTick });
+    }
+    cancelAnimationFrame(frame);
+    const failed = results.filter(item => !item.perfect || item.state !== 'hit');
+    return { ok: failed.length === 0 && results.length === ported.cues.length, count: results.length, failed, results };
   };
   window.__rhythmAudit = audit;
   auditStatePublisher = () => {
