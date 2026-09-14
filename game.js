@@ -14,6 +14,16 @@ const sprites = {};
 // Local exports composed from the GBA decomp's original 4bpp tiles, palette
 // banks and animation cells.  These replace the temporary hand-drawn sheet.
 const gba = {};
+// Keep Karate Man on the same cel-origin path as every later port.  The
+// exporter derives these anchors from the original OBJ cell definitions, so
+// they must not be duplicated as a hand-maintained table in the renderer.
+let karateManifest = {};
+const karateManifestLoadPromise = fetch('assets/gba/karate_frames.json')
+  .then((response) => {
+    if (!response.ok) throw new Error(`Failed to load Karate frame manifest (${response.status})`);
+    return response.json();
+  })
+  .then((manifest) => { karateManifest = manifest; });
 for (const cell of [0, 1, 2, 15, 16, 17, 18, 19, 20, 21, 22, 23, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 64, 65, 66, 67]) {
   const image = new Image();
   image.src = `assets/gba/cel${String(cell).padStart(3, '0')}.png?v=obj2d`;
@@ -350,7 +360,7 @@ function start() {
   judgement = '';
   lastBeat = -1;
   lastMusicBeat = -99;
-  Promise.all([bgmLoadPromise, fanLoadPromise]).then(() => loadOriginalSamples()).then(() => {
+  Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
     audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
@@ -849,8 +859,9 @@ function drawFighter(x, y, punching, beat) {
   const cell = punching ? punchFrames[Math.min(punchFrames.length - 1, Math.floor(punchAge / 16))] : idleCell;
   const image = gba[cell]; const scale = 4;
   ctx.save(); ctx.imageSmoothingEnabled = false;
-  const origins = { 0: [35,75], 1: [35,74], 2: [35,73], 15: [35,71], 16: [35,72], 17: [35,73], 18: [35,73], 19: [34,64], 20: [34,64], 21: [35,67], 22: [35,67], 23: [35,67] };
-  const [originX, originY] = origins[cell] ?? origins[0];
+  const meta = karateManifest[cell] ?? karateManifest[0];
+  if (!meta) { ctx.restore(); return; }
+  const { originX, originY } = meta;
   if (image?.complete) ctx.drawImage(image, x - originX * scale, y - originY * scale, image.naturalWidth * scale, image.naturalHeight * scale);
   ctx.restore();
 }
@@ -2000,7 +2011,11 @@ function drawPorted(tick, cfg) {
       const spawnTempo = tempoAtTick(cue.visualSpawn);
       const moveDuration = Math.max(1, 192 * 150 / Math.max(1, spawnTempo));
       const travel = Math.max(0, Math.min(1, framesBetweenTicks(cue.visualSpawn, tick) / moveDuration));
-      const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
+      // func_08031c94 begins from fixed-point Y 0xA000 (160 px) and adds
+      // its 54 px lane drift before subtracting the per-type hop.  The old
+      // 40 px literal put every demon one lane too high, which also made
+      // their entry look prematurely fast.
+      const x = 240 - 216 * travel, baseY = 160 + 54 * travel;
       // Demon hop/hover cels loop independently of horizontal travel in the
       // original sprite engine; tying this phase to travel made paired cues
       // stretch the hop and visibly drift away from the beat.
