@@ -1460,7 +1460,14 @@ function startPortedMode(id) {
       return cue;
     });
     ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.cueSpawningDisabled = false; ported.starWandAt = -1; ported.nightWalkBaseY = 120; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
-    await loadOriginalSamples(data.needed);
+    // Never let a single stalled/unsupported sample request freeze the game
+    // on its first frame (notably Safari can keep a failed range request
+    // pending indefinitely). Start the deterministic clock after a short
+    // bounded preload; any late samples are picked up by the normal cache.
+    await Promise.race([
+      loadOriginalSamples(data.needed),
+      new Promise(resolve => setTimeout(resolve, 2500))
+    ]);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
     audioSongStart = audio().currentTime + 0.05; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
