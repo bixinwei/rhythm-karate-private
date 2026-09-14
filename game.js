@@ -1662,8 +1662,11 @@ function samuraiFogAt(tick) {
   return { offsets:[distance,-distance], alpha:Math.max(0,hitAlpha-afterFrames*fadePerFrame)/16 };
 }
 function nightWalkWorldShift(tick) {
-  let completed = 0, active = null;
+  let spawnedGaps = 0, completed = 0, active = null;
   for (const cue of ported.cues) {
+    // night_walk_cue_spawn subtracts 16 from unk8 immediately for every
+    // gap platform, before the player reaches its judgment point.
+    if (cue.endOfBridge && cue.spawn <= tick) spawnedGaps++;
     // Only a jump over a gap moves the shared world origin.  Ordinary
     // stepping-stone/bridge jumps move Yan's sprite in place; applying their
     // parabola to the stars and bridge makes the whole background appear to
@@ -1683,10 +1686,11 @@ function nightWalkWorldShift(tick) {
   // The engine stores the shared origin as a negative vertical offset
   // (unk3B8.unk6). Stars are then rendered at starY - offset, so they drift
   // down slightly while Yan clears a gap while the bridge moves upward.
-  if (!active) return -completed * 16;
+  const baseShift = -(spawnedGaps + completed) * 16;
+  if (!active) return baseShift;
   const step = 27 * active.elapsed / active.duration - 16;
   const jumpHeight = 32 - (32 * step * step / 256);
-  return -completed * 16 - Math.max(0,jumpHeight);
+  return baseShift - Math.max(0,jumpHeight);
 }
 function portedLoop() {
   pumpPortedAudio();
@@ -2080,7 +2084,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         active: tweezers.active.map(hair => ({ beat: hair.beat, hitBeat: hair.hitBeat, type: hair.type, state: hair.state, pullComplete: Boolean(hair.pullComplete) })),
         scrolling: tweezers.scrollStart >= 0
       };
-      if (portedModes[mode]) return { mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length };
+      if (portedModes[mode]) return { mode, running, tick: ported.timeline ? portedTick() : null, cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length, failedAt: ported.failedAt, actionAt: ported.actionAt, actionHit: ported.actionHit };
       return { mode, running, beat: songBeat() };
     },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
@@ -2093,7 +2097,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     value.nextCue = audit.nextCue();
     value.cueSpawningDisabled = ported.cueSpawningDisabled;
     if (portedModes[mode]) value.perfectHits = ported.cues.filter(cue => cue.state === 'hit' && cue.perfect).length;
-    value.cueStates = ported.cues.map(cue => ({ spawn: cue.spawn, hit: cue.hit, state: cue.state, perfect: cue.perfect ?? null }));
+    value.cueStates = ported.cues.map(cue => ({ spawn: cue.spawn, hit: cue.hit, state: cue.state, perfect: cue.perfect ?? null, endOfBridge: cue.endOfBridge ?? null, platformType: cue.platformType ?? null, actionTick: cue.actionTick ?? null }));
     document.body.dataset.auditState = JSON.stringify(value);
   };
   document.addEventListener('rhythm-audit', () => {
