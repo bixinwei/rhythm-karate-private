@@ -51,7 +51,8 @@ function karateUpdateBgPalette() {
 }
 
 const BPM = 120;
-const BEAT_MS = 60000 / BPM;// GBA mixer values are 0..256 fixed-point.  The ROM sums every voice in its
+const BEAT_MS = 60000 / BPM;
+// GBA mixer values are 0..256 fixed-point.  The ROM sums every voice in its
 // scratch domain and midi_directsound_init fills gMidiSampleTable with
 // clamp(scratch >> 7, -128, 127), so one full-volume voice already reaches full
 // scale and loud passages saturate at the DMA write.  Web Audio clamps the
