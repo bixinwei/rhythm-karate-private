@@ -59,46 +59,61 @@ const GBA_MIX_SCALE = 0.48;
 const PERFECT_WINDOW = 3 / 24;
 const HIT_WINDOW = 5 / 24;
 const TRAVEL_BEATS = 1;
-// Spawn beats transcribed from games/karate_man/karate_man.bs. Karate's Cue
-// definition has a duration of 0x18 (one beat at 120 BPM), so each punch is
-// exactly one beat after its spawn, matching the original cue system.
-const spawnChart = [
-  [14,'pot'], [22,'pot'], [30,'pot'], [38,'pot'], [46,'pot'], [50,'rock'],
-  [58,'pot'], [62,'pot'], [66,'pot'], [70,'pot'], [74,'football'], [79,'bulb'], [86,'pot'], [90,'rock'],
-  [96,'pot'], [98,'pot'], [100,'pot'], [102,'pot'], [104,'football'], [108,'bulb'], [109,'bulb'], [110,'rock'],
-  [112,'pot'], [114,'pot'], [116,'pot'], [118,'pot'], [120,'pot'], [122,'pot'], [124,'pot'], [126,'pot'],
-  // karate_man_sub_089ee9cc: POT 3072, ROCK 3120, BULB 3192, BOMB 3216 ticks.
-  [128,'pot'], [130,'rock'], [133,'bulb'], [134,'bomb'],
-  // script_karate_man_main: the closing ROCK spawns at tick 3696 after the
-  // `10 rest 24` ending phrase, not one beat earlier.
-  [154,'rock']
-];
-const chart = spawnChart.map(([spawnBeat, type]) => [spawnBeat + 1, type]);
-// These are the original `print_text_f` commands in karate_man.bs.  They are
-// not web-font text: IDs 1–4 select the corresponding GBA warning cels.
-// Script ticks: 1872, 2568, 3168, 3552 => beats 78, 107, 132, 148.
-const cueWarnings = [
-  { beat: 78, id: 1, duration: 1 },
-  { beat: 107, id: 3, duration: 1 },
-  { beat: 132, id: 2, duration: 1.5 },
-  { beat: 148, id: 4, duration: 3 }
-];
-const SONG_END = 159;
-// Script ticks 3264 and 3552 (see karate_man_sub_089ee9cc / script_karate_man_main).
-const tempoSegments = [{ from: 0, bpm: 120 }, { from: 136, bpm: 150 }, { from: 148, bpm: 140 }];
-// The script's own music-bus automation, in beats: set_music_volume 150 at
-// tick 0, set_music_volume 100 at tick 3264, mod_music_volume 240 over 120
-// ticks at tick 3432, then set_music_volume 150 when the Fan track starts at
-// tick 3648.  These are GBA mixer stages and must not be flattened.
-const karateMusicVolumeEvents = [
-  { beat: 0, value: 150 },
-  { beat: 136, value: 100 },
-  { beat: 143, rampTo: 240, span: 5 },
-  { beat: 152, value: 150 }
-];
+// Karate Man is expanded from games/karate_man/karate_man.bs by
+// tools/export_beatscript_timeline.py (main script plus the scene entry's
+// ending tail), exactly like the other five levels.  Nothing below is
+// hand-transcribed any more: the cue chart, warning cels, tempo segments, the
+// script's music-bus automation, the beat_anim grid and the ending fades all
+// come from that expansion.
+const KARATE_CUE_TYPES = { CUE_POT: 'pot', CUE_ROCK: 'rock', CUE_SOCCER_BALL: 'football', CUE_LIGHT_BULB: 'bulb', CUE_BOMB: 'bomb' };
+let karateChart = [];
+let karateWarnings = [];
+let karateTempo = [{ from: 0, bpm: 120 }];
+let karateVolumeEvents = [];
+let karateBeatAnimTicks = [];
+let karateSongEnd = 0;
+let karateFanStartBeat = 0;
+let karateScreenFade = null;
+let karateTimelineReady = false;
+const karateTimelineLoadPromise = fetch('assets/gba/karate_man_timeline.json')
+  .then((response) => {
+    if (!response.ok) throw new Error(`Failed to load Karate timeline (${response.status})`);
+    return response.json();
+  })
+  .then((timeline) => {
+    const events = timeline.events;
+    // The CueDefinition duration is 0x18 ticks, so each cue is punched one beat
+    // after its spawn tick.
+    karateChart = events.filter((event) => event.op === 'spawn_cue')
+      .map((event) => [event.tick / 24 + TRAVEL_BEATS, KARATE_CUE_TYPES[event.args[0]] ?? String(event.args[0]).toLowerCase()]);
+    karateWarnings = events.filter((event) => event.op === 'print_text_f').map((event) => {
+      const clear = events.find((next) => next.op === 'clear_text_f' && next.tick > event.tick);
+      return { beat: event.tick / 24, id: Number(event.args[0]), duration: ((clear?.tick ?? event.tick + 24) - event.tick) / 24 };
+    });
+    karateTempo = events.filter((event) => event.op === 'set_tempo').map((event) => ({ from: event.tick / 24, bpm: Number(event.args[0]) }));
+    if (!karateTempo.length || karateTempo[0].from !== 0) karateTempo.unshift({ from: 0, bpm: 120 });
+    karateVolumeEvents = events.filter((event) => ['set_music_volume', 'mod_music_volume', 'fade_music_out'].includes(event.op)).map((event) => {
+      const beat = event.tick / 24;
+      if (event.op === 'set_music_volume') return { beat, value: Number(event.args[0]) };
+      return event.op === 'mod_music_volume'
+        ? { beat, rampTo: Number(event.args[0]), span: Number(event.args[1]) / 24 }
+        : { beat, rampTo: 0, span: Math.max(1, Number(event.args[0])) / 24 };
+    });
+    karateBeatAnimTicks = events.filter((event) => event.op === 'beat_anim').map((event) => event.tick);
+    karateSongEnd = timeline.endTick / 24;
+    const fan = events.find((event) => event.op === 'play_music' && String(event.args[0]).includes('karate_fan'));
+    karateFanStartBeat = fan ? fan.tick / 24 : karateSongEnd;
+    const fade = [...events].reverse().find((event) => event.op === 'fade_screen_out');
+    karateScreenFade = fade ? {
+      beat: fade.tick / 24,
+      span: Math.max(1, Number(fade.args[0])) / 24,
+      colour: String(fade.args[1] ?? 'BLACK').toUpperCase().includes('WHITE') ? '#fff' : '#000'
+    } : null;
+    karateTimelineReady = true;
+  });
 function karateMusicVolumeAt(beat) {
   let value = 256;
-  for (const event of karateMusicVolumeEvents) {
+  for (const event of karateVolumeEvents) {
     if (event.beat > beat) break;
     if (event.rampTo != null) {
       if (beat < event.beat + event.span) return value + (event.rampTo - value) * (beat - event.beat) / event.span;
@@ -124,8 +139,8 @@ const KARATE_ANIMATIONS = {
 };
 function elapsedForBeat(target) {
   let ms = 0;
-  for (let i = 0; i < tempoSegments.length; i++) {
-    const s = tempoSegments[i], e = tempoSegments[i + 1]?.from ?? target;
+  for (let i = 0; i < karateTempo.length; i++) {
+    const s = karateTempo[i], e = karateTempo[i + 1]?.from ?? target;
     if (target <= s.from) break;
     const span = Math.min(target, e) - s.from;
     if (span > 0) ms += span * 60000 / s.bpm;
@@ -135,8 +150,8 @@ function elapsedForBeat(target) {
 }
 function beatAtElapsed(ms) {
   let beat = 0;
-  for (let i = 0; i < tempoSegments.length; i++) {
-    const s = tempoSegments[i], next = tempoSegments[i + 1];
+  for (let i = 0; i < karateTempo.length; i++) {
+    const s = karateTempo[i], next = karateTempo[i + 1];
     const span = next ? (next.from - s.from) * 60000 / s.bpm : Infinity;
     if (ms <= span) return s.from + ms * s.bpm / 60000;
     ms -= span; beat = next.from;
@@ -167,6 +182,7 @@ const karateResultUntil = { miss: -Infinity, barely: -Infinity, smirk: -Infinity
 // the current Joe animation is tracked with the audio-clock instant it started.
 let karateBeatAnimKind = 'stand';
 let karateBeatAnimStart = -Infinity;
+let karateBeatAnimIndex = 0;
 let lastBeat = -1;
 let judgement = '';
 let active = [];
@@ -301,7 +317,7 @@ function scheduleKarateNote(event, absoluteBeat) {
   const sample = originalSamples[event.sample];
   if (!sample) return;
   const ac = audio();
-  const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
+  const endBeat = Math.min(karateSongEnd, absoluteBeat + event.length);
   const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
   // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
   // is Karate Man's background vocal/call-and-response track.  Keep only
@@ -333,7 +349,7 @@ function scheduleKarateMusicTrack(track, events, startBeat, nowBeat, horizonBeat
     cursor += 1;
     // Advance past anything the render loop missed (backgrounded tab) rather
     // than dumping a burst of late notes into the mix.
-    if (absoluteBeat >= SONG_END || absoluteBeat < nowBeat) continue;
+    if (absoluteBeat >= karateSongEnd || absoluteBeat < nowBeat) continue;
     scheduleKarateNote(event, absoluteBeat);
   }
   karateMusicCursor[track] = cursor;
@@ -499,10 +515,11 @@ function start() {
   karateResultUntil.miss = karateResultUntil.barely = karateResultUntil.smirk = karateResultUntil.happy = -Infinity;
   karateBeatAnimKind = 'stand';
   karateBeatAnimStart = -Infinity;
+  karateBeatAnimIndex = 0;
   karateStagePalette = 'low';
   karateMusicCursor.bgm = 0;
   karateMusicCursor.fan = 0;
-  Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise, karateSfxLoadPromise]).then(() => loadOriginalSamples()).then(() => {
+  Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise, karateSfxLoadPromise, karateTimelineLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
     audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
@@ -541,7 +558,7 @@ function loop() {
   const beat = songBeat();
   if (portedModes[mode]) return portedLoop();
   if (mode === 'tweezers') return tweezersLoop(beat);
-  if (beat > SONG_END) return finish();
+  if (beat > karateSongEnd) return finish();
   update(beat);
   render(beat);
   auditStatePublisher();
@@ -838,12 +855,16 @@ function update(beat) {
   if (currentWholeBeat !== lastBeat) {
     lastBeat = currentWholeBeat;
     playMusic(currentWholeBeat);
-    // The BeatScript issues `beat_anim` once per beat, which is what
-    // karate_common_beat_animation() responds to.
+  }
+  // `beat_anim` commands are consumed from the expanded script, so Joe's beat
+  // animation restarts exactly when karate_common_beat_animation() would run
+  // (the finale and the closing phrase have no beat_anim at all).
+  while (karateBeatAnimIndex < karateBeatAnimTicks.length && karateBeatAnimTicks[karateBeatAnimIndex] <= beat * 24) {
+    karateBeatAnimIndex++;
     karateBeatAnimation(beat);
   }
-  while (chartIndex < chart.length && chart[chartIndex][0] - beat <= TRAVEL_BEATS) {
-    const [hitBeat, type] = chart[chartIndex++];
+  while (chartIndex < karateChart.length && karateChart[chartIndex][0] - beat <= TRAVEL_BEATS) {
+    const [hitBeat, type] = karateChart[chartIndex++];
     active.push({ hitBeat, spawnBeat: hitBeat - 1, type, state: 'flying', impact: 0, cuePlayed: false, accentPlayed: false, missed: false });
     if (!playKarateSfx('fly')) launchSound(type);
   }
@@ -997,10 +1018,23 @@ function drawTop(beat) {
   drawItems(beat);
   drawOriginalHitEffects(beat);
   drawCueWarning(beat);
+  // The scene entry's ending: fade_screen_out ramps the playfield to BLACK and
+  // the trailing rests hold it until the script stops.
+  const fade = karateScreenFadeAlpha(beat);
+  if (fade > 0) {
+    ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = karateScreenFade.colour;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+}
+
+function karateScreenFadeAlpha(beat) {
+  if (!karateScreenFade) return 0;
+  return Math.max(0, Math.min(1, (beat - karateScreenFade.beat) / karateScreenFade.span));
 }
 
 function drawCueWarning(beat) {
-  const warning = cueWarnings.find((entry) => beat >= entry.beat && beat < entry.beat + entry.duration);
+  const warning = karateWarnings.find((entry) => beat >= entry.beat && beat < entry.beat + entry.duration);
   if (!warning) return;
   const cell = warning.id === 4 ? 64 : 64 + warning.id;
   const image = gba[cell];
@@ -1399,14 +1433,30 @@ function portedMusicVolumeAt(tick) {
   let value = 256;
   for (const event of ported.timeline.events) {
     if (event.op === 'set_music_volume' && event.tick <= tick) value = Number(event.args[0]);
-    if (event.op === 'mod_music_volume' && event.tick <= tick) {
-      const target = Number(event.args[0]), span = Number(event.args[1]);
+    if ((event.op === 'mod_music_volume' || event.op === 'fade_music_out') && event.tick <= tick) {
+      // fade_music_out <ticks> ramps the current music-bus volume to silence;
+      // every level's scene entry ends with one before the screen fade.
+      const target = event.op === 'mod_music_volume' ? Number(event.args[0]) : 0;
+      const span = Math.max(1, Number(event.args[1] ?? event.args[0]));
       const before = value;
       if (tick < event.tick + span) return before + (target - before) * (tick - event.tick) / span;
       value = target;
     }
   }
   return value;
+}
+
+// fade_screen_out <ticks>[, <colour>]: the fade command does not consume script
+// time (the BeatScript handler returns immediately), so the playfield ramps over
+// N ticks from the command's tick and the following `rest` commands hold it.
+function portedScreenFade(tick) {
+  let fade = null;
+  for (const event of ported.timeline.events) {
+    if (event.op !== 'fade_screen_out' || event.tick > tick) continue;
+    fade = { tick: event.tick, span: Math.max(1, Number(event.args[0])), colour: String(event.args[1] ?? 'BLACK').toUpperCase().includes('WHITE') ? '#fff' : '#000' };
+  }
+  if (!fade) return null;
+  return { alpha: Math.max(0, Math.min(1, (tick - fade.tick) / fade.span)), colour: fade.colour };
 }
 function configurePortedSample(source, event, pitchSemitones = 0, rateScale = 1) {
   const note = event.playNote ?? event.note;
@@ -2331,6 +2381,14 @@ function drawPorted(tick, cfg) {
     const fade = Math.max(0, Math.min(1, framesBetweenTicks(ported.failedAt + 192, tick) / 12));
     if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, stage.width, stage.height); ctx.restore(); }
   }
+  // Every scene entry ends with fade_screen_out + two rests, so the finished
+  // run fades out and holds the faded screen instead of cutting to the menu.
+  const screenFade = portedScreenFade(tick);
+  if (screenFade && screenFade.alpha > 0) {
+    ctx.save(); ctx.globalAlpha = screenFade.alpha; ctx.fillStyle = screenFade.colour;
+    ctx.fillRect(0, 0, stage.width, stage.height);
+    ctx.restore();
+  }
   drawTouchScreen();
 }
 function eventAudioTime(event) {
@@ -2399,6 +2457,8 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         mode, running, tick: ported.timeline ? portedTick() : null,
         cueCount: ported.cues.length, loadedFrames: Object.keys(ported.frames).length,
         failedAt: ported.failedAt, actionAt: ported.actionAt, actionHit: ported.actionHit,
+        musicLevel: ported.timeline ? portedMusicVolumeAt(portedTick()) : null,
+        screenFade: ported.timeline ? (portedScreenFade(portedTick())?.alpha ?? 0) : 0,
         ...(mode === 'night_walk' ? {
           worldShift: nightWalkWorldShift(portedTick()),
           nextBridgeBaseY: ported.nightWalkBaseY,
@@ -2407,8 +2467,8 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
       };
       if (mode === 'karate') return {
         mode, running, beat: songBeat(),
-        cueCount: chart.length, warnings: cueWarnings.map(warning => ({ beat: warning.beat, id: warning.id })),
-        tempoSegments, songEnd: SONG_END,
+        cueCount: karateChart.length, warnings: karateWarnings.map(warning => ({ beat: warning.beat, id: warning.id })),
+        tempoSegments: karateTempo, songEnd: karateSongEnd,
         bgmNotes: originalBgmEvents.length, bgmSamples: originalBgmEvents.filter(event => Number.isFinite(event.sample)).length,
         fanNotes: originalFanEvents.length, fanSamples: originalFanEvents.filter(event => Number.isFinite(event.sample)).length,
         sfxLoaded: Object.keys(karateSfx).length,
@@ -2421,7 +2481,11 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         musicCursor: { ...karateMusicCursor },
         scheduledMusicNodes: scheduledMusicNodes.length,
         updatedBeat: lastBeat,
-        noiseBuffers: gbaNoiseBuffers.size
+        noiseBuffers: gbaNoiseBuffers.size,
+        timelineReady: karateTimelineReady,
+        musicLevel: karateMusicVolumeAt(songBeat()),
+        beatAnimTicks: karateBeatAnimTicks.length,
+        screenFade: karateScreenFadeAlpha(songBeat())
       };
       return { mode, running, beat: songBeat() };
     },

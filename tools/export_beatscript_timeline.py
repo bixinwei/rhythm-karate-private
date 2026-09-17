@@ -3,6 +3,12 @@
 Only source directives that affect gameplay time or engine state are retained.
 Calls are expanded recursively, so the generated JSON can be mechanically
 compared with the original script instead of maintaining a hand-written chart.
+
+A scene entry script may be given as a third argument (plus the call inside it
+that enters the main script): its remaining commands are appended after the main
+script, which is where every level's `fade_music_out`/`fade_screen_out` ending
+lives.  Without that tail the browser build would cut the song off at the last
+gameplay beat and never show the ROM's ending.
 """
 from __future__ import annotations
 import json, re, sys
@@ -11,6 +17,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 GAME=sys.argv[1]
 ENTRY=sys.argv[2]
+TAIL=sys.argv[3] if len(sys.argv)>3 else None
+AFTER=sys.argv[4] if len(sys.argv)>4 else ENTRY
 game_dir=ROOT/'reference'/'rhythmtengoku-upstream'/'games'/GAME
 # Power Calligraphy's main sheet includes its executable subroutines from a
 # companion file; combine every local BeatScript source before resolving calls.
@@ -32,6 +40,25 @@ def walk(name,tick=0,depth=0):
         events.append({'tick':tick,'op':op,'args':args[1:]})
     return tick
 
+def walk_tail(name,tick):
+    """Append the scene entry's commands that follow the call into the main script."""
+    if name not in scripts: raise ValueError(f'missing tail script {name}')
+    started=False
+    for raw in scripts[name].splitlines():
+        line=raw.split('@')[0].strip()
+        if not line or line in {'return','stop','loop_start','loop_end'}: continue
+        args=line.replace(',',' ').split(); op=args[0]
+        if not started:
+            if op=='call' and args[1]==AFTER: started=True
+            continue
+        if op=='rest': tick += int(args[1],0); continue
+        if op=='call': tick=walk(args[1],tick,1); continue
+        events.append({'tick':tick,'op':op,'args':args[1:]})
+    if not started: raise ValueError(f'{name} never calls {AFTER}')
+    return tick
+
 end=walk(ENTRY)
+main_end=end
+if TAIL: end=walk_tail(TAIL,end)
 out.write_text(json.dumps({'entry':ENTRY,'endTick':end,'events':events},indent=2))
-print(GAME,ENTRY,'events',len(events),'end',end,'ticks')
+print(GAME,ENTRY,'events',len(events),'main end',main_end,'end',end,'ticks')

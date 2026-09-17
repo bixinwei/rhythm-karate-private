@@ -1,6 +1,6 @@
 {
   "entry": "script_power_calligraphy_main",
-  "endTick": 5502,
+  "endTick": 5550,
   "events": [
     {
       "tick": 0,
@@ -9637,6 +9637,39 @@
       "tick": 5478,
       "op": "disable_pause_menu",
       "args": []
+    },
+    {
+      "tick": 5502,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 5502,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 5502,
+      "op": "fade_music_out",
+      "args": [
+        "48"
+      ]
+    },
+    {
+      "tick": 5502,
+      "op": "fade_screen_out",
+      "args": [
+        "12",
+        "BLACK"
+      ]
+    },
+    {
+      "tick": 5550,
+      "op": "define_gameplay_scene",
+      "args": [
+        "scene_power_calligraphy",
+        "script_power_calligraphy_entry"
+      ]
     }
   ]
 }

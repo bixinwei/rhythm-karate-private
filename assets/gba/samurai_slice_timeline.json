@@ -1,6 +1,6 @@
 {
   "entry": "script_samurai_slice_main",
-  "endTick": 5880,
+  "endTick": 5928,
   "events": [
     {
       "tick": 0,
@@ -2168,6 +2168,46 @@
       "tick": 5880,
       "op": ".end",
       "args": []
+    },
+    {
+      "tick": 5880,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 5880,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 5880,
+      "op": "fade_music_out",
+      "args": [
+        "48"
+      ]
+    },
+    {
+      "tick": 5880,
+      "op": "fade_screen_out",
+      "args": [
+        "12",
+        "BLACK"
+      ]
+    },
+    {
+      "tick": 5928,
+      "op": "define_gameplay_scene",
+      "args": [
+        "scene_samurai_slice",
+        "script_samurai_slice_entry"
+      ]
+    },
+    {
+      "tick": 5928,
+      "op": ".section",
+      "args": [
+        ".script.prologue"
+      ]
     }
   ]
 }

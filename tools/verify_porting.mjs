@@ -23,8 +23,9 @@ check(game.includes('drawSpaceballEntity(poof,34,52,0,zoom)') && game.includes('
 check(game.includes('for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZoom)'), 'spaceball: star field amount differs from source');
 check(game.includes('const closeSeq = [[close[1],3],[close[2],3],[close[3],3],[close[4],20]]') && game.includes('const farSeq = [[far[1],3],[far[2],3],[far[3],3],[far[4],20]]'), 'spaceball: batter animation cel durations differ from source');
 check(game.includes('framesBetweenTicks(ported.actionAt, ported.actionAt + 10)') && game.includes('swingFrames < swingDuration'), 'spaceball: swing timer differs from source 0x0A');
-const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
-check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[154,\'rock\']'), 'karate: spawn chart missing or truncated');
+const karateTimeline = JSON.parse(fs.readFileSync(path.join(assets, 'karate_man_timeline.json'), 'utf8'));
+const karateCues = karateTimeline.events.filter(event => event.op === 'spawn_cue').map(event => event.tick / 24);
+check(karateCues.length === 35 && karateCues[0] === 14 && karateCues.at(-1) === 154, `karate: timeline cue chart missing or truncated (${karateCues.length} cues)`);
 
 // Every ported game must have a deterministic timeline and at least one music
 // start. This catches incomplete exports before a browser run.

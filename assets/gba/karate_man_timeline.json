@@ -1,0 +1,1307 @@
+{
+  "entry": "script_karate_man_main",
+  "endTick": 3864,
+  "events": [
+    {
+      "tick": 0,
+      "op": "set_results_header",
+      "args": [
+        "D_0805abdc"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "start_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 0,
+      "op": "import_marking_criteria",
+      "args": [
+        "karate_man_marking_criteria"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "run",
+      "args": [
+        "gameplay_set_mercy_count",
+        "2"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "run",
+      "args": [
+        "gameplay_set_sound_tempo",
+        "124"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_tempo",
+      "args": [
+        "120"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "set_music_volume",
+      "args": [
+        "150"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "play_music",
+      "args": [
+        "s_karate_bgm_seqData"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "start_tracking_inputs",
+      "args": []
+    },
+    {
+      "tick": 0,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 0,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 24,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 48,
+      "op": "karate_man_print_textbox",
+      "args": [
+        "D_0805abc4"
+      ]
+    },
+    {
+      "tick": 48,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 72,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 96,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 120,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 144,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 168,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 192,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 216,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 240,
+      "op": "karate_man_clear_textbox",
+      "args": []
+    },
+    {
+      "tick": 240,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 264,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 288,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 312,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 336,
+      "op": "run",
+      "args": [
+        "gameplay_assess_irrelevant_inputs",
+        "TRUE"
+      ]
+    },
+    {
+      "tick": 336,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 336,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 360,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 384,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 384,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 408,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 432,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 456,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 480,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 504,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 528,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 528,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 552,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 576,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 600,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 624,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 648,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 672,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 696,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 720,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 720,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 744,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 768,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 792,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 816,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 840,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 864,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 888,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 912,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 912,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 936,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 960,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 984,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1008,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1032,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1056,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1080,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1104,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 1104,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1128,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1152,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1176,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1200,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROCK"
+      ]
+    },
+    {
+      "tick": 1200,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1224,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1248,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1272,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1296,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1320,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1344,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 1344,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1368,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1392,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 1392,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1416,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1440,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1464,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1488,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 1488,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1512,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1536,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1560,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1584,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 1584,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1608,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1632,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1656,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1680,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 1680,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1704,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1728,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1752,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1776,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SOCCER_BALL"
+      ]
+    },
+    {
+      "tick": 1776,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1800,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1824,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1848,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1872,
+      "op": "print_text_f",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 1872,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1896,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 1896,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LIGHT_BULB"
+      ]
+    },
+    {
+      "tick": 1896,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1920,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1944,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1968,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 1992,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2016,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2040,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2064,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2064,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2088,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2112,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2136,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2160,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROCK"
+      ]
+    },
+    {
+      "tick": 2160,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2184,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2208,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2232,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2256,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2280,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2304,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2304,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2304,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2328,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2352,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2352,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2376,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2400,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2400,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2424,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2448,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2448,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2472,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2496,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_SOCCER_BALL"
+      ]
+    },
+    {
+      "tick": 2496,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2520,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2544,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2568,
+      "op": "print_text_f",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "tick": 2568,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2592,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 2592,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 2592,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LIGHT_BULB"
+      ]
+    },
+    {
+      "tick": 2592,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2616,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LIGHT_BULB"
+      ]
+    },
+    {
+      "tick": 2616,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2640,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROCK"
+      ]
+    },
+    {
+      "tick": 2640,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2664,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2688,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2688,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2712,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2736,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2736,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2760,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2784,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2784,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2808,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2832,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2832,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2856,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2880,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2880,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2904,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2928,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2928,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2952,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 2976,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 2976,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3000,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3024,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 3024,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3048,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3072,
+      "op": "set_marking_criteria",
+      "args": [
+        "0"
+      ]
+    },
+    {
+      "tick": 3072,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_POT"
+      ]
+    },
+    {
+      "tick": 3072,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3096,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3120,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROCK"
+      ]
+    },
+    {
+      "tick": 3120,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3144,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3168,
+      "op": "print_text_f",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3168,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3192,
+      "op": "set_marking_criteria",
+      "args": [
+        "1"
+      ]
+    },
+    {
+      "tick": 3192,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_LIGHT_BULB"
+      ]
+    },
+    {
+      "tick": 3192,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3204,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 3216,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_BOMB"
+      ]
+    },
+    {
+      "tick": 3216,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3240,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3264,
+      "op": "set_tempo",
+      "args": [
+        "150"
+      ]
+    },
+    {
+      "tick": 3264,
+      "op": "set_music_volume",
+      "args": [
+        "100"
+      ]
+    },
+    {
+      "tick": 3264,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3288,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3312,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3336,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3360,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3384,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3408,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3432,
+      "op": "mod_music_volume",
+      "args": [
+        "240",
+        "120"
+      ]
+    },
+    {
+      "tick": 3432,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3456,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3480,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3528,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3546,
+      "op": "run",
+      "args": [
+        "gameplay_set_reverb",
+        "40"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "set_tempo",
+      "args": [
+        "140"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "print_text_f",
+      "args": [
+        "4"
+      ]
+    },
+    {
+      "tick": 3624,
+      "op": "clear_text_f",
+      "args": []
+    },
+    {
+      "tick": 3648,
+      "op": "run",
+      "args": [
+        "gameplay_set_reverb",
+        "0"
+      ]
+    },
+    {
+      "tick": 3648,
+      "op": "set_music_volume",
+      "args": [
+        "150"
+      ]
+    },
+    {
+      "tick": 3648,
+      "op": "play_music",
+      "args": [
+        "s_karate_fan_seqData"
+      ]
+    },
+    {
+      "tick": 3648,
+      "op": "set_marking_criteria",
+      "args": [
+        "2"
+      ]
+    },
+    {
+      "tick": 3696,
+      "op": "spawn_cue",
+      "args": [
+        "CUE_ROCK"
+      ]
+    },
+    {
+      "tick": 3696,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3720,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3744,
+      "op": "stop_tracking_perfect_campaign",
+      "args": []
+    },
+    {
+      "tick": 3744,
+      "op": "beat_anim",
+      "args": []
+    },
+    {
+      "tick": 3792,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 3816,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 3816,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 3816,
+      "op": "fade_music_out",
+      "args": [
+        "48"
+      ]
+    },
+    {
+      "tick": 3816,
+      "op": "fade_screen_out",
+      "args": [
+        "12",
+        "BLACK"
+      ]
+    },
+    {
+      "tick": 3864,
+      "op": "define_gameplay_scene",
+      "args": [
+        "scene_karate_man_skipped_practice",
+        "script_karate_man_skipped_practice_entry"
+      ]
+    },
+    {
+      "tick": 3864,
+      "op": ".section",
+      "args": [
+        ".script.prologue"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "entry": "script_spaceball_main",
-  "endTick": 3504,
+  "endTick": 3552,
   "events": [
     {
       "tick": 0,
@@ -1224,6 +1224,46 @@
       "op": ".section",
       "args": [
         ".script.entry"
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": "disable_pause_menu",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": "disable_play_inputs",
+      "args": []
+    },
+    {
+      "tick": 3504,
+      "op": "fade_music_out",
+      "args": [
+        "48"
+      ]
+    },
+    {
+      "tick": 3504,
+      "op": "fade_screen_out",
+      "args": [
+        "12",
+        "BLACK"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": "define_gameplay_scene",
+      "args": [
+        "scene_spaceball",
+        "script_spaceball_entry"
+      ]
+    },
+    {
+      "tick": 3552,
+      "op": ".section",
+      "args": [
+        ".script.prologue"
       ]
     }
   ]

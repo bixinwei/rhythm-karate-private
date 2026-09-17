@@ -29,7 +29,7 @@ const scripts = new Map();
     if (current) scripts.get(current).push(line);
   }
 }
-const TIMED_OPS = new Set(['spawn_cue', 'print_text_f', 'clear_text_f', 'set_tempo', 'set_music_volume', 'mod_music_volume', 'play_music']);
+const TIMED_OPS = new Set(['spawn_cue', 'print_text_f', 'clear_text_f', 'set_tempo', 'set_music_volume', 'mod_music_volume', 'beat_anim', 'play_music']);
 const timeline = [];
 let tick = 0;
 const walk = (name) => {
@@ -61,44 +61,83 @@ const sourceVolumes = timeline.filter(e => e.op === 'set_music_volume' || e.op =
 });
 const sourceFanBeat = timeline.filter(e => e.op === 'play_music')[1]?.tick / 24;
 
-// --- Read the browser's hand-written tables ---------------------------------
+// --- The committed timeline must agree with a fresh expansion ---------------
 const section = (start, end) => {
   const from = game.indexOf(start);
   const to = game.indexOf(end, from);
   check(from >= 0 && to > from, `game.js: cannot locate ${start}`);
   return from < 0 ? '' : game.slice(from, to);
 };
-const portSpawns = [...section('const spawnChart = [', 'const chart =').matchAll(/\[(\d+)\s*,\s*'(\w+)'\]/g)].map(m => ({ beat: Number(m[1]), type: m[2] }));
-const portWarnings = [...section('const cueWarnings = [', 'const SONG_END').matchAll(/\{\s*beat:\s*(\d+),\s*id:\s*(\d+),\s*duration:\s*([\d.]+)\s*\}/g)].map(m => ({ beat: Number(m[1]), id: Number(m[2]), duration: Number(m[3]) }));
-const portTempos = [...section('const tempoSegments = [', 'function elapsedForBeat').matchAll(/\{\s*from:\s*(\d+),\s*bpm:\s*(\d+)\s*\}/g)].map(m => ({ beat: Number(m[1]), bpm: Number(m[2]) }));
-const portVolumes = [...section('const karateMusicVolumeEvents = [', 'function karateMusicVolumeAt').matchAll(/\{\s*beat:\s*(\d+),\s*(?:value:\s*(\d+)|rampTo:\s*(\d+),\s*span:\s*(\d+))\s*\}/g)]
-  .map(m => m[2] != null ? { beat: Number(m[1]), value: Number(m[2]) } : { beat: Number(m[1]), rampTo: Number(m[3]), span: Number(m[4]) });
-const portSongEnd = Number(/const SONG_END = (\d+)/.exec(game)?.[1]);
-const portFanBeat = Number(/scheduleKarateMusicTrack\('fan',\s*originalFanEvents,\s*(\d+)/.exec(game)?.[1]);
+const karateTimeline = JSON.parse(fs.readFileSync(path.join(assets, 'karate_man_timeline.json'), 'utf8'));
+const timelineEvents = karateTimeline.events;
+// The ending tail is fade_music_out + fade_screen_out + two rests; fades do not
+// consume script time, so the script ends 48 ticks after the main script.
+const TAIL_TICKS = 48;
+check(karateTimeline.entry === 'script_karate_man_main', `karate: timeline entry is ${karateTimeline.entry}`);
+check(karateTimeline.endTick === sourceEndTick + TAIL_TICKS,
+  `karate: timeline endTick ${karateTimeline.endTick} should be the main script end ${sourceEndTick} + ${TAIL_TICKS}`);
+const portSpawns = timelineEvents.filter(e => e.op === 'spawn_cue').map(e => ({ beat: e.tick / 24, type: CUE_TYPES[e.args[0]] ?? String(e.args[0]).toLowerCase() }));
+const portWarnings = timelineEvents.filter(e => e.op === 'print_text_f').map(e => {
+  const clear = timelineEvents.find(next => next.op === 'clear_text_f' && next.tick > e.tick);
+  return { beat: e.tick / 24, id: Number(e.args[0]), duration: ((clear?.tick ?? e.tick + 24) - e.tick) / 24 };
+});
+const portTempos = timelineEvents.filter(e => e.op === 'set_tempo').map(e => ({ beat: e.tick / 24, bpm: Number(e.args[0]) }));
+const portVolumes = timelineEvents.filter(e => ['set_music_volume', 'mod_music_volume', 'fade_music_out'].includes(e.op)).map(e => {
+  const beat = e.tick / 24;
+  if (e.op === 'set_music_volume') return { beat, value: Number(e.args[0]) };
+  return e.op === 'mod_music_volume'
+    ? { beat, rampTo: Number(e.args[0]), span: Number(e.args[1]) / 24 }
+    : { beat, rampTo: 0, span: Number(e.args[0]) / 24 };
+});
+const portSongEnd = karateTimeline.endTick / 24;
+const portFanBeat = timelineEvents.find(e => e.op === 'play_music' && String(e.args[0]).includes('karate_fan'))?.tick / 24;
 const portAnimations = {};
 for (const match of section('const KARATE_ANIMATIONS = {', '};').matchAll(/(\w+):\s*(\[\[[\s\S]*?\]\])/g)) {
   portAnimations[match[1]] = [...match[2].matchAll(/\[(\d+),\s*(\d+)\]/g)].map(frame => [Number(frame[1]), Number(frame[2])]);
 }
 
 // --- Cue chart, warnings, tempo and script volume must match the source -----
-check(portSpawns.length === sourceSpawns.length && sourceSpawns.every((cue, index) => cue.beat === portSpawns[index]?.beat && cue.type === portSpawns[index]?.type),
-  `karate: spawn chart differs from karate_man.bs\n    source ${show(sourceSpawns)}\n    game.js ${show(portSpawns)}`);
+const sourceCueTypes = sourceSpawns.map(cue => cue.type);
+check(portSpawns.length === sourceSpawns.length && sourceSpawns.every((cue, index) => cue.beat === portSpawns[index]?.beat && sourceCueTypes[index] === portSpawns[index]?.type),
+  `karate: timeline cue chart differs from karate_man.bs\n    source ${show(sourceSpawns)}\n    timeline ${show(portSpawns)}`);
 check(sourceWarnings.every((warning, index) => warning.beat === portWarnings[index]?.beat && warning.id === portWarnings[index]?.id && Math.abs(warning.duration - portWarnings[index]?.duration) < 1e-6),
-  `karate: print_text_f warnings differ from karate_man.bs\n    source ${show(sourceWarnings)}\n    game.js ${show(portWarnings)}`);
+  `karate: timeline print_text_f warnings differ from karate_man.bs\n    source ${show(sourceWarnings)}\n    timeline ${show(portWarnings)}`);
 check(sourceTempos.every((tempo, index) => tempo.beat === portTempos[index]?.beat && tempo.bpm === portTempos[index]?.bpm),
-  `karate: tempo segments differ from karate_man.bs\n    source ${show(sourceTempos)}\n    game.js ${show(portTempos)}`);
+  `karate: timeline tempo segments differ from karate_man.bs\n    source ${show(sourceTempos)}\n    timeline ${show(portTempos)}`);
 check(sourceVolumes.every((volume, index) => volume.beat === portVolumes[index]?.beat && volume.value === portVolumes[index]?.value && volume.rampTo === portVolumes[index]?.rampTo && volume.span === portVolumes[index]?.span),
-  `karate: music volume automation differs from karate_man.bs\n    source ${show(sourceVolumes)}\n    game.js ${show(portVolumes)}`);
-check(portSongEnd === sourceEndTick / 24, `karate: SONG_END ${portSongEnd} must be the script's final tick ${sourceEndTick} (${sourceEndTick / 24} beats)`);
+  `karate: timeline music volume automation differs from karate_man.bs\n    source ${show(sourceVolumes)}\n    timeline ${show(portVolumes)}`);
+check(portVolumes.at(-1)?.rampTo === 0, 'karate: the timeline has no closing fade_music_out');
+check(portSongEnd === (sourceEndTick + TAIL_TICKS) / 24, `karate: SONG_END ${portSongEnd} must be the script end ${(sourceEndTick + TAIL_TICKS) / 24} beats`);
 check(portFanBeat === sourceFanBeat, `karate: s_karate_fan starts at beat ${portFanBeat}, script plays it at ${sourceFanBeat}`);
+check(timelineEvents.some(e => e.op === 'fade_screen_out'), 'karate: the timeline has no fade_screen_out ending');
+check(timelineEvents.filter(e => e.op === 'beat_anim').length === timeline.filter(e => e.op === 'beat_anim').length,
+  'karate: the timeline beat_anim grid differs from the script');
+check(game.includes("fetch('assets/gba/karate_man_timeline.json')") && game.includes('karateTimelineLoadPromise')
+  && game.includes('karateBeatAnimTicks') && game.includes('karateScreenFadeAlpha(beat)'),
+  'karate: game.js no longer derives its cue chart, beat_anim grid and ending fade from the timeline');
+check(!game.includes('const spawnChart') && !game.includes('const cueWarnings') && !game.includes('const tempoSegments'),
+  'karate: the hand-written script tables are back in game.js');
+
+// --- Every level's timeline must carry its scene entry ending ---------------
+for (const id of ['spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy']) {
+  const data = JSON.parse(fs.readFileSync(path.join(assets, `${id}_timeline.json`), 'utf8'));
+  const fadedMusic = data.events.filter(e => e.op === 'fade_music_out');
+  const fadedScreen = data.events.filter(e => e.op === 'fade_screen_out');
+  check(fadedMusic.length === 1 && fadedScreen.length === 1, `${id}: expected one fade_music_out and one fade_screen_out, found ${fadedMusic.length}/${fadedScreen.length}`);
+  const lastGameplay = data.events.filter(e => e.op === 'spawn_cue').at(-1)?.tick ?? 0;
+  check((fadedScreen[0]?.tick ?? 0) > lastGameplay, `${id}: the screen fade happens before the last cue`);
+  check(data.endTick === (fadedScreen[0]?.tick ?? 0) + 48, `${id}: endTick ${data.endTick} should be the screen fade ${fadedScreen[0]?.tick} + 48 ticks of held black`);
+}
+check(game.includes("event.op === 'fade_music_out'") && game.includes('function portedScreenFade('),
+  'game.js: the ported engine no longer applies the scripted music and screen fades');
 
 // The script's Cue definitions all last 0x18 ticks, i.e. exactly one beat, so
 // the browser chart must spawn one beat before each required punch.
 const engine = fs.readFileSync(path.join(upstream, 'games/karate_man/engine.c'), 'utf8');
 const durations = [...engine.matchAll(/\/\* Total Duration {2}\*\/ (0x[0-9A-Fa-f]+|\d+)/g)].map(m => Number(m[1]));
 check(durations.length > 0 && durations.every(value => value === 0x18), `karate: cue durations in engine.c are not all 0x18 (${show(durations)})`);
-check(/const TRAVEL_BEATS = 1;/.test(game) && /const chart = spawnChart\.map\(\(\[spawnBeat, type\]\) => \[spawnBeat \+ 1, type\]\)/.test(game),
-  'karate: the cue chart no longer turns each 0x18-tick spawn into the punch one beat later');
+check(/const TRAVEL_BEATS = 1;/.test(game) && /\[event\.tick \/ 24 \+ TRAVEL_BEATS, KARATE_CUE_TYPES\[event\.args\[0\]\]/.test(game),
+  'karate: the timeline cues no longer turn each 0x18-tick spawn into the punch one beat later');
 
 // --- Joe's cel animations must be the decomp's animation tables -------------
 const animSource = fs.readFileSync(path.join(upstream, 'games/karate_man/graphics/karate_man_anim.c'), 'utf8');
