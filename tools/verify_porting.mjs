@@ -17,7 +17,11 @@ check(game.includes('CUE_FIRST:24') && game.includes('CUE_SECOND:24'), 'samurai:
 check(game.includes('CUE_KICK:192') && game.includes('CUE_STAR_WAND:192'), 'night_walk: cue duration differs from source');
 check(game.includes('CUE_LOW_FAST:12') && game.includes('CUE_HIGH:48'), 'spaceball: cue duration differs from source');
 check(game.includes('const arcFrames = framesBetweenTicks(cue.spawn, cue.hit)') && game.includes('const landingFrames = 2 * arcFrames'), 'spaceball: flight must use ticks_to_frames-equivalent frame math');
-check(game.includes('function resetSpaceballStar(index, zoom)') && game.includes('updateSpaceballStars(zoom)') && game.includes('star.z -= 8 / 256'), 'spaceball: stars are not persistent GBA z-lifecycle objects');
+check(game.includes('function resetSpaceballStar(index, zoom)') && game.includes('updateSpaceballStars(zoom, Math.floor(secondsAtTick(Math.max(0, tick)) * 60))') && game.includes('star.z -= 8 / 256'), 'spaceball: stars are not persistent GBA z-lifecycle objects');
+// The starfield advances from the song clock, not from the render frame count, so
+// the background is a pure function of the shared tick and both 双人联机 screens
+// (and any two devices) show the same stars.
+check(game.includes('let spaceballStarFrame = 0') && game.includes('while (spaceballStarFrame < target)'), 'spaceball: starfield is not driven by the shared clock');
 check(game.includes('drawPortedCell(27, 120 + star.x * scale, 80 + star.y * scale, 4 * scale)'), 'spaceball: star affine scale is not derived from z');
 check(game.includes('drawSpaceballEntity(poof,34,52,0,zoom)') && game.includes('drawSpaceballEntity(poof,2,52,0,zoom)'), 'spaceball: landing poofs do not share source entity transform');
 check(game.includes('for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZoom)'), 'spaceball: star field amount differs from source');
