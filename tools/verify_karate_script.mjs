@@ -154,6 +154,38 @@ check(timelineReverb.some(entry => entry.level === 40) && timelineReverb.at(-1)?
 check(game.includes('karateReverbEvents') && game.includes('setReverbLevel(karateReverbEvents') && game.includes('connect(master())'),
   'game.js: the reverb is not driven by the timeline or voices bypass the master bus');
 
+// --- Every script text box must have a port string --------------------------
+// The ROM prints these with its text printer (1bpp glyphs over a filled box, see
+// text_printer_data.c), so the port renders the translated lines itself; the guard
+// is that no timeline may reference a box the port does not know about.
+const portStrings = new Set([...section('const TEXT_BOX_STRINGS = {', '};').matchAll(/(D_[0-9a-f]+):/g)].map(m => m[1]));
+check(portStrings.size === 5, `game.js: expected 5 text-box strings, found ${portStrings.size}`);
+const boxLayouts = section('const TEXT_BOX_LAYOUTS = {', '};');
+for (const [id, centreX, y] of [['karate', '124', '32'], ['night_walk', '120', '40'], ['power_calligraphy', '128', '146']]) {
+  check(boxLayouts.includes(`${id}: { centreX: ${centreX}, y: ${y}`), `game.js: ${id} text box is not anchored at (${centreX}, ${y})`);
+}
+const scriptBoxes = [];
+for (const id of ['karate_man', 'spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy']) {
+  const data = JSON.parse(fs.readFileSync(path.join(assets, `${id}_timeline.json`), 'utf8'));
+  const opens = data.events.filter(e => /^(karate_man_print_textbox|print_text_[sf])$/.test(e.op));
+  const closes = data.events.filter(e => /^(karate_man_clear_textbox|clear_text_[sf])$/.test(e.op));
+  for (const event of opens) {
+    const label = event.args[0];
+    // karate's `print_text_f 1..4` are the warning cels, not text.
+    if (/^D_/.test(label ?? '')) {
+      check(portStrings.has(label), `${id}: text box ${label} has no ported string (game.js TEXT_BOX_STRINGS)`);
+      scriptBoxes.push({ id, label, tick: event.tick });
+    }
+  }
+  check(closes.length >= opens.filter(e => /^D_/.test(e.args[0] ?? '')).length, `${id}: a text box is never cleared`);
+}
+check(scriptBoxes.length === 5, `expected 5 scripted text boxes, found ${scriptBoxes.length} (${show(scriptBoxes)})`);
+check(scriptBoxes.filter(box => box.id === 'karate_man').length === 1 && scriptBoxes.filter(box => box.id === 'night_walk').length === 3
+  && scriptBoxes.filter(box => box.id === 'power_calligraphy').length === 1,
+  `text boxes per level changed: ${show(scriptBoxes)}`);
+check(game.includes('setActiveTextBox(') && game.includes('drawTextBox()') && game.includes('TEXT_BOX_FONT'),
+  'game.js: the script text boxes are no longer drawn');
+
 // The script's Cue definitions all last 0x18 ticks, i.e. exactly one beat, so
 // the browser chart must spawn one beat before each required punch.
 const engine = fs.readFileSync(path.join(upstream, 'games/karate_man/engine.c'), 'utf8');

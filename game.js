@@ -73,6 +73,8 @@ let karateVolumeEvents = [];
 let karateBeatAnimTicks = [];
 let karateReverbEvents = [];
 let karateReverbIndex = 0;
+// Pairs of `karate_man_print_textbox` / `_clear_textbox` from the expanded script.
+let karateTextBoxEvents = [];
 let karateSongEnd = 0;
 let karateFanStartBeat = 0;
 let karateScreenFade = null;
@@ -105,6 +107,13 @@ const karateTimelineLoadPromise = fetch('assets/gba/karate_man_timeline.json')
     // `run gameplay_set_reverb, N` during the finale.
     karateReverbEvents = events.filter((event) => event.op === 'run' && event.args[0] === 'gameplay_set_reverb')
       .map((event) => ({ beat: event.tick / 24, level: Number(event.args[1] ?? 0) }));
+    // The engine's text boxes: a print op opens a window that a clear op closes.
+    karateTextBoxEvents = [];
+    let openTextBox = null;
+    for (const event of events) {
+      if (event.op === 'karate_man_print_textbox' && event.args[0] && event.args[0] !== 'NULL') openTextBox = { label: event.args[0], from: event.tick / 24, mode: 'karate' };
+      if (event.op === 'karate_man_clear_textbox' && openTextBox) { karateTextBoxEvents.push({ ...openTextBox, until: event.tick / 24 }); openTextBox = null; }
+    }
     karateSongEnd = timeline.endTick / 24;
     const fan = events.find((event) => event.op === 'play_music' && String(event.args[0]).includes('karate_fan'));
     karateFanStartBeat = fan ? fan.tick / 24 : karateSongEnd;
@@ -563,6 +572,7 @@ function start() {
   karateBeatAnimIndex = 0;
   karateReverbIndex = 0;
   resetReverb();
+  activeTextBox = null;
   karateStagePalette = 'low';
   karateMusicCursor.bgm = 0;
   karateMusicCursor.fan = 0;
@@ -582,6 +592,7 @@ function quit() {
   songRun += 1;
   stopTweezersAudioScheduler();
   stopKarateAudioScheduler();
+  activeTextBox = null;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
   cancelAnimationFrame(frame);
@@ -638,6 +649,7 @@ function tweezersStart() {
   mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
   stopTweezersAudioScheduler();
   stopKarateAudioScheduler();
+  activeTextBox = null;
   // Falling-hair rotation is driven by the GBA engine RNG, so reset the
   // standalone level to a deterministic stream for reproducible replays.
   tweezersRandomState = 0;
@@ -913,6 +925,7 @@ function update(beat) {
   while (karateReverbIndex < karateReverbEvents.length && karateReverbEvents[karateReverbIndex].beat <= beat) {
     setReverbLevel(karateReverbEvents[karateReverbIndex++].level);
   }
+  setActiveTextBox(karateTextBoxEvents.find((entry) => beat >= entry.from && beat < entry.until));
   while (chartIndex < karateChart.length && karateChart[chartIndex][0] - beat <= TRAVEL_BEATS) {
     const [hitBeat, type] = karateChart[chartIndex++];
     active.push({ hitBeat, spawnBeat: hitBeat - 1, type, state: 'flying', impact: 0, cuePlayed: false, accentPlayed: false, missed: false });
@@ -1068,6 +1081,7 @@ function drawTop(beat) {
   drawItems(beat);
   drawOriginalHitEffects(beat);
   drawCueWarning(beat);
+  drawTextBox();
   // The scene entry's ending: fade_screen_out ramps the playfield to BLACK and
   // the trailing rests hold it until the script stops.
   const fade = karateScreenFadeAlpha(beat);
@@ -1081,6 +1095,61 @@ function drawTop(beat) {
 function karateScreenFadeAlpha(beat) {
   if (!karateScreenFade) return 0;
   return Math.max(0, Math.min(1, (beat - karateScreenFade.beat) / karateScreenFade.span));
+}
+
+// //  //  SCRIPT TEXT BOXES  //  //  //
+// The scripts print the ROM's text printer for a fixed number of beats.  The
+// printer settings are anchor/width/alignment, taken from each engine:
+//   karate_man      text_printer_create_new(memID, 4, 112, 30) at (124, 32), centred
+//   night_walk      text_printer_create_new(memID, 1, 240, 30) at (0, 40), centred, palette 6
+//   power_calligraphy  text_printer_get_unformatted_line_anim(SMALL, bottom-centre) at (128, 146)
+// The ROM strings are Shift-JIS glyph text (text_printer_data.c holds 1bpp glyphs
+// over a filled tile box, so no image asset is involved), which is why the port
+// renders the translated lines with its own font while keeping the ROM's timing,
+// anchor, line breaks and lifetime.  The box uses the printer palette's dark entry
+// and the glyphs its light entry (0x000000 / 0xF8F8F8 in these levels' palettes).
+const TEXT_BOX_LAYOUTS = {
+  karate: { centreX: 124, y: 32, maxWidth: 112, anchor: 'top', size: 11 },
+  night_walk: { centreX: 120, y: 40, maxWidth: 240, anchor: 'top', size: 11 },
+  power_calligraphy: { centreX: 128, y: 146, maxWidth: 232, anchor: 'bottom', size: 10 }
+};
+const TEXT_BOX_STRINGS = {
+  // karate_man_print_textbox D_0805abc4
+  D_0805abc4: ['别忘了　跟上节奏哦！'],
+  // print_text_s D_0805b1fc / D_0805b220 / D_0805b250
+  D_0805b1fc: ['跟着音乐　跳起来吧！'],
+  D_0805b220: ['在音乐结束前　把天空铺满星星吧！'],
+  D_0805b250: ['马上就要结束啦！'],
+  // print_text_f D_0805d2dc
+  D_0805d2dc: ['来吧！　写书法！！']
+};
+const TEXT_BOX_FONT = '600 %dpx "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+let activeTextBox = null;
+
+function setActiveTextBox(entry) {
+  activeTextBox = entry ? { lines: TEXT_BOX_STRINGS[entry.label] ?? [], layout: TEXT_BOX_LAYOUTS[entry.mode] ?? TEXT_BOX_LAYOUTS.karate } : null;
+}
+
+function drawTextBox() {
+  if (!activeTextBox?.lines.length) return;
+  const { lines, layout } = activeTextBox;
+  const scale = 4;
+  ctx.save();
+  ctx.font = TEXT_BOX_FONT.replace('%d', String(layout.size * scale));
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const lineHeight = layout.size * scale * 1.2;
+  const width = Math.min(layout.maxWidth * scale, Math.max(...lines.map((line) => ctx.measureText(line).width)) + 16 * scale);
+  const height = lineHeight * lines.length + 8 * scale;
+  const centreX = layout.centreX * scale;
+  const top = layout.anchor === 'bottom' ? layout.y * scale - height : layout.y * scale;
+  ctx.fillStyle = 'rgba(0,0,0,.86)';
+  ctx.fillRect(centreX - width / 2, top, width, height);
+  ctx.fillStyle = '#f8f8f8';
+  ctx.shadowColor = 'rgba(0,0,0,.7)';
+  ctx.shadowOffsetY = 2;
+  lines.forEach((line, index) => ctx.fillText(line, centreX, top + 4 * scale + index * lineHeight));
+  ctx.restore();
 }
 
 function drawCueWarning(beat) {
@@ -1342,7 +1411,7 @@ const portedModes = {
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, cueSpawningDisabled: false, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false, reverb: [], reverbIndex: 0 };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, cueSpawningDisabled: false, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false, reverb: [], reverbIndex: 0, textBoxes: [] };
 // Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
 let gbaRandomState = 0;
 function gbaRandom(max) {
@@ -1771,6 +1840,7 @@ function schedulePortedTimelineSfx() {
 function startPortedMode(id) {
   mode = id; running = false; const run = ++songRun; audio();
   stopKarateAudioScheduler();
+  activeTextBox = null;
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode'); touchFx = [];
   loadPortedMode(id).then(async data => {
@@ -1840,7 +1910,17 @@ function startPortedMode(id) {
     ported.reverb = data.timeline.events.filter(event => event.op === 'run' && event.args[0] === 'gameplay_set_reverb')
       .map(event => ({ tick: event.tick, level: Number(event.args[1] ?? 0) }));
     ported.reverbIndex = 0;
+    // Script text boxes: `print_text_s` / `print_text_f` open a window that the
+    // matching clear op closes (the numeric `print_text_f` arguments are the
+    // Karate Man warning cels, not text, so they are skipped here).
+    ported.textBoxes = [];
+    let openTextBox = null;
+    for (const event of data.timeline.events) {
+      if (/^print_text_[sf]$/.test(event.op) && TEXT_BOX_STRINGS[event.args[0]]) openTextBox = { label: event.args[0], from: event.tick, mode: id };
+      if (/^clear_text_[sf]$/.test(event.op) && openTextBox) { ported.textBoxes.push({ ...openTextBox, until: event.tick }); openTextBox = null; }
+    }
     resetReverb();
+    activeTextBox = null;
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
@@ -2080,6 +2160,7 @@ function portedLoop() {
   while (ported.reverbIndex < ported.reverb.length && ported.reverb[ported.reverbIndex].tick <= tick) {
     setReverbLevel(ported.reverb[ported.reverbIndex++].level);
   }
+  setActiveTextBox(ported.textBoxes.find(entry => tick >= entry.from && tick < entry.until));
   if (mode === 'night_walk') {
     // Match the engine's cue-spawn order. Pre-resolving every random platform
     // at startup lets later input RNG calls change the wrong cue.
@@ -2447,6 +2528,7 @@ function drawPorted(tick, cfg) {
     ctx.fillRect(0, 0, stage.width, stage.height);
     ctx.restore();
   }
+  drawTextBox();
   drawTouchScreen();
 }
 function eventAudioTime(event) {
@@ -2518,6 +2600,8 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         musicLevel: ported.timeline ? portedMusicVolumeAt(portedTick()) : null,
         screenFade: ported.timeline ? (portedScreenFade(portedTick())?.alpha ?? 0) : 0,
         reverbWet, reverbReady,
+        textBoxes: ported.textBoxes.map(entry => ({ label: entry.label, from: entry.from, until: entry.until })),
+        textBox: activeTextBox?.lines?.[0] ?? null,
         ...(mode === 'night_walk' ? {
           worldShift: nightWalkWorldShift(portedTick()),
           nextBridgeBaseY: ported.nightWalkBaseY,
@@ -2545,7 +2629,9 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         musicLevel: karateMusicVolumeAt(songBeat()),
         beatAnimTicks: karateBeatAnimTicks.length,
         screenFade: karateScreenFadeAlpha(songBeat()),
-        reverbWet, reverbReady, reverbIndex: karateReverbIndex, reverbEvents: karateReverbEvents.length
+        reverbWet, reverbReady, reverbIndex: karateReverbIndex, reverbEvents: karateReverbEvents.length,
+        textBoxes: karateTextBoxEvents.map(entry => ({ label: entry.label, from: entry.from, until: entry.until })),
+        textBox: activeTextBox?.lines?.[0] ?? null
       };
       return { mode, running, beat: songBeat() };
     },
