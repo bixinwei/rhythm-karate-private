@@ -23,61 +23,61 @@ ROOT = Path(__file__).resolve().parents[1]
 DIR = ROOT / 'assets' / 'gba' / 'spaceball'
 SCALE = 4
 
-# --- designed palette: 小清新 / 少女心 ------------------------------------
-# Pastel scheme: everything sits in the high-value / low-saturation corner, the
-# outlines drop from black to a soft plum so the art reads "cute" instead of
-# "arcade", and every colour keeps its retail brightness so the shading the GBA
-# artist baked in survives.  Hue families: mint, apricot-rose, lavender, sky,
-# warm cream.
+# --- designed palette: 少女心 (sakura pink lead) --------------------------
+# Pink-forward this time: sakura, peach and orchid carry the cast, mint survives
+# only as a tiny accent, the turf is strawberry-milk pink and the sky a
+# pink-lavender dusk.  Outlines move to a warm mauve so nothing reads as a black
+# arcade keyline, and every colour keeps its retail brightness (the GBA artist's
+# shading structure is the one thing that must not change).
 ATLAS_MAP = {
-    (248, 248, 248): (255, 247, 242),   # white trim / balls        -> cream
-    (0, 0, 0):       (91, 74, 99),      # outlines                  -> soft plum
-    (56, 56, 56):    (110, 92, 116),    # secondary darks
-    (248, 248, 8):   (255, 217, 160),   # batter 2 outfit           -> apricot
-    (200, 184, 0):   (240, 190, 124),   # batter 2 shade
-    (232, 0, 0):     (255, 158, 176),   # batter 2 mask/face        -> rose
-    (184, 0, 0):     (232, 134, 154),
-    (152, 0, 0):     (201, 111, 132),
-    (240, 160, 8):   (255, 201, 143),
-    (96, 224, 0):    (143, 224, 200),   # batter 1 outfit           -> mint
-    (0, 104, 16):    (63, 169, 143),    # batter 1 shade / plants   -> deep mint
-    (40, 56, 0):     (47, 107, 92),
-    (48, 72, 0):     (58, 122, 105),
-    (248, 200, 248): (255, 227, 239),   # batter 3 pale             -> baby pink
-    (248, 32, 168):  (201, 160, 232),   # batter 3 accent           -> orchid
-    (176, 0, 208):   (169, 143, 224),   # batter 3 shade            -> lavender
-    (224, 0, 160):   (191, 160, 224),
-    (168, 0, 232):   (155, 143, 216),
-    (0, 72, 232):    (159, 196, 240),   # ball highlight            -> sky
-    (128, 192, 248): (187, 217, 245),
-    (184, 216, 248): (216, 233, 250),
-    (56, 96, 152):   (168, 187, 216),   # ufo body                  -> pale blue
-    (24, 48, 80):    (124, 143, 181),
-    (224, 104, 0):   (242, 185, 138),   # props warm                -> peach
-    (232, 128, 0):   (245, 196, 150),   # props warm light          -> peach light
-    (248, 160, 120): (255, 201, 174),   # warm skin                 -> apricot skin
-    (248, 160, 160): (255, 211, 196),   # cool skin                 -> peach skin
-    (168, 96, 0):    (232, 199, 154),   # barrels                   -> light wood
-    (120, 64, 0):    (201, 164, 122),
-    (96, 40, 0):     (169, 131, 95),
-    (208, 192, 112): (242, 221, 176),   # straw / baskets           -> butter
-    (0, 232, 176):   (143, 232, 220),   # aqua accent
-    (16, 0, 248):    (176, 168, 240),   # deep blue accent          -> periwinkle
+    (248, 248, 248): (255, 246, 248),   # trim / balls        -> pink white
+    (0, 0, 0):       (122, 85, 102),    # outlines            -> warm mauve
+    (56, 56, 56):    (150, 116, 130),   # secondary darks
+    (248, 248, 8):   (255, 214, 170),   # batter 2 outfit     -> peach cream
+    (200, 184, 0):   (240, 186, 132),   # batter 2 shade
+    (232, 0, 0):     (255, 154, 180),   # batter 2 mask       -> rose
+    (184, 0, 0):     (238, 132, 158),
+    (152, 0, 0):     (210, 110, 138),
+    (240, 160, 8):   (255, 206, 164),
+    (96, 224, 0):    (255, 178, 205),   # batter 1 outfit     -> sakura pink
+    (0, 104, 16):    (224, 122, 160),   # batter 1 shade / plants
+    (40, 56, 0):     (150, 92, 120),
+    (48, 72, 0):     (162, 108, 132),
+    (248, 200, 248): (255, 224, 242),   # batter 3 pale       -> pink lilac
+    (248, 32, 168):  (226, 166, 232),   # batter 3 accent     -> orchid pink
+    (176, 0, 208):   (188, 150, 226),   # batter 3 shade      -> lavender
+    (224, 0, 160):   (214, 166, 226),
+    (168, 0, 232):   (176, 158, 226),
+    (0, 72, 232):    (186, 200, 240),   # ball highlight      -> soft sky
+    (128, 192, 248): (204, 220, 246),
+    (184, 216, 248): (232, 230, 250),   # light blue          -> pearl
+    (56, 96, 152):   (200, 180, 220),   # ufo body            -> pearl lilac
+    (24, 48, 80):    (150, 124, 164),
+    (224, 104, 0):   (247, 196, 168),   # props warm          -> peach
+    (232, 128, 0):   (250, 206, 178),
+    (248, 160, 120): (255, 206, 186),   # warm skin
+    (248, 160, 160): (255, 214, 204),   # cool skin
+    (168, 96, 0):    (240, 214, 186),   # barrels             -> cream wood
+    (120, 64, 0):    (214, 182, 150),
+    (96, 40, 0):     (186, 152, 124),
+    (208, 192, 112): (247, 230, 196),   # straw / baskets     -> cream
+    (0, 232, 176):   (170, 232, 214),   # aqua accent         -> tiny mint
+    (16, 0, 248):    (196, 176, 238),   # deep blue accent    -> periwinkle
 }
 BG_MAP = {
-    (0, 160, 24):  (168, 230, 192),   # turf stripes -> pastel mint
-    (0, 144, 24):  (150, 220, 180),
-    (0, 128, 16):  (134, 208, 168),
-    (0, 104, 16):  (111, 191, 151),
-    (0, 0, 112):   (142, 134, 200),   # night sky    -> dusk periwinkle
-    (48, 72, 0):   (95, 174, 138),
-    (248, 248, 248): (255, 247, 242),
+    (0, 160, 24):  (250, 214, 228),   # turf stripes -> strawberry milk
+    (0, 144, 24):  (243, 202, 220),
+    (0, 128, 16):  (235, 190, 212),
+    (0, 104, 16):  (222, 172, 198),
+    (0, 0, 112):   (226, 178, 214),   # night sky    -> pink-lavender dusk
+    (48, 72, 0):   (206, 152, 182),
+    (248, 248, 248): (255, 246, 248),
 }
-# The flying starfield dots are their own cel, so they get a colour that belongs
-# to the pastel scheme instead of inheriting the cream trim.
-CEL_OVERRIDES = {27: (255, 226, 176)}
+# The flying starfield dots are their own cel: pearl gold reads on the pink sky.
+CEL_OVERRIDES = {27: (255, 246, 220)}
 
 UNMAPPED = set()
+USED = set()
 
 
 def remap(image, table):
@@ -89,6 +89,8 @@ def remap(image, table):
                 continue
             if (r, g, b) not in table:
                 UNMAPPED.add((r, g, b))
+            else:
+                USED.add((r, g, b))
             pixels[x, y] = (*table.get((r, g, b), (r, g, b)), a)
     return image
 
@@ -154,6 +156,9 @@ def main():
     print(f'reskinned + HD x{SCALE}: atlas {atlas.size}, {len(manifest)} cels')
     if UNMAPPED:
         print('WARNING unmapped retail colours:', ['#%02X%02X%02X' % c for c in sorted(UNMAPPED)])
+    unused = set(ATLAS_MAP) - USED
+    if unused:
+        print('WARNING palette keys that no retail colour used (typo?):', ['#%02X%02X%02X' % c for c in sorted(unused)])
 
 
 if __name__ == '__main__':
