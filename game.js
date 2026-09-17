@@ -52,6 +52,9 @@ function karateUpdateBgPalette() {
 
 const BPM = 120;
 const BEAT_MS = 60000 / BPM;
+// Native drawing space of the two screens (the canvases themselves follow the
+// displayed size and devicePixelRatio; see fitStage()).
+const VIEW_W = 960, VIEW_H = 640, TOUCH_W = 640, TOUCH_H = 480;
 // GBA mixer values are 0..256 fixed-point.  The ROM sums every voice in its
 // scratch domain and midi_directsound_init fills gMidiSampleTable with
 // clamp(scratch >> 7, -128, 127), so one full-volume voice already reaches full
@@ -851,7 +854,8 @@ function tweezersOrbitAt(beat) {
 let tweezersManifest = {};
 const tweezersManifestLoadPromise = fetch('assets/gba/tweezers/frames.json').then((r) => { if (!r.ok) throw new Error(`Failed to load tweezers frame manifest (${r.status})`); return r.json(); }).then((v) => { tweezersManifest = Object.fromEntries(Object.entries(v).map(([k,val]) => [Number(k),val])); });
 function tweezersRender(beat) {
-  ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
+  fitStage(); beginStage(ctx, stageScale);
+  ctx.clearRect(0,0,VIEW_W,VIEW_H); ctx.imageSmoothingEnabled = false;
   const scrolling = tweezers.scrollStart >= 0 && beat < tweezers.scrollStart + tweezers.scrollDuration;
   if (tweezers.scrollStart >= 0 && !scrolling) {
     // rhythm_tweezers_update_scroll() calls gameplay_reset_cues() at the
@@ -866,11 +870,11 @@ function tweezersRender(beat) {
     tweezers.scrollStart = -1;
   }
   const t = scrolling ? Math.max(0, Math.min(1, (beat - tweezers.scrollStart) / tweezers.scrollDuration)) : 0;
-  const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * stage.width * tweezers.scrollDirection : 0;
+  const slide = scrolling ? (1 - Math.cos(Math.PI * t)) * .5 * VIEW_W * tweezers.scrollDirection : 0;
   ctx.save();
   ctx.translate(0, tweezers.verticalOffset * 4);
   ctx.translate(-slide, 0);
-  const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, stage.width, stage.height); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,stage.width,stage.height); }
+  const bg = tweezersBg[tweezers.veg]; if (bg?.complete) ctx.drawImage(bg, 0, 0, VIEW_W, VIEW_H); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,VIEW_W,VIEW_H); }
   // The engine's affine angle unit is one turn per 0x800, and the orbit
   // distance in rhythm_tweezers.c is 0x4c — 76 native screen pixels.
   // Keeping both values intact puts the tweezers around the vegetable face
@@ -907,9 +911,9 @@ function tweezersRender(beat) {
       (-0x200 + frames * hair.rotationSpeed + hair.orbitRotation) * Math.PI * 2 / 0x800);
   }
   if (scrolling) {
-    ctx.save(); ctx.translate(tweezers.scrollDirection * stage.width, 0);
+    ctx.save(); ctx.translate(tweezers.scrollDirection * VIEW_W, 0);
     const nextBg = tweezersBg[tweezers.nextVeg];
-    if (nextBg?.complete) ctx.drawImage(nextBg, 0, 0, stage.width, stage.height);
+    if (nextBg?.complete) ctx.drawImage(nextBg, 0, 0, VIEW_W, VIEW_H);
     const nextCell = tweezers.nextVeg === 'turnip' ? 3 : tweezers.nextVeg === 'potato' ? 6 : 0;
     drawTweezersCell(nextCell, 120, 16, 4, 1);
     ctx.restore();
@@ -1110,19 +1114,20 @@ function createImpact(kind) {
     startedAt: audioClock(),
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
-    x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
-    y: safeRadius + Math.random() * (touch.height - safeRadius * 2)
+    x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
+    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
   });
 }
 
 function render(beat) {
+  fitStage(); beginStage(ctx, stageScale);
   drawTop(beat);
   drawTouchScreen();
 }
 
 function drawTop(beat) {
-  const w = stage.width;
-  const h = stage.height;
+  const w = VIEW_W;
+  const h = VIEW_H;
   ctx.clearRect(0, 0, w, h);
   ctx.imageSmoothingEnabled = false;
   const stageImage = karateStages[karateStagePalette];
@@ -1362,7 +1367,8 @@ const PERFECT_COLORS = ['#d8ff20', '#ff20d4', '#14f5ff', '#4dff7e', '#b6ff18', '
 const TOUCH_FX_SECONDS = 28 / 60;
 
 function drawTouchScreen() {
-  const w = touch.width, h = touch.height, gap = 4, cols = 8, rows = 6;
+  fitStage(); beginStage(touchCtx, touchScale);
+  const w = TOUCH_W, h = TOUCH_H, gap = 4, cols = 8, rows = 6;
   // The 8 × 6 board uses the full 4:3 touch display; only the intentional
   // dark grid seams remain, with no outer black matte.
   const left = 0, top = 0, cellW = (w - gap * (cols - 1)) / cols, cellH = (h - gap * (rows - 1)) / rows;
@@ -1447,7 +1453,7 @@ function drawTouchScreen() {
   touchFx = touchFx.filter((item) => audioClock() - item.startedAt < TOUCH_FX_SECONDS);
   // 双人联机: the lower screen doubles as the turn/score panel, exactly where a
   // 3DS game would put it.
-  versusDrawLower(touchCtx, portedModes[mode] ? portedTick() : 0, touch.width, touch.height);
+  versusDrawLower(touchCtx, portedModes[mode] ? portedTick() : 0, TOUCH_W, TOUCH_H);
 }
 
 function finish() {
@@ -1463,7 +1469,7 @@ function finish() {
 // BeatScripts.  Their clocks, image manifests and original PCM music all load
 // before the lead-in begins; no render-frame clock is used for judgement.
 const portedModes = {
-  spaceball: { label: '太空棒球', bg: 'spaceball_bg_map.png', backdrop: '#e2b2d6', assetScale: 4, idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
+  spaceball: { label: '太空棒球', bg: 'spaceball_bg_map.png', backdrop: '#2b2f76', assetScale: 4, idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
   samurai_slice: { label: '拔刀术', bg: 'samurai_slice_bg_map.png', backdrop: '#f8f8f8', overlays: ['samurai_slice_bg_map_fog_bottom.png','samurai_slice_bg_map_fog_top.png'], idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100],['samurai_result_events',100]], sfx: { spawn:'samurai_appear_events', phrase1a:'samurai_phrase1a_events', phrase2a:'samurai_phrase2a_events', phrase3a:'samurai_phrase3a_events', phrase1b:'samurai_phrase1b_events', phrase2b:'samurai_phrase2b_events', phrase3b:'samurai_phrase3b_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
@@ -1508,7 +1514,7 @@ function updateSpaceballStars(zoom, frameIndex = null) {
     }
   }
 }
-const PORTED_ASSET_REV = 'gba-ports-sakura-17';
+const PORTED_ASSET_REV = 'gba-ports-vivid-18';
 const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
@@ -2114,7 +2120,26 @@ function queuePortedSpawnSfx() {
 // source rectangle expressed in native pixels is multiplied by the mode's asset
 // scale while the destination keeps using the native sprite scale.
 function modeAssetScale() { return portedModes[mode]?.assetScale ?? 1; }
-function drawPortedCell(cell, x, y, scale = 4, rotation = 0, flipX = false) {
+// 高清: the canvases are sized to their displayed size times the device pixel
+// ratio, so the game is rasterised at physical resolution instead of being
+// upscaled from a fixed 960x640 bitmap (which is what made HiDPI displays look
+// soft).  All drawing code keeps working in the native coordinate space: the
+// base transform maps that space onto the backing store, and `image-rendering:
+// pixelated` keeps the CSS step crisp.
+let stageScale = 4, touchScale = 4;
+function fitStage() {
+  const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+  const fit = (canvas, nativeW, nativeH) => {
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.round((rect.width || nativeW / 4) * dpr));
+    const height = Math.max(1, Math.round((rect.height || nativeH / 4) * dpr));
+    if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+    return width / nativeW;
+  };
+  stageScale = fit(stage, VIEW_W, VIEW_H);
+  touchScale = fit(touch, TOUCH_W, TOUCH_H);
+}
+function beginStage(ctx, scale) { ctx.setTransform(scale, 0, 0, scale, 0, 0); }function drawPortedCell(cell, x, y, scale = 4, rotation = 0, flipX = false) {
   const image = ported.frames[cell], meta = ported.manifest[cell]; if (!image || !meta) return;
   // x/y are always native 240x160 screen coordinates. `scale` changes only
   // the sprite size (affine sprites must not drag their anchor with zoom).
@@ -2150,9 +2175,13 @@ function drawSpaceballBackground(zoom) {
   const sourceX = 128 - 120 * step, sourceY = 176 - 80 * step;
   // Affine overflow is disabled in the original BGCNT; pixels outside the
   // 256x256 map reveal BG palette entry 0 instead of the page canvas.
-  ctx.fillStyle = portedModes.spaceball.backdrop; ctx.fillRect(0,0,stage.width,stage.height);
+  ctx.fillStyle = portedModes.spaceball.backdrop; ctx.fillRect(0,0,VIEW_W,VIEW_H);
   const assetScale = modeAssetScale();
-  ctx.drawImage(ported.bg, sourceX * assetScale, sourceY * assetScale, 240 * step * assetScale, 160 * step * assetScale, 0, 0, stage.width, stage.height);
+  // The affine playfield is stretched to the stage, so it needs the same
+  // nearest-neighbour filtering the sprites already use - otherwise the tiles
+  // are bilinearly smeared and the whole scene reads as hazy.
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(ported.bg, sourceX * assetScale, sourceY * assetScale, 240 * step * assetScale, 160 * step * assetScale, 0, 0, VIEW_W, VIEW_H);
 }
 function drawGbaTilemap(image, offsetX = 0, offsetY = 0) {
   // Regular 256x256 GBA backgrounds wrap.  Keep native pixels at 4x instead
@@ -2408,10 +2437,11 @@ function portedLoop() {
   drawPorted(tick, cfg); auditStatePublisher(); frame = requestAnimationFrame(loop);
 }
 function drawPorted(tick, cfg) {
-  ctx.clearRect(0,0,stage.width,stage.height); ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle=cfg.backdrop; ctx.fillRect(0,0,stage.width,stage.height);
+  fitStage(); beginStage(ctx, stageScale);
+  ctx.clearRect(0,0,VIEW_W,VIEW_H); ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle=cfg.backdrop; ctx.fillRect(0,0,VIEW_W,VIEW_H);
   if (mode === 'spaceball') drawSpaceballBackground(spaceballZoomAt(tick));
-  else if (mode !== 'night_walk') ctx.drawImage(ported.bg, 0, 0, stage.width, stage.height);
+  else if (mode !== 'night_walk') ctx.drawImage(ported.bg, 0, 0, VIEW_W, VIEW_H);
   const samuraiFog = mode === 'samurai_slice' ? samuraiFogAt(tick) : { offsets:[0,0], alpha:0 };
   if (mode === 'samurai_slice' && ported.overlays[1] && samuraiFog.alpha > 0) {
     ctx.save(); ctx.globalAlpha=samuraiFog.alpha; drawGbaTilemap(ported.overlays[1],0,samuraiFog.offsets[1]); ctx.restore();
@@ -2527,7 +2557,7 @@ function drawPorted(tick, cfg) {
     // BG_OFS is a source offset: positive values move the visible paper left
     // and up.  The kana, input strokes and brush use the same origin pointer.
     const paperScreenX = -paperX, paperScreenY = -paperY;
-    ctx.clearRect(0,0,stage.width,stage.height);
+    ctx.clearRect(0,0,VIEW_W,VIEW_H);
     ctx.drawImage(ported.bg,71,7,114,153,(71+paperScreenX)*4,(7+paperScreenY)*4,456,612);
     if (removeEvent) {
       const slow = removeEvent.op.endsWith('_slowly'), age = framesBetweenTicks(removeEvent.tick,tick);
@@ -2715,18 +2745,18 @@ function drawPorted(tick, cfg) {
     // The original end script fades the gameplay screen after eight rests
     // (192 ticks), over a 12-tick fade interval, before its final waits.
     const fade = Math.max(0, Math.min(1, framesBetweenTicks(ported.failedAt + 192, tick) / 12));
-    if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, stage.width, stage.height); ctx.restore(); }
+    if (fade > 0) { ctx.save(); ctx.globalAlpha = fade; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VIEW_W, VIEW_H); ctx.restore(); }
   }
   // Every scene entry ends with fade_screen_out + two rests, so the finished
   // run fades out and holds the faded screen instead of cutting to the menu.
   const screenFade = portedScreenFade(tick);
   if (screenFade && screenFade.alpha > 0) {
     ctx.save(); ctx.globalAlpha = screenFade.alpha; ctx.fillStyle = screenFade.colour;
-    ctx.fillRect(0, 0, stage.width, stage.height);
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     ctx.restore();
   }
   drawTextBox();
-  versusDrawUpper(ctx, tick, stage.width, stage.height);
+  versusDrawUpper(ctx, tick, VIEW_W, VIEW_H);
   drawTouchScreen();
 }
 function eventAudioTime(event) {
