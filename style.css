@@ -350,3 +350,16 @@ body {
     font-size: 10px;
   }
 }
+
+/* 双人联机 lobby */
+button.versus { background: linear-gradient(180deg, #2b6cff, #1b42ed); color: #fff; }
+#versus { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+#versus h1 { font-size: 30px; }
+.versus-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.versus-row label { display: flex; gap: 8px; align-items: center; color: #cfd6e6; font-size: 15px; }
+.versus-row input, .versus-row select { padding: 8px 10px; border-radius: 8px; border: 1px solid #38445f; background: #0d1220; color: #e8edf7; }
+.versus-panel { display: flex; flex-direction: column; gap: 10px; width: min(760px, 92vw); }
+.versus-panel label { display: flex; flex-direction: column; gap: 6px; color: #cfd6e6; font-size: 14px; }
+.versus-panel textarea { height: 92px; resize: vertical; padding: 10px; border-radius: 8px; border: 1px solid #38445f; background: #0d1220; color: #e8edf7; font-family: 'DM Mono', monospace; font-size: 12px; }
+.versus-status { color: #9fb0c8; font-size: 14px; text-align: center; min-height: 20px; }
+.versus-help { max-width: 760px; color: #8b9ab3; font-size: 13px; line-height: 1.7; text-align: center; }

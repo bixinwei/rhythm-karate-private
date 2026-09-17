@@ -1445,6 +1445,9 @@ function drawTouchScreen() {
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((item) => audioClock() - item.startedAt < TOUCH_FX_SECONDS);
+  // 双人联机: the lower screen doubles as the turn/score panel, exactly where a
+  // 3DS game would put it.
+  versusDrawLower(touchCtx, portedModes[mode] ? portedTick() : 0, touch.width, touch.height);
 }
 
 function finish() {
@@ -1490,11 +1493,19 @@ function resetSpaceballStar(index, zoom) {
     z: zoom + scale
   };
 }
-function updateSpaceballStars(zoom) {
+// The ROM advances the starfield once per 60 Hz frame, so stepping it from the
+// song clock keeps it a pure function of the shared tick: both peers (and any
+// two devices) show the same stars instead of drifting apart with frame rate.
+let spaceballStarFrame = 0;
+function updateSpaceballStars(zoom, frameIndex = null) {
   const zMin = zoom + 1, zMax = zoom + 4;
-  for (let i = 0; i < spaceballStars.length; i++) {
-    const star = spaceballStars[i]; star.z -= 8 / 256;
-    if (star.z < zMin || star.z > zMax) resetSpaceballStar(i, zoom);
+  const target = frameIndex == null ? spaceballStarFrame + 1 : Math.max(spaceballStarFrame, frameIndex);
+  while (spaceballStarFrame < target) {
+    spaceballStarFrame++;
+    for (let i = 0; i < spaceballStars.length; i++) {
+      const star = spaceballStars[i]; star.z -= 8 / 256;
+      if (star.z < zMin || star.z > zMax) resetSpaceballStar(i, zoom);
+    }
   }
 }
 const PORTED_ASSET_REV = 'gba-ports-13';
@@ -1961,7 +1972,7 @@ function schedulePortedTimelineSfx() {
     playPortedSfx(kind,event.tick,Number(event.args[1] ?? 256),Number(event.args[2] ?? 0),tempoAtTick(event.tick) / 120);
   }
 }
-function startPortedMode(id) {
+function startPortedMode(id, options = {}) {
   mode = id; running = false; const run = ++songRun; audio();
   stopKarateAudioScheduler();
   activeTextBox = null;
@@ -2051,7 +2062,8 @@ function startPortedMode(id) {
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
-    audioSongStart = audio().currentTime + 0.05; running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
+    // 双人联机 parks the song far in the future until both peers share a start time.
+    audioSongStart = audio().currentTime + (options.versus ? 3600 : 0.05); running = true; schedulePortedMusic(); schedulePortedTimelineSfx();
     if (id === 'samurai_slice') {
       for (const event of data.timeline.events.filter(item => item.op === 'samurai_slice_event02')) {
         const variant = Number(event.args[0]) <= 1 ? 1 : Number(event.args[0]) <= 3 ? 2 : 3;
@@ -2062,15 +2074,23 @@ function startPortedMode(id) {
         playPortedSfx(`phrase${variant}${alternate?'b':'a'}`,event.tick,256,0,tempoAtTick(event.tick)/120);
       }
     }
-    for (const cue of ported.cues) {
-      let sound = 'spawn';
-      if (mode === 'spaceball' && ['CUE_HIGH','CUE_HIGH_FAST'].includes(cue.kind)) sound = 'high';
-      if (mode === 'spaceball' && cue.kind === 'CUE_LOW_FAST') continue;
-      if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn);
-    }
+    queuePortedSpawnSfx();
     ported.audioQueue.sort((a,b) => a.when-b.when); ported.audioQueueReady=true; pumpPortedAudio();
     cancelAnimationFrame(frame); frame = requestAnimationFrame(loop);
+    // 双人联机 attaches the session once the cue chart exists (the turn plan is a
+    // pure function of it, so both peers derive the same blocks).
+    if (options.versus) versusOnLevelReady();
   }).catch(error => { console.error(`Unable to start ${id}:`, error); quit(); });
+}
+// Cue-spawn SFX are queued from the same audio queue as the music, so they can
+// be rebuilt together when 双人联机 re-schedules the song at the agreed start.
+function queuePortedSpawnSfx() {
+  for (const cue of ported.cues) {
+    let sound = 'spawn';
+    if (mode === 'spaceball' && ['CUE_HIGH','CUE_HIGH_FAST'].includes(cue.kind)) sound = 'high';
+    if (mode === 'spaceball' && cue.kind === 'CUE_LOW_FAST') continue;
+    if (ported.sfx[sound]) playPortedSfx(sound, cue.spawn);
+  }
 }
 function drawPortedCell(cell, x, y, scale = 4, rotation = 0, flipX = false) {
   const image = ported.frames[cell], meta = ported.manifest[cell]; if (!image || !meta) return;
@@ -2143,7 +2163,7 @@ function spaceballFlight(cue, tick) {
 }
 function drawSpaceballScene(tick) {
   const zoom = spaceballZoomAt(tick);
-  updateSpaceballStars(zoom);
+  updateSpaceballStars(zoom, Math.floor(secondsAtTick(Math.max(0, tick)) * 60));
   for (const star of spaceballStars) {
     const scale = 1 / Math.max(.05, star.z - zoom);
     // GBA affine sprites use scale = 256 / (z - zoom). `drawPortedCell`
@@ -2289,7 +2309,8 @@ function nightWalkWorldShift(tick) {
 function portedLoop() {
   pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
-  if (tick > ported.timeline.endTick) return finish();
+  if (tick > ported.timeline.endTick) return versusActive() && !versus.finished ? versusFinish() : finish();
+  versusUpdate(tick);
   while (ported.reverbIndex < ported.reverb.length && ported.reverb[ported.reverbIndex].tick <= tick) {
     setReverbLevel(ported.reverb[ported.reverbIndex++].level);
   }
@@ -2327,7 +2348,11 @@ function portedLoop() {
   // after the judgment tick.
   const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
   for (const cue of ported.cues) if (cue.state === 'fresh' && signedFramesBetweenTicks(cue.hit, tick) > lateWindow) {
+    // 双人联机: a cue owned by the peer is scored by the peer alone, so the local
+    // engine parks it as 'remote' and waits for the reported result.
+    if (versusActive() && RhythmVersus.ownerOf(versus.session, cue.index) === versus.session.peer) { cue.state = 'remote'; continue; }
     cue.state = 'miss';
+    if (versusActive()) RhythmVersus.recordLocal(versus.session, cue.index, 'miss');
     if (mode === 'power_calligraphy') playPortedSfx('miss');
     // night_walk_cue_miss(): only an unopened gap falls, and never once the
     // engine has stopped scrolling - the star wand (or the fish zap) ends the
@@ -2677,6 +2702,7 @@ function drawPorted(tick, cfg) {
     ctx.restore();
   }
   drawTextBox();
+  versusDrawUpper(ctx, tick, stage.width, stage.height);
   drawTouchScreen();
 }
 function eventAudioTime(event) {
@@ -2702,6 +2728,10 @@ function portedPunch(inputEvent = null) {
     const barelyFrames = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
     return withinFrames(offsetFrames, barelyFrames);
   });
+  // 双人联机: the shared key only answers for the player whose segment is running
+  // (co-op cues excepted), so an off-turn press is refused instead of stealing
+  // the peer's pitch.
+  if (versusActive() && !RhythmVersus.acceptsInput(versus.session, tick, cue?.index ?? null)) { versusReject(tick, cue); return; }
   ported.actionAt = tick; ported.actionHit = Boolean(cue); ported.actionCue = cue ?? null;
   if (!cue) {
     if (mode === 'night_walk') playPortedSfx('count',tick,128,-0xc00);
@@ -2728,6 +2758,7 @@ function portedPunch(inputEvent = null) {
   if (mode === 'power_calligraphy' && !perfect && ['KANA_INPUT_SUN2','KANA_INPUT_KOKORO2','KANA_INPUT_KOKORO3','KANA_INPUT_COMMA1'].includes(cue.inputType)) sound = 'barelyOuch';
   if (sound) playPortedSfx(sound);
   if (mode === 'night_walk') playNightWalkDrum(cue,perfect,tick);
+  if (versusActive()) RhythmVersus.recordLocal(versus.session, cue.index, perfect ? 'perfect' : 'barely', offset);
   createImpact(perfect ? 'perfect' : 'normal');
 }
 
@@ -2897,6 +2928,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     value.cueSpawningDisabled = ported.cueSpawningDisabled;
     if (portedModes[mode]) value.perfectHits = ported.cues.filter(cue => cue.state === 'hit' && cue.perfect).length;
     value.cueStates = ported.cues.map(cue => ({ spawn: cue.spawn, hit: cue.hit, state: cue.state, perfect: cue.perfect ?? null, endOfBridge: cue.endOfBridge ?? null, platformType: cue.platformType ?? null, actionTick: cue.actionTick ?? null }));
+    value.versus = versusActive() ? { active: true, role: versus.session.role, status: versus.session.status, connected: versus.session.connected, rtt: versus.session.rtt, started: versus.session.started, blocks: versus.plan.blocks.length, owner: RhythmVersus.blockAtTick(versus.plan, value.tick ?? 0)?.owner ?? null, coopDone: versus.coopLog?.length ?? 0, rejects: versus.rejects, scores: versus.session.scores } : { active: false };
     document.body.dataset.auditState = JSON.stringify(value);
   };
   document.addEventListener('rhythm-audit', () => {
@@ -2937,7 +2969,162 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
   }
 }
 
-$('#startBtn').onclick = () => { mode = 'karate'; start(); };
+// ---------------------------------------------------------------------------
+// 双人联机 (turn-based two-player co-op)
+//
+// Both peers watch the same picture: each client runs the same expanded
+// BeatScript and exchanges one small result per cue (with the hit offset, so a
+// barely hit drifts or wobbles on both screens identically).  Judgement itself
+// stays local - a +-3/+-5 frame window cannot survive an inter-city round trip -
+// and only the player whose segment is running may press; the other client's
+// input is refused and only shows a "locked" hint.
+// ---------------------------------------------------------------------------
+const versus = { active: false, session: null, plan: null, finished: false, resultAt: 0, lastPrompt: null, rejects: 0, lockFlashUntil: -1 };
+function versusActive() { return versus.active && Boolean(versus.session); }
+function versusHooks() {
+  return {
+    audio: () => audio().currentTime,
+    tone,
+    setSongStart: (time) => versusBeginSong(time)
+  };
+}
+function versusBeginSong(startTime) {
+  // Rebuild the whole audio queue from the agreed start time: the level was
+  // parked far in the future while the lobby was open.
+  audioSongStart = startTime;
+  for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
+  scheduledMusicNodes = [];
+  ported.audioQueue = []; ported.audioQueueIndex = 0; ported.audioQueueReady = false;
+  schedulePortedMusic(); schedulePortedTimelineSfx();
+  queuePortedSpawnSfx();
+  ported.audioQueue.sort((a,b) => a.when-b.when); ported.audioQueueReady = true; pumpPortedAudio();
+}
+function versusOnLevelReady() {
+  const cues = ported.cues;
+  versus.active = true; versus.plan = RhythmVersus.buildPlan(cues);
+  versus.session = RhythmVersus.createSession({
+    role: versus.pendingRole, kind: versus.pendingKind, room: versus.pendingRoom, level: 'spaceball', cues,
+    hooks: versusHooks(),
+    listeners: {
+      onStatus: (status) => versusStatus(status),
+      onPrompt: (prompt) => { versus.lastPrompt = prompt; },
+      onPeerCue: (index, result, offset) => versusApplyPeerCue(index, result, offset),
+      onCoop: (index, state, combined) => versusApplyCoop(index, state, combined)
+    }
+  });
+  versusShowLobby();
+  if (versus.pendingRole === 'host') {
+    RhythmVersus.hostRoom(versus.session).then((invite) => {
+      if (invite) { versusInviteBox().value = invite; versusStep('invite'); }
+      else { versusStep('waiting'); }
+    }).catch((error) => versusStatus({ detail: `创建房间失败：${error.message}` }));
+    return;
+  }
+  RhythmVersus.prepareGuest(versus.session);
+  versusStep(versus.pendingKind === 'webrtc' ? 'join' : 'waiting');
+}
+// The peer's reported outcome drives this client's copy of the cue, so the ball
+// flies (or is missed) on both screens with the same animation.
+function versusApplyPeerCue(index, result, offset) {
+  const cue = ported.cues[index]; if (!cue) return;
+  cue.state = result === 'miss' ? 'miss' : 'hit';
+  cue.perfect = result === 'perfect';
+  cue.remote = true;
+  if (result !== 'miss') cue.actionTick = cue.hit + (offset ?? 0) * tempoAtTick(cue.hit) / 150;
+  if (result === 'miss') { playPortedSfx('miss'); return; }
+  playPortedSfx(result === 'perfect' ? 'hit' : 'barely');
+}
+function versusApplyCoop(index, state, combined) { versus.coopLog = [...(versus.coopLog ?? []), { index, state, combined }]; }
+function versusReject(tick, cue) {
+  // The other player is on the bat: nothing happens locally except the hint.
+  versus.rejects++; versus.lockFlashUntil = tick + 12;
+  return false;
+}
+function versusUpdate(tick) {
+  if (!versusActive()) return;
+  RhythmVersus.update(versus.session, tick);
+}
+function versusFinish() {
+  versus.finished = true; versus.resultAt = audio().currentTime;
+  for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
+  scheduledMusicNodes = [];
+  setTimeout(() => { if (versus.finished) versusLeave(); }, 12000);
+}
+function versusLeave() {
+  versus.active = false; versus.finished = false;
+  try { versus.session?.send?.({ type: 'bye' }); versus.session?.transport?.close?.(); } catch {}
+  versus.session = null; versus.plan = null;
+  resetReverb(); quit();
+}
+function versusDrawUpper(ctx, tick, width, height) {
+  if (!versusActive()) return;
+  if (versus.finished) { RhythmVersus.drawResult(versus.session, ctx, width, height); return; }
+  RhythmVersus.drawUpper(versus.session, ctx, tick, width, height);
+  if (tick < versus.lockFlashUntil) {
+    ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#ff6b81'; ctx.font = '700 26px sans-serif';
+    ctx.fillText('现在轮到对手，你的按键已锁定', width / 2, height - 30); ctx.restore();
+  }
+}
+function versusDrawLower(ctx, tick, width, height) {
+  if (!versusActive()) return;
+  RhythmVersus.drawLower(versus.session, ctx, tick, width, height);
+}
+// ---- lobby ----------------------------------------------------------------
+function versusScreens() { return { menu: $('#menu'), versus: $('#versus'), game: $('#game') }; }
+function versusInviteBox() { return $('#versusInvite'); }
+function versusStatus(status) {
+  const session = versus.session;
+  const box = $('#versusStatus'); if (!box) return;
+  const lines = [
+    status.detail ?? session?.detail ?? '',
+    session?.connected ? `已连接 · 延迟 ${(session.rtt * 1000).toFixed(0)} ms · 时钟偏差 ${(session.offset * 1000).toFixed(0)} ms` : '未连接',
+    session?.status === 'mismatch' ? '方案不一致：请确认两边关卡与版本相同' : ''
+  ].filter(Boolean);
+  box.textContent = lines.join(' · ');
+  $('#versusStartBtn').disabled = !(session?.role === 'host' && session?.connected && session?.status !== 'mismatch');
+}
+function versusStep(step) {
+  const panels = { invite: true, join: true, waiting: true };
+  for (const name of Object.keys(panels)) $('#versus-' + name).classList.toggle('hidden', name !== step);
+  $('#versus-create').classList.toggle('hidden', Boolean(step));
+  versusStatus({ detail: step === 'waiting' ? '等待对手加入…' : step === 'join' ? '把对手发来的邀请码粘进来' : '把邀请码发给对手，再把他的应答码粘回来' });
+}
+function versusShowLobby() {
+  const { menu: menuScreen, versus: versusScreen, game: gameScreen } = versusScreens();
+  versusScreen.classList.remove('hidden'); menuScreen.classList.add('hidden'); gameScreen.classList.add('hidden');
+  $('#versusStartBtn').disabled = true;
+}
+function versusLobbyOpen() {
+  versus.pendingRole = null; versus.pendingKind = $('#versusKind').value; versus.pendingRoom = ($('#versusRoom').value || 'MOON').toUpperCase();
+  const { menu: menuScreen, versus: versusScreen, game: gameScreen } = versusScreens();
+  versusScreen.classList.remove('hidden'); menuScreen.classList.add('hidden'); gameScreen.classList.add('hidden');
+  versusCreateStates();
+}
+function versusCreateStates() {
+  for (const name of ['invite', 'join']) $('#versus-' + name).classList.add('hidden');
+  $('#versus-create').classList.remove('hidden');
+  $('#versusStatus').textContent = '选择创建或加入房间';
+}
+function versusWaitForCueChart(role) {
+  // The turn plan comes from the loaded cue chart, so the level is opened first
+  // and the session attaches as soon as its cues exist.
+  versus.pendingRole = role; versus.pendingKind = $('#versusKind').value; versus.pendingRoom = ($('#versusRoom').value || 'MOON').toUpperCase();
+  versus.pendingJoinCode = $('#versusInvite').value.trim();
+  startPortedMode('spaceball', { versus: true });
+}
+$('#versusBtn').onclick = () => { versusLobbyOpen(); };
+$('#versusBack').onclick = () => { versus.active = false; $('#versus').classList.add('hidden'); $('#menu').classList.remove('hidden'); };
+$('#versusHost').onclick = () => versusWaitForCueChart('host');
+$('#versusJoin').onclick = () => versusWaitForCueChart('guest');
+$('#versusJoinGo').onclick = async () => {
+  try { $('#versusReply').value = await versus.session.transport.answerTo($('#versusInvite').value.trim()); }
+  catch (error) { $('#versusStatus').textContent = `邀请码无效：${error.message}`; }
+};
+$('#versusAccept').onclick = async () => {
+  try { await RhythmVersus.acceptAnswer(versus.session, $('#versusAnswer').value.trim()); versusStep('waiting'); }
+  catch (error) { $('#versusStatus').textContent = `应答码无效：${error.message}`; }
+};
+$('#versusStartBtn').onclick = () => RhythmVersus.start(versus.session);$('#startBtn').onclick = () => { mode = 'karate'; start(); };
 $('#tweezersBtn').onclick = tweezersStart;
 $('#spaceballBtn').onclick = () => startPortedMode('spaceball');
 $('#samuraiBtn').onclick = () => startPortedMode('samurai_slice');
