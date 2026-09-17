@@ -49,13 +49,18 @@ for (let i = 0; i < Math.min(samuraiCreate.length, samuraiCues.length); i++) {
   check(samuraiCues[i].tick - samuraiCreate[i].tick === 120, `samurai: pair ${i} offset ${samuraiCues[i].tick - samuraiCreate[i].tick}, expected 120`);
 }
 check(game.includes('192 * 150'), 'samurai: movement is not using source 0xC0 lifetime');
-check(game.includes('4 * clamped * (span - clamped) / Math.max(1, span)'), 'samurai: func_08031c68 parabola factor missing');
+// func_08031c68 returns 4 * local * (span - local) * spanTicks / span^2, so its
+// peak is the span in ticks (24/48 px), not the frame span.
+check(game.includes('4 * clamped * (span - clamped) * spanTicks / (span * span)'), 'samurai: func_08031c68 parabola factor missing');
 check(game.includes('function samuraiHopAt(cue, tick)') && game.includes('const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn))'), 'samurai: hop phase is not evaluated in spawn-tempo frame domain');
 check(game.includes('const spawnTempo = tempoAtTick(cue.visualSpawn)') && game.includes('192 * 150'), 'samurai: movement lifetime must lock spawn tempo');
-check(game.includes('baseY = 160 + 54 * travel') && !game.includes('baseY = 40 + 54 * travel'), 'samurai: demon lane origin differs from source fixed-point 0xA000');
-check(game.includes('if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));') && game.includes('phaseParabola(e - frameAt(72), frameAt(48))') && game.includes('phaseParabola(e - frameAt(96), frameAt(48))'), 'samurai: medium-demon hop segments differ from source');
-check(game.includes('const start = frameAt(120), active = frameAt(40), waveSpan = frameAt(48)') && game.includes('/ waveSpan * Math.PI * 2'), 'samurai: propeller/winged sine phase differs from source');
-check(game.includes('phaseParabola(e - start, span)') && !game.includes('phaseParabola(48, e - start, span)'), 'samurai: large-demon parabola arguments are reversed');
+// func_08031c94 builds the lane from 0xA0 << 6 (40 px), not 0xA0 << 8 (160 px).
+check(game.includes('baseY = 40 + 54 * travel') && !game.includes('baseY = 160 + 54 * travel'), 'samurai: demon lane origin must be the source 0xA0 << 6 (40 px)');
+check(game.includes('e < frameAt(0xA0) ? parabola(e % frameAt(0x18), 0x18) : 0'), 'samurai: small-demon 0x18 hop chain differs from source');
+check(game.includes('if (e < frameAt(0x60)) return parabola(e % frameAt(0x18), 0x18);') && game.includes('if (e < frameAt(0xA0)) return parabola(e - frameAt(0x60), 0x30);'), 'samurai: medium-demon hop segments differ from source');
+check(game.includes('if (e >= frameAt(0x78) && e < frameAt(0xA0)) return parabola(e - frameAt(0x60), 0x30);') && game.includes('return 8 * wave + 8 + 64 * Math.min(1, e / lifetime);'), 'samurai: propeller/winged hover lift differs from source');
+check(game.includes('return e >= frameAt(0x60) && e < frameAt(0xA0) ? parabola(e - frameAt(0x60), 0x30) : 0;'), 'samurai: large-demon parabola window differs from source');
+check(game.includes('drawPortedCell(cue.objectType >= 4 ? 87 : 80, x, shadowY, 4)') && game.includes('const shadowY = baseY - 4 +'), 'samurai: every demon must draw its ground shadow at baseY - 4');
 check(game.includes('event02') && game.includes('expectedSpawnTick'), 'samurai: event02-to-cue resolver missing');
 check(game.includes('samuraiSpawns.find(item => item.tick === expectedSpawnTick)') && !game.includes('samuraiSpawns.filter(item => item.tick <= event.tick)'), 'samurai: visual spawn must use exact event02 pairing');
 check(game.includes('tempoAtTick(event.tick)/120'), 'samurai: phrase SFX tempo conversion mismatch');

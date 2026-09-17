@@ -2071,37 +2071,42 @@ function drawSamuraiScene(tick) {
   drawPortedCell(cell,14,123,4);
 }
 function samuraiHopAt(cue, tick) {
-  const elapsed = framesBetweenTicks(cue.visualSpawn, tick);
+  // func_08031c94 advances the demon for ticks_to_frames(0xC0) and calls
+  // func_08031c68(localFrames, spanTicks) for every hop:
+  //   hop = 4 * local * (span - local) * spanTicks / span^2,  span = ticks_to_frames(spanTicks)
+  // Its peak (local = span / 2) is exactly spanTicks pixels, so the amplitude is
+  // tempo independent - the previous version divided by span once, which made
+  // every hop frameAt(spanTicks) pixels tall.
   const framePerTick = 150 / Math.max(1, tempoAtTick(cue.visualSpawn));
   const frameAt = value => value * framePerTick;
-  // func_08031c68(r0, r1) returns the fixed-point parabola used by the
-  // original engine: 4 * local * (span - local) / span.  Its peak is the
-  // frame span itself, so using a hard-coded pixel amplitude makes the hop
-  // wrong whenever the song tempo changes.
-  const phaseParabola = (local, span) => {
+  const parabola = (local, spanTicks) => {
+    const span = Math.max(1, frameAt(spanTicks));
     const clamped = Math.max(0, Math.min(span, local));
-    return 4 * clamped * (span - clamped) / Math.max(1, span);
+    return 4 * clamped * (span - clamped) * spanTicks / (span * span);
   };
-  const e = Math.max(0, elapsed);
+  const e = Math.max(0, framesBetweenTicks(cue.visualSpawn, tick));
   if (cue.objectType === 0) {
-    const span = frameAt(24), local = e % span;
-    return e < frameAt(160) ? phaseParabola(local, span) : 0;
+    // Small demon: 0x18-tick hops until 0xA0, then it stays on the lane.
+    return e < frameAt(0xA0) ? parabola(e % frameAt(0x18), 0x18) : 0;
   }
   if (cue.objectType === 1) {
-    // The medium demon uses the source's final 0x30-tick segment rather
-    // than repeating the small 0x18-tick hop for its whole lifetime.
-    if (e < frameAt(72)) return phaseParabola(e % frameAt(24), frameAt(24));
-    if (e < frameAt(96)) return phaseParabola(e - frameAt(72), frameAt(48));
-    if (e < frameAt(160)) return phaseParabola(e - frameAt(96), frameAt(48));
+    // Medium demon: four 0x18 hops, then one 0x30 parabola over [0x60, 0xA0).
+    if (e < frameAt(0x60)) return parabola(e % frameAt(0x18), 0x18);
+    if (e < frameAt(0xA0)) return parabola(e - frameAt(0x60), 0x30);
     return 0;
   }
   if (cue.objectType === 2 || cue.objectType === 3) {
-    const start = frameAt(120), active = frameAt(40), waveSpan = frameAt(48);
-    if (e < start || e >= start + active) return 0;
-    return 32 + 32 * Math.sin((e - start) / waveSpan * Math.PI * 2);
+    // Winged and propeller demons hover: 8 * sin + 8 + 64 * progress above the
+    // lane, with the 0x30 parabola dive during [0x78, 0xA0).  Returning 0 here
+    // (the previous behaviour) dropped them onto the lane base.
+    if (e >= frameAt(0x78) && e < frameAt(0xA0)) return parabola(e - frameAt(0x60), 0x30);
+    const period = Math.max(1, frameAt(0x30));
+    const lifetime = Math.max(1, frameAt(0xC0));
+    const wave = Math.sin(((e % period) / period) * Math.PI * 2);
+    return 8 * wave + 8 + 64 * Math.min(1, e / lifetime);
   }
-  const start = frameAt(96), span = frameAt(48);
-  return e >= start && e < start + span ? phaseParabola(e - start, span) : 0;
+  // Large demon: one 0x30 parabola over [0x60, 0xA0).
+  return e >= frameAt(0x60) && e < frameAt(0xA0) ? parabola(e - frameAt(0x60), 0x30) : 0;
 }
 function samuraiFogAt(tick) {
   const effect = latestPortedEvent('samurai_slice_event03',tick);
@@ -2459,7 +2464,12 @@ function drawPorted(tick, cfg) {
       // its 54 px lane drift before subtracting the per-type hop.  The old
       // 40 px literal put every demon one lane too high, which also made
       // their entry look prematurely fast.
-      const x = 240 - 216 * travel, baseY = 160 + 54 * travel;
+      // func_08031c94 builds the lane from fixed-point constants: X =
+      // 0xF0 << 8 - 216 * travel (240 px) and Y = 0xA0 << 6 + 54 * travel,
+      // i.e. 0xA0 * 64 / 256 = **40 px**, not 160 px.  A previous pass read that
+      // shift as << 8 and moved every demon 120 px down, which is why they fell
+      // through the pavement and off the bottom of the screen.
+      const x = 240 - 216 * travel, baseY = 40 + 54 * travel;
       // Demon hop/hover cels loop independently of horizontal travel in the
       // original sprite engine; tying this phase to travel made paired cues
       // stretch the hop and visibly drift away from the beat.
@@ -2477,7 +2487,11 @@ function drawPorted(tick, cfg) {
           if (drift < 7) drawPortedCell(animationCell([[88,1],[89,4],[90,2]],framesBetweenTicks(cue.actionTick ?? cue.hit,tick)),74,96,4);
         }
       } else {
-        if (![2,3].includes(cue.objectType)) drawPortedCell(cue.objectType >= 4 ? 87 : 80,x,baseY+4,4);
+        // Every demon owns a ground shadow sprite (sprite index 2): the original
+        // parks it at baseY - 4 and drops it another 64 px once the cue passes
+        // ticks_to_frames(0x78).  Flying demons keep it on the lane below them.
+        const shadowY = baseY - 4 + (framesBetweenTicks(cue.visualSpawn, tick) > 150 / Math.max(1, tempoAtTick(cue.visualSpawn)) * 0x78 ? 64 : 0);
+        drawPortedCell(cue.objectType >= 4 ? 87 : 80, x, shadowY, 4);
         drawPortedCell(animationCell(seq,framesBetweenTicks(cue.visualSpawn,tick),true),x,y,4);
       }
     }
