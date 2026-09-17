@@ -789,10 +789,10 @@ function tweezersUpdate(beat) {
 }
 function tweezersPunch(targetBeat = null) {
   if (!running || mode !== 'tweezers') return;
-  const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs)) <= (h.fast ? 6 : h.type === 'long' ? 4 : 5));
+  const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && withinFrames(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs), h.fast ? 6 : h.type === 'long' ? 4 : 5));
   if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; missSound(); createImpact('empty'); return; }
   const perfectFrames = hair.fast || hair.type === 'long' ? 4 : 3;
-  const perfect = Math.abs(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs)) <= perfectFrames; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  const perfect = withinFrames(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs), perfectFrames); hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
   if (perfect) tweezers.perfectHits++;
   if (hair.type === 'long') {
     // gameplay_get_last_hit_offset() is the frame offset from gameplay_update_cue;
@@ -1025,7 +1025,7 @@ function punch() {
   // karate_cue_* CueDefinitions use the same frame windows as every other game
   // (hit ±3, barely ±5 frames), and elapsedForBeat() is the karate beat clock's
   // real-time map, so the window stays 50/83.3 ms across the tempo changes.
-  const candidate = active.find((item) => item.state === 'flying' && Math.abs(karateFramesBetween(item.hitBeat, beat)) <= KARATE_HIT_FRAMES);
+  const candidate = active.find((item) => item.state === 'flying' && withinFrames(karateFramesBetween(item.hitBeat, beat), KARATE_HIT_FRAMES));
   // karate_input_event(): every punch starts Joe's animation (low below flow 3,
   // high at 3+) and plays the punch whoosh, even when it hits nothing.
   punchSound();
@@ -1043,7 +1043,7 @@ function punch() {
     createImpact('empty');
     return;
   }
-  const timedPerfect = cheat || (candidate && Math.abs(karateFramesBetween(candidate.hitBeat, beat)) <= KARATE_PERFECT_FRAMES);
+  const timedPerfect = cheat || (candidate && withinFrames(karateFramesBetween(candidate.hitBeat, beat), KARATE_PERFECT_FRAMES));
   // karate_cue_hit(): a rock or bomb punched below flow 3 is the "ouch" hit.
   // It still counts, but costs a flow level, plays the hard SFX and never
   // shows the normal punch cels.
@@ -1578,6 +1578,13 @@ function tempoAtTick(tick) {
 // signedFramesBetweenTicks()/framesBetweenBeats() rather than raw tick deltas.
 function framesBetweenBeats(fromBeat, toBeat, beatMs) {
   return (toBeat - fromBeat) * beatMs / 1000 * 60;
+}
+// The ROM compares integer 60 Hz frame counters, so a window edge is inclusive;
+// the tick->frame conversion can land a few hundred nanoseconds outside it when
+// an input sits exactly on the edge, hence the epsilon.
+const FRAME_WINDOW_EPSILON = 1e-6;
+function withinFrames(offsetFrames, frames) {
+  return Math.abs(offsetFrames) <= frames + FRAME_WINDOW_EPSILON;
 }
 function portedTick() {
   return portedTickAtAudioTime(audio().currentTime);
@@ -2614,9 +2621,9 @@ function portedPunch(inputEvent = null) {
   const cue = ported.cues.find(item => {
     if (item.state !== 'fresh') return false;
     const offsetFrames = signedFramesBetweenTicks(item.hit, tick);
-    if (mode === 'power_calligraphy') return offsetFrames >= -24 && offsetFrames <= 12;
+    if (mode === 'power_calligraphy') return offsetFrames >= -24 - FRAME_WINDOW_EPSILON && offsetFrames <= 12 + FRAME_WINDOW_EPSILON;
     const barelyFrames = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
-    return Math.abs(offsetFrames) <= barelyFrames;
+    return withinFrames(offsetFrames, barelyFrames);
   });
   ported.actionAt = tick; ported.actionHit = Boolean(cue); ported.actionCue = cue ?? null;
   if (!cue) {
@@ -2626,7 +2633,7 @@ function portedPunch(inputEvent = null) {
   cue.state = 'hit'; const offset = signedFramesBetweenTicks(cue.hit, tick);
   cue.actionTick = tick;
   const perfectFrames = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
-  const perfect = Math.abs(offset) <= perfectFrames;
+  const perfect = withinFrames(offset, perfectFrames);
   cue.perfect = perfect;
   if (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND' && perfect) {
     const priorHits = ported.cues.filter(item => item !== cue && item.state === 'hit' && item.perfect && item.hit <= cue.hit).length;
@@ -2765,6 +2772,14 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     // Tap point for local level measurement: the master bus is the exact signal
     // the player hears, so an analyser hung off it reads the real output level.
     masterNode: () => master(),
+    // Inject an input at an arbitrary source tick so the local audit can verify
+    // the CueDefinition windows around a cue instead of only the exact hit.
+    punchAtTick: (tick) => {
+      if (!running || !ported.timeline) return null;
+      audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(Number(tick));
+      portedPunch();
+      return ported.actionHit;
+    },
     // Parking the clock must use the same heard-time origin as portedTick(),
     // otherwise a parked cue would sit outputLatency() away from its own tick.
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(Number(tick)); },

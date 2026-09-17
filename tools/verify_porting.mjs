@@ -83,11 +83,12 @@ check(game.includes('const hitOffsetFrames = framesBetweenBeats(hair.hitBeat, be
 // duration + the raw CueDefinition window values, so every hit/barely window is
 // a real-time frame window (±3 = 50.0 ms, ±5 = 83.3 ms) at any tempo.  Judging in
 // ticks made the windows BPM-dependent and up to 56% wider than the ROM.
-check(game.includes('const offsetFrames = signedFramesBetweenTicks(item.hit, tick)') && game.includes('return Math.abs(offsetFrames) <= barelyFrames'), 'judgement: barely window is not the source frame window');
-check(game.includes('const perfect = Math.abs(offset) <= perfectFrames') && game.includes('const offset = signedFramesBetweenTicks(cue.hit, tick)'), 'judgement: hit window is not the source frame window');
+check(game.includes('const offsetFrames = signedFramesBetweenTicks(item.hit, tick)') && game.includes('return withinFrames(offsetFrames, barelyFrames)'), 'judgement: barely window is not the source frame window');
+check(game.includes('const perfect = withinFrames(offset, perfectFrames)') && game.includes('const offset = signedFramesBetweenTicks(cue.hit, tick)'), 'judgement: hit window is not the source frame window');
 check(game.includes('signedFramesBetweenTicks(cue.hit, tick) > lateWindow') && game.includes("const lateWindow = mode === 'power_calligraphy' ? 12 : 5"), 'judgement: cue expiry does not use the source miss window');
-check(game.includes('Math.abs(karateFramesBetween(item.hitBeat, beat)) <= KARATE_HIT_FRAMES') && game.includes('KARATE_PERFECT_FRAMES = 3'), 'karate: cue windows are not the source frame windows');
-check(game.includes('Math.abs(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs)) <= (h.fast ? 6 : h.type === \'long\' ? 4 : 5)'), 'tweezers: cue windows are not the source frame windows');
+check(game.includes('withinFrames(karateFramesBetween(item.hitBeat, beat), KARATE_HIT_FRAMES)') && game.includes('KARATE_PERFECT_FRAMES = 3'), 'karate: cue windows are not the source frame windows');
+check(game.includes('function withinFrames(offsetFrames, frames)') && game.includes('FRAME_WINDOW_EPSILON'), 'judgement: ROM-inclusive window edges missing');
+check(game.includes('withinFrames(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs), h.fast ? 6 : h.type === \'long\' ? 4 : 5)'), 'tweezers: cue windows are not the source frame windows');
 check(game.includes('tweezersRandom(0x1f) - 15') && !game.includes('rotationSpeed: Math.floor(Math.random()'), 'tweezers: falling-hair rotation must use deterministic GBA RNG');
 check(game.includes('tempoAtTick(event.tick) / 120') && game.includes('Calligraphy changes tempo mid-song'), 'calligraphy: timeline SFX ignore active tempo');
 check(game.includes('const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120'), 'audio: ported SFX sequence offsets ignore trigger tempo');

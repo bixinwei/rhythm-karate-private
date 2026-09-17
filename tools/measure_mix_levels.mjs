@@ -123,7 +123,10 @@ const LEVELS = [
   // karate_bgm_events.json carries no SongHeader volume: the port hardcodes the
   // ROM's 90 and the BeatScript music-bus automation (100 -> 240 -> 150), so the
   // measurement uses that pair explicitly.
-  { id: 'karate_man', file: 'karate_bgm_events', timeline: null, overrides: { header: 90, bus: 150, bpm: 120 } }
+  { id: 'karate_man', file: 'karate_bgm_events', timeline: null, overrides: { header: 90, bus: 150, bpm: 120 } },
+  // scheduleTweezersMusic() uses the ROM's own SongHeader 127 plus the
+  // BeatScript music-bus level 220; the song runs at 96 BPM.
+  { id: 'rhythm_tweezers', file: 'tweezers_bgm_events', timeline: null, overrides: { header: 127, bus: 220, bpm: 96 } }
 ];
 
 const scales = process.argv.slice(2).map(Number).filter((value) => Number.isFinite(value) && value > 0);
