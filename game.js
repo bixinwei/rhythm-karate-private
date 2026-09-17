@@ -85,6 +85,7 @@ let karateSongEnd = 0;
 let karateFanStartBeat = 0;
 let karateScreenFade = null;
 let karateTimelineReady = false;
+let karateInputGates = [];
 const karateTimelineLoadPromise = fetch('assets/gba/karate_man_timeline.json')
   .then((response) => {
     if (!response.ok) throw new Error(`Failed to load Karate timeline (${response.status})`);
@@ -129,6 +130,8 @@ const karateTimelineLoadPromise = fetch('assets/gba/karate_man_timeline.json')
       span: Math.max(1, Number(fade.args[0])) / 24,
       colour: String(fade.args[1] ?? 'BLACK').toUpperCase().includes('WHITE') ? '#fff' : '#000'
     } : null;
+    // enable_play_inputs / disable_play_inputs, in the chart's beat domain.
+    karateInputGates = events.filter((event) => /play_inputs/.test(event.op)).map((event) => ({ value: event.tick / 24 + TRAVEL_BEATS, enabled: event.op === 'enable_play_inputs' }));
     karateTimelineReady = true;
   });
 function karateMusicVolumeAt(beat) {
@@ -262,7 +265,11 @@ function audio() {
 // Anything the ROM plays from a sprite animation (Joe's punch, barely, miss,
 // smirk and happy cels) is timed on the shared AudioContext clock so a dropped
 // render frame cannot stretch or truncate it.
-function audioClock() { return audioCtx ? audioCtx.currentTime : performance.now() / 1000; }
+// Gameplay-side timers (punch cels, hit flashes, touch-screen FX) must run on
+// the clock the player hears, exactly like portedTick(); a raw AudioContext time
+// would make them lead the audio by outputLatency().  Scheduling never uses this
+// helper, so it stays on the raw clock.
+function audioClock() { return audioCtx ? Math.max(0, audioCtx.currentTime - outputLatency()) : performance.now() / 1000; }
 
 // The device delays what the player actually hears by its output buffer
 // (AudioContext.outputLatency, ~20-60 ms on iOS).  Judgement, cue lifetime and
@@ -303,17 +310,27 @@ function master() {
 
 // gameplay_set_reverb(level) -> midi_player_set_reverb(clamp(level + 35, 0, 127), 2, 2, 4);
 // the worklet applies the ROM's `wet >> decay` multiplier and filter shifts.
-// Note the ROM starts with gMidiReverb1Wet = 0 (midi_directsound_init) and the
-// +35 offset only applies when the script itself calls gameplay_set_reverb, so
-// the silent state and the scripted state are different values.
-function setReverbLevel(level) {
-  reverbWet = Math.max(0, Math.min(127, Number(level) + 35));
+//
+// gameplay_start_scene() runs for every gameplay scene and calls
+// midi_player_set_reverb(35, 2, 2, 4) itself, i.e. the default in-game wet level
+// is 35 - the same value gameplay_set_reverb(0) would select.  Only
+// midi_directsound_init (boot, and every non-gameplay scene) leaves it at 0, so
+// starting a level with 0 reverb would make all five levels that never call
+// gameplay_set_reverb play completely dry.
+const ROM_DEFAULT_REVERB_WET = 35;
+function setReverbWet(wet) {
+  reverbWet = Math.max(0, Math.min(127, Number(wet)));
   if (reverbNode) reverbNode.parameters.get('wet').value = reverbWet;
+}
+function setReverbLevel(level) {
+  setReverbWet(Number(level) + 35);
+}
+function startGameplayReverb() {
+  setReverbWet(ROM_DEFAULT_REVERB_WET);
 }
 
 function resetReverb() {
-  reverbWet = 0;
-  if (reverbNode) reverbNode.parameters.get('wet').value = reverbWet;
+  setReverbWet(0);
 }
 
 function tone(freq, length, type = 'sine', volume = .05, offset = 0) {
@@ -596,7 +613,7 @@ function start() {
   karateBeatAnimStart = -Infinity;
   karateBeatAnimIndex = 0;
   karateReverbIndex = 0;
-  resetReverb();
+  startGameplayReverb();
   activeTextBox = null;
   karateStagePalette = 'low';
   karateMusicCursor.bgm = 0;
@@ -717,7 +734,7 @@ function tweezersLoop(beat) {
       .filter(item => item.state === 'fresh')
       .sort((a, b) => a.hitBeat - b.hitBeat)[0];
     if (hair && hair.hitBeat <= beat + 0.5) {
-      audioSongStart = audio().currentTime - hair.hitBeat * tweezersBeatMs / 1000;
+      audioSongStart = audio().currentTime - outputLatency() - hair.hitBeat * tweezersBeatMs / 1000;
       tweezersPunch(hair.hitBeat);
     }
   }
@@ -790,9 +807,9 @@ function tweezersUpdate(beat) {
 function tweezersPunch(targetBeat = null) {
   if (!running || mode !== 'tweezers') return;
   const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && withinFrames(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs), h.fast ? 6 : h.type === 'long' ? 4 : 5));
-  if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; missSound(); createImpact('empty'); return; }
+  if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; armMissPunishment(tweezersBeatMs * .5 / 1000); missSound(); createImpact('empty'); return; }
   const perfectFrames = hair.fast || hair.type === 'long' ? 4 : 3;
-  const perfect = withinFrames(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs), perfectFrames); hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  const perfect = withinFrames(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs), punishedHitFrames(perfectFrames)); hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
   if (perfect) tweezers.perfectHits++;
   if (hair.type === 'long') {
     // gameplay_get_last_hit_offset() is the frame offset from gameplay_update_cue;
@@ -1022,6 +1039,9 @@ function punch() {
   if (!running) return;
   const beat = songBeat();
   if (beat < 0) return;
+  // gameplay_update_scene() drops input while play inputs are disabled; the
+  // skipped-practice entry disables them again after the main script ends.
+  if (!karateInputsEnabledAt(beat)) return;
   // karate_cue_* CueDefinitions use the same frame windows as every other game
   // (hit ±3, barely ±5 frames), and elapsedForBeat() is the karate beat clock's
   // real-time map, so the window stays 50/83.3 ms across the tempo changes.
@@ -1040,10 +1060,11 @@ function punch() {
     perfectRun = false;
     judgement = 'MISS';
     // An empty punch is acknowledged only by the small yellow star.
+    armMissPunishment((elapsedForBeat(beat + .5) - elapsedForBeat(beat)) / 1000);
     createImpact('empty');
     return;
   }
-  const timedPerfect = cheat || (candidate && withinFrames(karateFramesBetween(candidate.hitBeat, beat), KARATE_PERFECT_FRAMES));
+  const timedPerfect = cheat || (candidate && withinFrames(karateFramesBetween(candidate.hitBeat, beat), punishedHitFrames(KARATE_PERFECT_FRAMES)));
   // karate_cue_hit(): a rock or bomb punched below flow 3 is the "ouch" hit.
   // It still counts, but costs a flow level, plays the hard SFX and never
   // shows the normal punch cels.
@@ -1428,6 +1449,7 @@ function drawTouchScreen() {
 
 function finish() {
   running = false;
+  resetReverb();
   stopTweezersAudioScheduler();
   stopKarateAudioScheduler();
   auditStatePublisher();
@@ -1585,6 +1607,42 @@ function framesBetweenBeats(fromBeat, toBeat, beatMs) {
 const FRAME_WINDOW_EPSILON = 1e-6;
 function withinFrames(offsetFrames, frames) {
   return Math.abs(offsetFrames) <= frames + FRAME_WINDOW_EPSILON;
+}
+// gameplay_update_inputs(): an input that hits no cue registers an irrelevant
+// input and arms the miss-punishment timer with ticks_to_frames(0x0C) - twelve
+// ticks of real time.  While it runs, gameplay_calculate_input_timing() forces
+// the *hit* window to -1/+1 frames; the barely window keeps its own values, so a
+// stray tap costs the next cue its "perfect" but not its hit.  The ROM counts the
+// timer down once per 60 Hz frame, which is the same duration, so a deadline on
+// the heard clock is equivalent and independent of the render rate.
+let missPunishmentUntil = -Infinity;
+function armMissPunishment(seconds) {
+  missPunishmentUntil = audioClock() + Math.max(0, seconds);
+}
+function punishedHitFrames(frames) {
+  return audioClock() < missPunishmentUntil ? 1 : frames;
+}
+// gameplay_update_scene() only dispatches input while gameplay_inputs_enabled()
+// is true.  Every level's scene entry calls enable_play_inputs before its main
+// script, and the main scripts toggle it around the intro and the ending, so a
+// tap outside an enabled window is ignored exactly like the ROM's.
+function portedInputsEnabledAt(tick) {
+  if (!ported.timeline) return true;
+  return inputsEnabledAt(ported.inputGates ?? [], tick);
+}
+function inputsEnabledAt(gates, value) {
+  // Every level's scene entry calls enable_play_inputs before its main script,
+  // so the run starts enabled; the main scripts then toggle it around the intro
+  // and the ending and gameplay_update_scene() ignores input while it is false.
+  let enabled = true;
+  for (const gate of gates) {
+    if (gate.value > value) break;
+    enabled = gate.enabled;
+  }
+  return enabled;
+}
+function karateInputsEnabledAt(beat) {
+  return inputsEnabledAt(karateInputGates, beat);
 }
 function portedTick() {
   return portedTickAtAudioTime(audio().currentTime);
@@ -1830,6 +1888,17 @@ function playPortedSfx(kind, atTick = null, eventVolume = 256, eventPitch = 0, r
     if (atTick == null) startPortedAudioItem(item); else queuePortedAudio(item);
   }
 }
+// play_drumtech_seq(sequence, timingOffset): the first note of every sequence
+// fires immediately (the ROM forces ticks == 0 to play at once), while later
+// notes are scheduled `ticks_to_frames(delta) + timingOffset` frames out.
+// night_walk_cue_hit passes ~offset (= -offset - 1) and night_walk_cue_barely
+// passes -offset, which lands those later notes back on the beat grid instead of
+// leaving them up to 5 frames (83 ms) off with the player's tap.
+function nightWalkGridTick(cue, tick) {
+  const offsetFrames = signedFramesBetweenTicks(cue.hit, tick);
+  const alignmentFrames = cue.perfect ? -offsetFrames - 1 : -offsetFrames;
+  return tick + alignmentFrames * tempoAtTick(cue.hit) / 150;
+}
 function playNightWalkDrum(cue, perfect, tick) {
   if (!perfect) {
     if (cue.kind === 'CUE_KICK') playPortedSfx('barely',tick,256,0xc00);
@@ -1839,15 +1908,16 @@ function playNightWalkDrum(cue, perfect, tick) {
     }
     return;
   }
+  const grid = nightWalkGridTick(cue, tick);
   if (cue.kind === 'CUE_KICK') return playPortedSfx('kick',tick);
   if (cue.kind === 'CUE_SNARE') {
     // drum_seq_night_walk_snare1: drum 4 at t=0, drum 17 at +0x04 ticks.
-    playPortedSfx('kick',tick); playPortedSfx('snare',tick + 4); return;
+    playPortedSfx('kick',tick); playPortedSfx('snare',grid + 4); return;
   }
   if (cue.kind === 'CUE_CYMBAL' || cue.kind === 'CUE_STAR_WAND') {
     // drum_seq_night_walk_cymbal1: kick/snare at t=0, cymbal at +0x0C.
     playPortedSfx('kick',tick); playPortedSfx('snare',tick);
-    playPortedSfx('cymbal',tick + 12,128); return;
+    playPortedSfx('cymbal',grid + 12,128); return;
   }
   if (cue.kind === 'CUE_ROLL') {
     // The GBA selects one of four roll phrases with agb_random(4). The
@@ -1861,8 +1931,8 @@ function playNightWalkDrum(cue, perfect, tick) {
       [[8,64]],
       []
     ][rollVariant];
-    for (const [delay,volume] of rolls) playPortedSfx('roll',tick+delay,volume);
-    if (rollVariant === 2) playPortedSfx('barelySnare',tick+12,64);
+    for (const [delay,volume] of rolls) playPortedSfx('roll',grid+delay,volume);
+    if (rollVariant === 2) playPortedSfx('barelySnare',grid+12,64);
   }
 }
 function playNightWalkOffbeat(cue) {
@@ -1973,7 +2043,10 @@ function startPortedMode(id) {
       if (/^print_text_[sf]$/.test(event.op) && TEXT_BOX_STRINGS[event.args[0]]) openTextBox = { label: event.args[0], from: event.tick, mode: id };
       if (/^clear_text_[sf]$/.test(event.op) && openTextBox) { ported.textBoxes.push({ ...openTextBox, until: event.tick }); openTextBox = null; }
     }
-    resetReverb();
+    startGameplayReverb();
+    // gameplay_update_scene() gates input on gameplay_inputs_enabled(); the
+    // timeline carries the BeatScript's own enable/disable commands.
+    ported.inputGates = data.timeline.events.filter((event) => /play_inputs/.test(event.op)).map((event) => ({ value: event.tick, enabled: event.op === 'enable_play_inputs' }));
     activeTextBox = null;
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
@@ -2256,7 +2329,10 @@ function portedLoop() {
   for (const cue of ported.cues) if (cue.state === 'fresh' && signedFramesBetweenTicks(cue.hit, tick) > lateWindow) {
     cue.state = 'miss';
     if (mode === 'power_calligraphy') playPortedSfx('miss');
-    if (mode === 'night_walk' && cue.endOfBridge && ported.failedAt < 0) {
+    // night_walk_cue_miss(): only an unopened gap falls, and never once the
+    // engine has stopped scrolling - the star wand (or the fish zap) ends the
+    // level, so its miss is ignored like any other stopped-scroll miss.
+    if (mode === 'night_walk' && cue.endOfBridge && ported.starWandAt < 0 && ported.failedAt < 0) {
       ported.failedAt = tick; ported.failedCue = cue; ported.cueSpawningDisabled = true;
       for (const future of ported.cues) if (future.spawn > tick && future.state === 'fresh') future.state = 'disabled';
       playPortedSfx('fall', tick);
@@ -2618,6 +2694,7 @@ function portedPunch(inputEvent = null) {
   if (!running) return;
   const inputAudioTime = eventAudioTime(inputEvent);
   const tick = inputEvent ? portedTickAtAudioTime(inputAudioTime) : portedTick();
+  if (!portedInputsEnabledAt(tick)) return;
   const cue = ported.cues.find(item => {
     if (item.state !== 'fresh') return false;
     const offsetFrames = signedFramesBetweenTicks(item.hit, tick);
@@ -2628,12 +2705,13 @@ function portedPunch(inputEvent = null) {
   ported.actionAt = tick; ported.actionHit = Boolean(cue); ported.actionCue = cue ?? null;
   if (!cue) {
     if (mode === 'night_walk') playPortedSfx('count',tick,128,-0xc00);
+    armMissPunishment(secondsAtTick(tick + 12) - secondsAtTick(tick));
     createImpact('empty'); return;
   }
   cue.state = 'hit'; const offset = signedFramesBetweenTicks(cue.hit, tick);
   cue.actionTick = tick;
-  const perfectFrames = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
-  const perfect = withinFrames(offset, perfectFrames);
+  const basePerfectFrames = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
+  const perfect = withinFrames(offset, punishedHitFrames(basePerfectFrames));
   cue.perfect = perfect;
   if (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND' && perfect) {
     const priorHits = ported.cues.filter(item => item !== cue && item.state === 'hit' && item.perfect && item.hit <= cue.hit).length;
@@ -2794,9 +2872,14 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     if (!running || !ported.timeline) return { ok: false, reason: 'not-running' };
     if (!portedModes[mode]) return { ok: false, reason: 'wrong-mode' };
     cancelAnimationFrame(frame);
-    const results = [];
+    const results = [], unrunnable = [];
     for (const cue of ported.cues) {
       if (cue.state !== 'fresh') continue;
+      // gameplay_update_scene() ignores input while gameplay_inputs_enabled() is
+      // false, so a cue whose judgment tick lands in a disabled window cannot be
+      // hit at all (Night Walk's closing gap cue after disable_play_inputs).  The
+      // replay reports those separately instead of pretending to hit them.
+      if (!portedInputsEnabledAt(cue.hit)) { unrunnable.push({ tick: cue.hit, kind: cue.kind }); continue; }
       audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(cue.spawn);
       portedLoop();
       audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(cue.hit);
@@ -2805,7 +2888,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     }
     cancelAnimationFrame(frame);
     const failed = results.filter(item => !item.perfect || item.state !== 'hit');
-    return { ok: failed.length === 0 && results.length === ported.cues.length, count: results.length, failed, results };
+    return { ok: failed.length === 0 && results.length + unrunnable.length === ported.cues.length, count: results.length, unrunnable, failed, results };
   };
   window.__rhythmAudit = audit;
   auditStatePublisher = () => {

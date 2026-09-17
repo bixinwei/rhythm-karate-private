@@ -1202,32 +1202,6 @@
     },
     {
       "tick": 3504,
-      "op": ".end",
-      "args": []
-    },
-    {
-      "tick": 3504,
-      "op": ".include",
-      "args": [
-        "\"include/beatscript.inc\""
-      ]
-    },
-    {
-      "tick": 3504,
-      "op": ".include",
-      "args": [
-        "\"games/spaceball/macros.inc\""
-      ]
-    },
-    {
-      "tick": 3504,
-      "op": ".section",
-      "args": [
-        ".script.entry"
-      ]
-    },
-    {
-      "tick": 3504,
       "op": "disable_pause_menu",
       "args": []
     },
@@ -1249,21 +1223,6 @@
       "args": [
         "12",
         "BLACK"
-      ]
-    },
-    {
-      "tick": 3552,
-      "op": "define_gameplay_scene",
-      "args": [
-        "scene_spaceball",
-        "script_spaceball_entry"
-      ]
-    },
-    {
-      "tick": 3552,
-      "op": ".section",
-      "args": [
-        ".script.prologue"
       ]
     }
   ]

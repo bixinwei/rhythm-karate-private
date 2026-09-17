@@ -2166,11 +2166,6 @@
     },
     {
       "tick": 5880,
-      "op": ".end",
-      "args": []
-    },
-    {
-      "tick": 5880,
       "op": "disable_pause_menu",
       "args": []
     },
@@ -2192,21 +2187,6 @@
       "args": [
         "12",
         "BLACK"
-      ]
-    },
-    {
-      "tick": 5928,
-      "op": "define_gameplay_scene",
-      "args": [
-        "scene_samurai_slice",
-        "script_samurai_slice_entry"
-      ]
-    },
-    {
-      "tick": 5928,
-      "op": ".section",
-      "args": [
-        ".script.prologue"
       ]
     }
   ]

@@ -1287,21 +1287,6 @@
         "12",
         "BLACK"
       ]
-    },
-    {
-      "tick": 3864,
-      "op": "define_gameplay_scene",
-      "args": [
-        "scene_karate_man_skipped_practice",
-        "script_karate_man_skipped_practice_entry"
-      ]
-    },
-    {
-      "tick": 3864,
-      "op": ".section",
-      "args": [
-        ".script.prologue"
-      ]
     }
   ]
 }

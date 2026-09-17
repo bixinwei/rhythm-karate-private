@@ -84,7 +84,17 @@ check(game.includes('const hitOffsetFrames = framesBetweenBeats(hair.hitBeat, be
 // a real-time frame window (±3 = 50.0 ms, ±5 = 83.3 ms) at any tempo.  Judging in
 // ticks made the windows BPM-dependent and up to 56% wider than the ROM.
 check(game.includes('const offsetFrames = signedFramesBetweenTicks(item.hit, tick)') && game.includes('return withinFrames(offsetFrames, barelyFrames)'), 'judgement: barely window is not the source frame window');
-check(game.includes('const perfect = withinFrames(offset, perfectFrames)') && game.includes('const offset = signedFramesBetweenTicks(cue.hit, tick)'), 'judgement: hit window is not the source frame window');
+check(game.includes('const perfect = withinFrames(offset, punishedHitFrames(basePerfectFrames))') && game.includes('const offset = signedFramesBetweenTicks(cue.hit, tick)'), 'judgement: hit window is not the source frame window');
+// gameplay_update_inputs() arms gameplay_set_miss_punishment_duration's default
+// (0x0C ticks) after an irrelevant input, and gameplay_calculate_input_timing()
+// collapses the hit window to -1/+1 frames while the timer runs.
+check(game.includes('function punishedHitFrames(frames)') && game.includes('return audioClock() < missPunishmentUntil ? 1 : frames'), 'judgement: miss punishment window missing');
+check(game.includes('armMissPunishment(secondsAtTick(tick + 12) - secondsAtTick(tick))') && game.includes('missPunishmentUntil = audioClock() + Math.max(0, seconds)'), 'judgement: irrelevant input does not arm the miss punishment timer');
+// gameplay_update_scene() ignores input while gameplay_inputs_enabled() is false.
+check(game.includes('function portedInputsEnabledAt(tick)') && game.includes("if (!portedInputsEnabledAt(tick)) return;"), 'judgement: play-input enable/disable gates are ignored');
+// gameplay_start_scene() sets midi_player_set_reverb(35, 2, 2, 4) for every
+// gameplay scene, so a level that never calls gameplay_set_reverb is not dry.
+check(game.includes('const ROM_DEFAULT_REVERB_WET = 35') && game.includes('function startGameplayReverb()') && (game.match(/startGameplayReverb\(\);/g) ?? []).length === 2, 'audio: gameplay scene reverb default missing');
 check(game.includes('signedFramesBetweenTicks(cue.hit, tick) > lateWindow') && game.includes("const lateWindow = mode === 'power_calligraphy' ? 12 : 5"), 'judgement: cue expiry does not use the source miss window');
 check(game.includes('withinFrames(karateFramesBetween(item.hitBeat, beat), KARATE_HIT_FRAMES)') && game.includes('KARATE_PERFECT_FRAMES = 3'), 'karate: cue windows are not the source frame windows');
 check(game.includes('function withinFrames(offsetFrames, frames)') && game.includes('FRAME_WINDOW_EPSILON'), 'judgement: ROM-inclusive window edges missing');
@@ -100,7 +110,8 @@ check(game.includes('night_walk_init_balloons sets anim_play_yan_jump') && game.
 check(game.includes('ported.nightStars.push') && game.includes('gbaRandom(8), x = gbaRandom(256)') && game.includes('initialCel = ported.nightStars[i].variant'), 'night_walk: persistent star initialization/animation missing');
 check(game.includes('function gbaRandom(max)') && game.includes('gbaRandom(4) === 0'), 'night_walk: random platform does not use GBA LCG semantics');
 check(game.includes('cue.platformResolved') && game.includes('cue.spawn > tick') && game.includes('const rollVariant = gbaRandom(4)'), 'night_walk: runtime RNG order for random platforms/roll phrases is not preserved');
-check(game.includes("playPortedSfx('snare',tick + 4)") && game.includes("playPortedSfx('cymbal',tick + 12,128)"), 'night_walk: kick/snare/cymbal DrumTech deltas differ from source');
+check(game.includes("playPortedSfx('snare',grid + 4)") && game.includes("playPortedSfx('cymbal',grid + 12,128)") && game.includes('function nightWalkGridTick(cue, tick)'), 'night_walk: kick/snare/cymbal DrumTech deltas differ from source');
+check(game.includes('const alignmentFrames = cue.perfect ? -offsetFrames - 1 : -offsetFrames'), 'night_walk: drumtech sequence offset does not match gameplay_get_last_hit_offset()');
 check(game.includes("future.state = 'disabled'") && game.includes('cueSpawningDisabled'), 'night_walk: failed gap does not stop future cue spawning');
 check(game.includes('night_walk_init_balloons') && game.includes('ported.balloons.push') && game.includes('balloon.palette * 1000'), 'night_walk: balloon palette namespaces are not applied');
 check(game.includes('drawPortedCell(92 + balloon.palette * 1000, balloon.x, balloon.y, 4)') && game.includes('framesBetweenTicks(pop.tick, tick) >= 2'), 'night_walk: balloon pop cel/lifetime missing');

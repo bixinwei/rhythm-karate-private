@@ -1782,32 +1782,6 @@
     },
     {
       "tick": 4704,
-      "op": ".end",
-      "args": []
-    },
-    {
-      "tick": 4704,
-      "op": ".include",
-      "args": [
-        "\"include/beatscript.inc\""
-      ]
-    },
-    {
-      "tick": 4704,
-      "op": ".include",
-      "args": [
-        "\"games/night_walk/macros.inc\""
-      ]
-    },
-    {
-      "tick": 4704,
-      "op": ".section",
-      "args": [
-        ".script.entry"
-      ]
-    },
-    {
-      "tick": 4704,
       "op": "disable_pause_menu",
       "args": []
     },
@@ -1829,21 +1803,6 @@
       "args": [
         "12",
         "BLACK"
-      ]
-    },
-    {
-      "tick": 4752,
-      "op": "define_gameplay_scene",
-      "args": [
-        "scene_night_walk",
-        "script_night_walk_entry"
-      ]
-    },
-    {
-      "tick": 4752,
-      "op": ".section",
-      "args": [
-        ".script.prologue"
       ]
     }
   ]

@@ -27,12 +27,22 @@ out=ROOT/'assets'/'gba'/f'{GAME}_timeline.json'
 scripts={m.group(1):m.group(2) for m in re.finditer(r'^script\s+(\w+)\s*\n(.*?)(?=^script\s+|\Z)',source,re.M|re.S)}
 events=[]
 
+# Assembler directives are not BeatScript commands.  The script-body regex below
+# stops at the next `script` label, so the last script of a sheet also swallows
+# the directives that follow it, and the joined multi-sheet sources swallow the
+# next sheet's header (`.include`/`.section`/`define_gameplay_scene`).  Those
+# lines used to be emitted as events at the end of every timeline.
+DIRECTIVES={'define_gameplay_scene'}
+
+def is_directive(op): return op.startswith('.') or op in DIRECTIVES
+
 def walk(name,tick=0,depth=0):
     if depth>80: raise ValueError(f'runaway call at {name}')
     for raw in scripts[name].splitlines():
         line=raw.split('@')[0].strip()
         if not line or line in {'return','stop','loop_start','loop_end'}: continue
         args=line.replace(',',' ').split(); op=args[0]
+        if is_directive(op): continue
         if op=='rest': tick += int(args[1],0); continue
         if op=='call': tick=walk(args[1],tick,depth+1); continue
         # Preserve every timed command (including game-specific macros such as
@@ -48,6 +58,7 @@ def walk_tail(name,tick):
         line=raw.split('@')[0].strip()
         if not line or line in {'return','stop','loop_start','loop_end'}: continue
         args=line.replace(',',' ').split(); op=args[0]
+        if is_directive(op): continue
         if not started:
             if op=='call' and args[1]==AFTER: started=True
             continue
