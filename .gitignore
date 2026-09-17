@@ -1,1 +1,8 @@
 .engramory-memory/
+# Local-only tooling inputs and capture artifacts: the decomp checkout and the
+# mGBA/Edge verification profiles must never be published with the web build.
+reference/
+.mgba-verify/
+.edge-preview*/
+.edge-capture*/
+tools/__pycache__/

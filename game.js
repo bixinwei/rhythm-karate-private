@@ -24,7 +24,10 @@ const karateManifestLoadPromise = fetch('assets/gba/karate_frames.json')
     return response.json();
   })
   .then((manifest) => { karateManifest = manifest; });
-for (const cell of [0, 1, 2, 15, 16, 17, 18, 19, 20, 21, 22, 23, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 64, 65, 66, 67]) {
+// anim_karate_joe_stand, joe_beat, joe_punch_low/high/ouch, joe_barely,
+// joe_miss, joe_smirk and joe_happy cover cels 000-026; 035-049 are the
+// objects, shadow, shards and flow meter, 064-067 the cue warnings.
+for (const cell of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 64, 65, 66, 67]) {
   const image = new Image();
   image.src = `assets/gba/cel${String(cell).padStart(3, '0')}.png?v=obj2d`;
   gba[cell] = image;
@@ -49,19 +52,61 @@ const spawnChart = [
   [58,'pot'], [62,'pot'], [66,'pot'], [70,'pot'], [74,'football'], [79,'bulb'], [86,'pot'], [90,'rock'],
   [96,'pot'], [98,'pot'], [100,'pot'], [102,'pot'], [104,'football'], [108,'bulb'], [109,'bulb'], [110,'rock'],
   [112,'pot'], [114,'pot'], [116,'pot'], [118,'pot'], [120,'pot'], [122,'pot'], [124,'pot'], [126,'pot'],
-  [128,'pot'], [130,'rock'], [132,'bulb'], [133,'bomb'], [153,'rock']
+  // karate_man_sub_089ee9cc: POT 3072, ROCK 3120, BULB 3192, BOMB 3216 ticks.
+  [128,'pot'], [130,'rock'], [133,'bulb'], [134,'bomb'],
+  // script_karate_man_main: the closing ROCK spawns at tick 3696 after the
+  // `10 rest 24` ending phrase, not one beat earlier.
+  [154,'rock']
 ];
 const chart = spawnChart.map(([spawnBeat, type]) => [spawnBeat + 1, type]);
 // These are the original `print_text_f` commands in karate_man.bs.  They are
 // not web-font text: IDs 1–4 select the corresponding GBA warning cels.
+// Script ticks: 1872, 2568, 3168, 3552 => beats 78, 107, 132, 148.
 const cueWarnings = [
   { beat: 78, id: 1, duration: 1 },
   { beat: 107, id: 3, duration: 1 },
-  { beat: 131, id: 2, duration: 1.5 },
-  { beat: 147, id: 4, duration: 3 }
+  { beat: 132, id: 2, duration: 1.5 },
+  { beat: 148, id: 4, duration: 3 }
 ];
-const SONG_END = 158;
-const tempoSegments = [{ from: 0, bpm: 120 }, { from: 135, bpm: 150 }, { from: 147, bpm: 140 }];
+const SONG_END = 159;
+// Script ticks 3264 and 3552 (see karate_man_sub_089ee9cc / script_karate_man_main).
+const tempoSegments = [{ from: 0, bpm: 120 }, { from: 136, bpm: 150 }, { from: 148, bpm: 140 }];
+// The script's own music-bus automation, in beats: set_music_volume 150 at
+// tick 0, set_music_volume 100 at tick 3264, mod_music_volume 240 over 120
+// ticks at tick 3432, then set_music_volume 150 when the Fan track starts at
+// tick 3648.  These are GBA mixer stages and must not be flattened.
+const karateMusicVolumeEvents = [
+  { beat: 0, value: 150 },
+  { beat: 136, value: 100 },
+  { beat: 143, rampTo: 240, span: 5 },
+  { beat: 152, value: 150 }
+];
+function karateMusicVolumeAt(beat) {
+  let value = 256;
+  for (const event of karateMusicVolumeEvents) {
+    if (event.beat > beat) break;
+    if (event.rampTo != null) {
+      if (beat < event.beat + event.span) return value + (event.rampTo - value) * (beat - event.beat) / event.span;
+      value = event.rampTo;
+      continue;
+    }
+    value = event.value;
+  }
+  return value;
+}
+// games/karate_man/graphics/karate_man_anim.c: every Joe animation, with its
+// original cel order and per-cel frame durations.
+const KARATE_ANIMATIONS = {
+  stand: [[0, 24]],
+  beat: [[2, 3], [1, 3], [0, 24]],
+  punchLow: [[15, 4], [16, 2], [17, 2], [18, 2], [2, 1], [1, 1], [0, 40]],
+  punchHigh: [[20, 1], [19, 3], [21, 2], [22, 2], [23, 2], [2, 1], [1, 1], [0, 15]],
+  punchOuch: [[24, 3], [25, 2], [26, 2], [25, 2], [26, 2], [25, 2], [26, 2], [25, 2], [26, 2], [25, 2], [26, 2], [25, 2], [26, 20]],
+  barely: [[5, 3], [4, 3], [3, 24]],
+  miss: [[8, 3], [7, 3], [6, 24]],
+  smirk: [[11, 3], [10, 3], [9, 24]],
+  happy: [[14, 3], [13, 3], [12, 24]]
+};
 function elapsedForBeat(target) {
   let ms = 0;
   for (let i = 0; i < tempoSegments.length; i++) {
@@ -95,8 +140,18 @@ let best = Number(localStorage.karateBest || 0);
 let running = false;
 let perfectRun = true;
 let cheat = false;
+// Joe's punch animation is a source sprite animation started by the input, so
+// it is measured on the shared AudioContext clock rather than on render frames.
 let lastPunchAt = -Infinity;
 let lastPunchHigh = false;
+let lastPunchOuch = false;
+// karate_joe_update() counts joe->miss/barely/smirk/happy down over
+// ticks_to_frames(0x24) (1.5 beats) and 0x6c (4.5 beats) respectively.
+const karateResultUntil = { miss: -Infinity, barely: -Infinity, smirk: -Infinity, happy: -Infinity };
+// karate_common_beat_animation() is re-issued by every `beat_anim` command, so
+// the current Joe animation is tracked with the audio-clock instant it started.
+let karateBeatAnimKind = 'stand';
+let karateBeatAnimStart = -Infinity;
 let lastBeat = -1;
 let judgement = '';
 let active = [];
@@ -128,16 +183,28 @@ const tweezersBgmLoadPromise = fetch('assets/gba/tweezers_bgm_events.json').then
 const tweezersSfxLoadPromise = Promise.all(['appear', 'long_appear', 'hit', 'barely', 'long_hit', 'long_pull', 'next'].map((name) =>
   fetch(`assets/gba/tweezers_${name}_events.json`).then((response) => { if (!response.ok) throw new Error(`Failed to load tweezers SFX ${name} (${response.status})`); return response.json(); }).then((events) => { tweezersSfx[name] = events; })
 ));
-const originalSfx = {};
-for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch']) {
-  fetch(`assets/gba/boxing_${name}_events.json`).then((response) => response.json()).then((events) => { originalSfx[name] = events; }).catch(() => {});
-}
+// Karate Man's effect sequences.  Each one is exported from its own primary
+// SongHeader, so the SongHeader volume, MIDI velocity, channel volume and PSG
+// instruments all come from the ROM instead of a hand-tuned browser table.
+const KARATE_SFX_NAMES = ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch', 'barely', 'hard', 'miss_voice', 'score_up', 'score_down'];
+const karateSfx = {};
+const karateSfxLoadPromise = Promise.all(KARATE_SFX_NAMES.map((name) =>
+  fetch(`assets/gba/karate_${name}_events.json`).then((response) => {
+    if (!response.ok) throw new Error(`Failed to load Karate SFX ${name} (${response.status})`);
+    return response.json();
+  }).then((payload) => { karateSfx[name] = { volume: payload.volume ?? 256, events: payload.events ?? payload }; })
+)).catch((error) => { console.error('Karate Man SFX load failed:', error); });
 
 function audio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
+
+// Anything the ROM plays from a sprite animation (Joe's punch, barely, miss,
+// smirk and happy cels) is timed on the shared AudioContext clock so a dropped
+// render frame cannot stretch or truncate it.
+function audioClock() { return audioCtx ? audioCtx.currentTime : performance.now() / 1000; }
 
 function tone(freq, length, type = 'sine', volume = .05, offset = 0) {
   const ac = audio(); const at = ac.currentTime + offset;
@@ -148,18 +215,37 @@ function tone(freq, length, type = 'sine', volume = .05, offset = 0) {
   osc.connect(gain).connect(ac.destination); osc.start(at); osc.stop(at + length + .02);
 }
 
-// Bank 56 is the original Karate Man effects bank.  These are the PCM sample
-// numbers used by the exact programs present in the exported effect MIDI.
-const karateSfxSamples = {
-  1: 819, 35: 824, 36: 509, 37: 840, 39: 818, 40: 841, 41: 823,
-  42: 127, 44: 835, 46: 819, 49: 845, 50: 846, 51: 839, 52: 847,
-  53: 848, 54: 849, 55: 429
-};
+// GBA sound players run their sequences at the tempo set by
+// `run gameplay_set_sound_tempo, 124` in script_karate_man_main, so a
+// sequence beat is 60/124 s - not the 120 BPM the browser used to assume.
+const KARATE_SOUND_BEAT_SECONDS = 60 / 124;
+
+// Play one original Karate effect with the shared GBA voice path (sample,
+// playback rate, ADSR, loop points and PSG square channels).
+function playKarateSfx(name, offsetSeconds = 0) {
+  const entry = karateSfx[name];
+  if (!entry?.events?.length) return false;
+  const ac = audio();
+  const base = ac.currentTime + .005 + offsetSeconds;
+  let started = false;
+  for (const event of entry.events) {
+    // PCM voices wait for their decoded sample; a not-yet-loaded sample must
+    // never reach startPortedAudioItem(), which expects it to exist.
+    if (event.wave == null && !originalSamples[event.sample]) continue;
+    const when = Math.max(ac.currentTime + .005, base + event.beat * KARATE_SOUND_BEAT_SECONDS);
+    const duration = Math.max(.02, event.length * KARATE_SOUND_BEAT_SECONDS);
+    const level = GBA_MIX_SCALE * (event.velocity / 127) * (entry.volume / 256);
+    startPortedAudioItem({ type: 'sfx', event, when, duration, level, automationSecondsPerBeat: KARATE_SOUND_BEAT_SECONDS });
+    started = true;
+  }
+  return started;
+}
 
 function loadOriginalSamples(neededNumbers) {
   const ac = audio();
   const bgmNumbers = [...originalBgmEvents, ...originalFanEvents, ...tweezersBgmEvents, ...Object.values(tweezersSfx).flat()].map((event) => event.sample).filter(Number.isFinite);
-  const allNumbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...Object.values(karateSfxSamples), ...bgmNumbers])];
+  const karateNumbers = Object.values(karateSfx).flatMap((entry) => entry.events.map((event) => event.sample)).filter(Number.isFinite);
+  const allNumbers = [...new Set([...Array.from({ length: 13 }, (_, index) => index + 1), ...karateNumbers, ...bgmNumbers])];
   const numbers = neededNumbers ?? allNumbers;
   return Promise.all(numbers.map((number) => {
     if (originalSamples[number]) return Promise.resolve();
@@ -200,7 +286,8 @@ function scheduleOriginalMusic(events, startBeat = 0) {
     // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
     // is Karate Man's background vocal/call-and-response track.  Keep only
     // this track in the foreground; all prior guessed sample boosts are gone.
-    const volume = GBA_MIX_SCALE * (event.velocity / 127) * (90 / 256) * (150 / 256);
+    // SongHeader 90 x the script's own set_music_volume/mod_music_volume.
+    const volume = GBA_MIX_SCALE * (event.velocity / 127) * (90 / 256) * (karateMusicVolumeAt(absoluteBeat) / 256);
     const sample = originalSamples[event.sample];
     const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
     if (sample) {
@@ -220,8 +307,9 @@ function scheduleOriginalMusic(events, startBeat = 0) {
 
 function scheduleOriginalBgm() {
   scheduleOriginalMusic(originalBgmEvents);
-  // The original script switches to s_karate_fan exactly after the `4` cue.
-  scheduleOriginalMusic(originalFanEvents, 151);
+  // The original script switches to s_karate_fan exactly after the `4` cue:
+  // set_music_volume 150 / play_music s_karate_fan_seqData at tick 3648 (beat 152).
+  scheduleOriginalMusic(originalFanEvents, 152);
 }
 
 function scheduleTweezersMusic() {
@@ -314,35 +402,14 @@ function stopTweezersAudioScheduler() {
   tweezersAudioScheduler = 0;
 }
 
-function playOriginalSfx(name) {
-  const events = originalSfx[name];
-  if (!events?.length) return false;
-  const ac = audio();
-  let usedOriginalPcm = false;
-  for (const event of events) {
-    const sample = originalSamples[karateSfxSamples[event.program]];
-    const offset = event.beat * .5;
-    if (sample) {
-      const source = ac.createBufferSource(); const gain = ac.createGain();
-      source.buffer = sample;
-      source.playbackRate.value = Math.pow(2, (event.note - 60) / 12);
-      const sfxVolumes = { fly: 80, pot: 110, rock: 110, ball: 110, bulb: 110, bomb: 110, normal: 95, punch: 80 };
-      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * ((sfxVolumes[name] ?? 80) / 256);
-      source.connect(gain).connect(ac.destination);
-      source.start(ac.currentTime + offset);
-      source.stop(ac.currentTime + offset + Math.min(1.35, Math.max(.12, event.length * .5 + .28)));
-      usedOriginalPcm = true;
-      continue;
-    }
-    const freq = 440 * Math.pow(2, (event.note - 69) / 12);
-    const percussion = event.program >= 119 || event.program === 127;
-    tone(Math.min(1400, freq), Math.max(.025, Math.min(.42, event.length * .5)), percussion ? 'square' : 'triangle', .018 + event.velocity / 127 * .042, offset);
-  }
-  return usedOriginalPcm || events.length > 0;
+// The ROM's per-cue hit sound, barely sound and "ouch" sound are all separate
+// sequences (see the karate CueDefinitions); an irrelevant input only gets the
+// punch whoosh.
+function punchSound() { if (!playKarateSfx('punch')) { tone(145, .07, 'sawtooth', .08); tone(300, .04, 'square', .025, .015); } }
+function hitSound(perfect, type = 'normal', ouch = false) {
+  const kind = ouch ? 'hard' : perfect ? (type === 'football' ? 'ball' : type) : 'barely';
+  if (!playKarateSfx(kind)) { tone(perfect ? 660 : 410, .16, 'triangle', .07); if (perfect) tone(990, .2, 'sine', .035, .04); }
 }
-
-function punchSound() { if (!playOriginalSfx('punch')) { tone(145, .07, 'sawtooth', .08); tone(300, .04, 'square', .025, .015); } }
-function hitSound(perfect) { tone(perfect ? 660 : 410, .16, 'triangle', .07); if (perfect) tone(990, .2, 'sine', .035, .04); }
 function missSound() { tone(110, .18, 'sawtooth', .04); }
 // A two-note call is played exactly one beat before each required punch.
 // This is the playable rhythm cue: no call means do not punch on the next beat.
@@ -354,11 +421,6 @@ function throwCue(type) {
 function launchSound(type) {
   const root = type === 'bomb' ? 164.81 : type === 'rock' ? 207.65 : type === 'football' ? 277.18 : type === 'bulb' ? 329.63 : 246.94;
   tone(root, .12, 'triangle', .04);
-}
-function hitAccent(type) {
-  const root = type === 'bomb' ? 233.08 : type === 'rock' ? 293.66 : type === 'football' ? 392 : type === 'bulb' ? 440 : 349.23;
-  tone(root, .055, 'square', .065);
-  tone(root * 2, .11, 'triangle', .035, .025);
 }
 
 function start() {
@@ -381,7 +443,12 @@ function start() {
   judgement = '';
   lastBeat = -1;
   lastMusicBeat = -99;
-  Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise]).then(() => loadOriginalSamples()).then(() => {
+  lastPunchAt = -Infinity;
+  lastPunchOuch = false;
+  karateResultUntil.miss = karateResultUntil.barely = karateResultUntil.smirk = karateResultUntil.happy = -Infinity;
+  karateBeatAnimKind = 'stand';
+  karateBeatAnimStart = -Infinity;
+  Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise, karateSfxLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
     audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
@@ -715,16 +782,19 @@ function update(beat) {
   if (currentWholeBeat !== lastBeat) {
     lastBeat = currentWholeBeat;
     playMusic(currentWholeBeat);
+    // The BeatScript issues `beat_anim` once per beat, which is what
+    // karate_common_beat_animation() responds to.
+    karateBeatAnimation(beat);
   }
   while (chartIndex < chart.length && chart[chartIndex][0] - beat <= TRAVEL_BEATS) {
     const [hitBeat, type] = chart[chartIndex++];
     active.push({ hitBeat, spawnBeat: hitBeat - 1, type, state: 'flying', impact: 0, cuePlayed: false, accentPlayed: false, missed: false });
-    if (!playOriginalSfx('fly')) launchSound(type);
+    if (!playKarateSfx('fly')) launchSound(type);
   }
   for (const item of active) {
     if (item.state === 'flying' && !item.cuePlayed && beat >= item.hitBeat - 1) {
       item.cuePlayed = true;
-      if (!originalSfx.fly?.length) throwCue(item.type);
+      if (!karateSfx.fly?.events?.length) throwCue(item.type);
     }
     const cueTime = beat - item.spawnBeat;
     // The source engine does not despawn at the input window.  A missed
@@ -732,12 +802,13 @@ function update(beat) {
     // remain alive until 0x78 script ticks (five beats at this tempo).
     if (item.state === 'flying' && !item.missed && cueTime > 1.5) {
       item.missed = true;
-      item.impact = performance.now();
+      // karate_cue_update(): once the object leaves the player's range the cue
+      // is flagged missed and Joe plays his miss face for ticks_to_frames(0x24).
+      // The Flow Meter is not reset by a miss in the ROM.
+      karateResultUntil.miss = beat + 1.5;
       combo = 0;
-      flowLevel = 0;
       perfectRun = false;
       judgement = 'MISS';
-      missSound();
     }
     if (item.state === 'flying' && cueTime > 2) {
       item.state = 'landed';
@@ -750,39 +821,85 @@ function update(beat) {
   active = active.filter((item) => beat - item.spawnBeat < 5);
 }
 
+// karate_common_beat_animation(): restart Joe's beat animation, with the miss /
+// happy / barely / smirk variants overriding it while their timers run.  The
+// miss variant also plays the original "nua" voice, exactly as the ROM does
+// each time the animation is (re)started.
+function karateBeatAnimation(beat) {
+  karateBeatAnimKind = beat < karateResultUntil.miss ? 'miss'
+    : beat < karateResultUntil.happy ? 'happy'
+    : beat < karateResultUntil.barely ? 'barely'
+    : beat < karateResultUntil.smirk ? 'smirk'
+    : 'beat';
+  karateBeatAnimStart = audioClock();
+  if (karateBeatAnimKind === 'miss') playKarateSfx('miss_voice');
+  // karate_increment_flow()/karate_decrement_flow() also swap the background
+  // palette at levels 3 and 2; the port keeps the standard palette until the
+  // serious-mode and flow-palette tilemaps are exported.
+}
+
+// karate_increment_flow() / karate_decrement_flow(): six meter cels, the
+// ROM plays a short jingle when the meter enters High (3) or Low (2) Flow.
+function karateFlowLevel(next) {
+  const value = Math.max(0, Math.min(5, next));
+  if (value === flowLevel) return;
+  flowLevel = value;
+  if (value === 3) playKarateSfx('score_up');
+  if (value === 2) playKarateSfx('score_down');
+}
+
 function punch() {
   if (!running) return;
   const beat = songBeat();
   if (beat < 0) return;
   const candidate = active.find((item) => item.state === 'flying' && Math.abs(item.hitBeat - beat) <= HIT_WINDOW);
+  // karate_input_event(): every punch starts Joe's animation (low below flow 3,
+  // high at 3+) and plays the punch whoosh, even when it hits nothing.
   punchSound();
-  lastPunchAt = performance.now();
+  lastPunchAt = audioClock();
   lastPunchHigh = flowLevel > 2;
+  lastPunchOuch = false;
+  const wasHigh = flowLevel > 2;
   if (!candidate && !cheat) {
+    // The ROM only plays the punch animation for an irrelevant input; the Flow
+    // Meter is untouched (gameplay_assess_irrelevant_inputs handles grading).
     combo = 0;
-    flowLevel = 0;
     perfectRun = false;
     judgement = 'MISS';
     // An empty punch is acknowledged only by the small yellow star.
     createImpact('empty');
-    missSound();
     return;
   }
-  const perfect = cheat || Math.abs(candidate.hitBeat - beat) <= PERFECT_WINDOW;
+  const timedPerfect = cheat || Math.abs(candidate.hitBeat - beat) <= PERFECT_WINDOW;
+  // karate_cue_hit(): a rock or bomb punched below flow 3 is the "ouch" hit.
+  // It still counts, but costs a flow level, plays the hard SFX and never
+  // shows the normal punch cels.
+  const ouch = !cheat && Boolean(candidate) && timedPerfect && !wasHigh
+    && (candidate.type === 'rock' || candidate.type === 'bomb');
+  const perfect = timedPerfect && !ouch;
   if (candidate) {
     candidate.state = 'hit';
-    candidate.hitAt = performance.now();
+    candidate.hitAt = audioClock();
+    candidate.ouch = ouch;
     candidate.impactPos = objectPosition(1);
   }
+  lastPunchOuch = ouch;
+  if (ouch || !perfect) karateFlowLevel(flowLevel - 1);   // karate_cue_hit (ouch) / karate_cue_barely
+  else karateFlowLevel(flowLevel + 1);                    // karate_increment_flow()
+  if (!perfect) {
+    // karate_cue_barely(): always shows the high punch cels plus the barely face.
+    lastPunchHigh = true;
+    karateResultUntil.barely = beat + 1.5;
+  }
+  if (perfect && wasHigh && candidate?.type === 'rock') karateResultUntil.smirk = beat + 1.5;
+  if (perfect && wasHigh && candidate?.type === 'bomb') karateResultUntil.happy = beat + 4.5;
   score += perfect ? 100 : 60;
   combo += 1;
-  // The original Flow Meter has six cels: empty plus five fill levels.
-  flowLevel = Math.min(5, flowLevel + 1);
   best = Math.max(best, combo);
   judgement = perfect ? 'PERFECT' : 'OK!';
   if (!perfect) perfectRun = false;
   localStorage.karateBest = best;
-  if (!playOriginalSfx(candidate?.type === 'football' ? 'ball' : candidate?.type ?? 'normal')) hitSound(perfect);
+  hitSound(perfect, candidate?.type ?? 'normal', ouch);
   createImpact(perfect ? 'perfect' : 'normal');
   const flash = $('#upperFlash');
   flash.className = perfect ? 'good' : 'ok';
@@ -796,7 +913,7 @@ function createImpact(kind) {
   // entirely inside the 640 × 480 lower screen.
   const safeRadius = 181;
   touchFx.push({
-    life: 1,
+    startedAt: audioClock(),
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (touch.width - safeRadius * 2),
@@ -818,7 +935,7 @@ function drawTop(beat) {
   else { ctx.fillStyle = '#ff7418'; ctx.fillRect(0, 0, w, h); }
   drawFlowMeter();
   // Native game positions: Joe at (80, 88), hit effect at (158, 54).
-  drawFighter(320, 352, performance.now() - lastPunchAt < 150, beat);
+  drawFighter(320, 352, beat);
   drawItems(beat);
   drawOriginalHitEffects(beat);
   drawCueWarning(beat);
@@ -856,7 +973,7 @@ function drawOriginalHitEffects(beat) {
   for (const item of active) {
     // anim_karate_hit_effect is precisely cel043 for two GBA frames.
     // No scaling, fading, particles, or extra animation is present in ROM.
-    if (item.state !== 'hit' || performance.now() - item.hitAt > 1000 / 30) continue;
+    if (item.state !== 'hit' || (audioClock() - item.hitAt) > 2 / 60) continue;
     ctx.save(); ctx.imageSmoothingEnabled = false;
     // sprite_create places the original effect at (158, 54); cels are
     // exported around their native origin and then mapped at 4×.
@@ -867,18 +984,8 @@ function drawOriginalHitEffects(beat) {
   }
 }
 
-function drawFighter(x, y, punching, beat) {
-  const punchAge = performance.now() - lastPunchAt;
-  // The source uses Low Flow first, only switching to High Flow after three
-  // successful hits.  The two sequences use distinct body/head cels.
-  const punchFrames = lastPunchHigh
-    ? [20, 19, 19, 19, 21, 21, 22, 22, 23, 23, 2, 1, 0]
-    : [15, 15, 15, 15, 16, 16, 17, 17, 18, 18, 2, 1, 0];
-  // anim_karate_joe_beat is cel002 for 3 frames, cel001 for 3 frames,
-  // then cel000 for 24 frames. Its total is exactly one 120 BPM beat.
-  const beatFrame = Math.floor(((beat % 1 + 1) % 1) * 30);
-  const idleCell = beatFrame < 3 ? 2 : beatFrame < 6 ? 1 : 0;
-  const cell = punching ? punchFrames[Math.min(punchFrames.length - 1, Math.floor(punchAge / 16))] : idleCell;
+function drawFighter(x, y, beat) {
+  const cell = karateFighterCell();
   const image = gba[cell]; const scale = 4;
   ctx.save(); ctx.imageSmoothingEnabled = false;
   const meta = karateManifest[cell] ?? karateManifest[0];
@@ -886,6 +993,20 @@ function drawFighter(x, y, punching, beat) {
   const { originX, originY } = meta;
   if (image?.complete) ctx.drawImage(image, x - originX * scale, y - originY * scale, image.naturalWidth * scale, image.naturalHeight * scale);
   ctx.restore();
+}
+
+// Pick Joe's cel the way karate_common_beat_animation() does: a punch animation
+// owns the sprite until its final frames, then the beat animation (with the
+// miss / happy / barely / smirk beat variants) takes over.
+function karateFighterCell() {
+  const punchAge = (audioClock() - lastPunchAt) * 60;
+  const punch = lastPunchOuch ? KARATE_ANIMATIONS.punchOuch
+    : lastPunchHigh ? KARATE_ANIMATIONS.punchHigh
+    : KARATE_ANIMATIONS.punchLow;
+  const punchTotal = punch.reduce((sum, frame) => sum + frame[1], 0);
+  if (punchAge < punchTotal - 4) return animationCell(punch, punchAge);
+  return animationCell(KARATE_ANIMATIONS[karateBeatAnimKind] ?? KARATE_ANIMATIONS.beat,
+    (audioClock() - karateBeatAnimStart) * 60);
 }
 
 function drawItems(beat) {
@@ -973,6 +1094,8 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 
 // The captures show a single ten-star circle for a perfect hit.
 const PERFECT_COLORS = ['#d8ff20', '#ff20d4', '#14f5ff', '#4dff7e', '#b6ff18', '#fff000', '#ff32d7', '#ffd91a', '#2dff8d', '#ff8a25'];
+// Result animations run for ~28 rendered frames in the reference captures.
+const TOUCH_FX_SECONDS = 28 / 60;
 
 function drawTouchScreen() {
   const w = touch.width, h = touch.height, gap = 4, cols = 8, rows = 6;
@@ -1008,8 +1131,12 @@ function drawTouchScreen() {
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (cellW + gap) + 12, top + row * (cellH + gap) + 54);
   touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.textAlign = 'right'; touchCtx.fillText('TOUCH', w - 26, h - 25); touchCtx.textAlign = 'left';
   for (const fx of touchFx) {
-    fx.life -= .036;
-    const progress = 1 - fx.life, cx = fx.x, cy = fx.y;
+    // Result animations last ~28 rendered frames in the reference capture and
+    // must not speed up on a 120 Hz display, so their age comes from the shared
+    // clock instead of one step per animation frame.
+    const life = 1 - (audioClock() - fx.startedAt) / TOUCH_FX_SECONDS;
+    if (life <= 0) continue;
+    const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
       // Unlike the normal yellow ring, perfect stars keep travelling past
       // the checkerboard and finally leave the lower screen.
@@ -1024,25 +1151,25 @@ function drawTouchScreen() {
         // Stars begin small in the centre cluster, growing continuously as
         // the ring expands to its final diameter.
         const scale = .55 + travel * .68;
-        draw3dsStar(touchCtx, x, y, 22.88 * scale, PERFECT_COLORS[i], Math.max(0, fx.life), spin);
+        draw3dsStar(touchCtx, x, y, 22.88 * scale, PERFECT_COLORS[i], Math.max(0, life), spin);
       }
     } else if (fx.kind === 'normal') {
       const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
       for (let i = 0; i < 8; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / 4;
         const x = cx + Math.cos(angle) * 150 * ease, y = cy + Math.sin(angle) * 150 * ease;
-        draw3dsStar(touchCtx, x, y, 8.712 + travel * 13.464, '#ffe229', Math.max(0, fx.life), 0);
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.376 + travel * 3.96, '#ffe229', Math.max(0, fx.life * .9), 0);
+        draw3dsStar(touchCtx, x, y, 8.712 + travel * 13.464, '#ffe229', Math.max(0, life), 0);
+        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.376 + travel * 3.96, '#ffe229', Math.max(0, life * .9), 0);
       }
     } else if (fx.kind === 'empty') {
       // An empty punch produces only the single yellow centre star.
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
-      draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, fx.life), 0);
+      draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, life), 0);
     }
     // Judgement belongs to the touch display, not over the GBA playfield.
     if (fx.label) {
       touchCtx.save();
-      touchCtx.globalAlpha = Math.max(0, fx.life);
+      touchCtx.globalAlpha = Math.max(0, life);
       // 3DS-style result hierarchy: a perfect carries colour, while a miss
       // stays plain white. A normal hit has no text label.
       touchCtx.fillStyle = fx.kind === 'perfect' ? '#ff4cdb' : '#ffffff';
@@ -1053,7 +1180,7 @@ function drawTouchScreen() {
     }
   }
   touchCtx.globalAlpha = 1;
-  touchFx = touchFx.filter((fx) => fx.life > 0);
+  touchFx = touchFx.filter((item) => audioClock() - item.startedAt < TOUCH_FX_SECONDS);
 }
 
 function finish() {
@@ -2165,6 +2292,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         mode, running, beat: songBeat(), lastEvent: tweezers.lastEvent,
         auditPerfect: localAuditPerfect,
         perfectHits: tweezers.perfectHits,
+        decodedSamples: Object.keys(originalSamples).length,
         active: tweezers.active.map(hair => ({ beat: hair.beat, hitBeat: hair.hitBeat, type: hair.type, state: hair.state, pullComplete: Boolean(hair.pullComplete) })),
         scrolling: tweezers.scrollStart >= 0
       };
@@ -2178,7 +2306,26 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
           firstBridges: ported.cues.slice(0, 10).map(cue => ({ spawn: cue.spawn, endOfBridge: cue.endOfBridge, baseY: cue.baseY, spawned: cue.platformSpawned }))
         } : {})
       };
+      if (mode === 'karate') return {
+        mode, running, beat: songBeat(),
+        cueCount: chart.length, warnings: cueWarnings.map(warning => ({ beat: warning.beat, id: warning.id })),
+        tempoSegments, songEnd: SONG_END,
+        bgmNotes: originalBgmEvents.length, bgmSamples: originalBgmEvents.filter(event => Number.isFinite(event.sample)).length,
+        fanNotes: originalFanEvents.length, fanSamples: originalFanEvents.filter(event => Number.isFinite(event.sample)).length,
+        sfxLoaded: Object.keys(karateSfx).length,
+        sfxSamplesReady: Object.values(karateSfx).every(entry => entry.events.every(event => event.wave || originalSamples[event.sample])),
+        decodedSamples: Object.keys(originalSamples).length,
+        flowLevel, beatAnim: karateBeatAnimKind, fighterCell: karateFighterCell(),
+        judgement, activeObjects: active.length,
+        ouchPunch: lastPunchOuch
+      };
       return { mode, running, beat: songBeat() };
+    },
+    // Karate Man and Rhythm Tweezers run on their own beat clock, so the local
+    // audit needs a way to park them on a source beat before injecting input.
+    jumpToBeat: (beat) => {
+      if (!running || portedModes[mode]) return;
+      audioSongStart = audio().currentTime - (mode === 'tweezers' ? beat * tweezersBeatMs : elapsedForBeat(beat)) / 1000;
     },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
     nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,
@@ -2223,13 +2370,28 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
   if (new URLSearchParams(location.search).has('auditSweep')) {
     const sweepStart = () => {
       const requested = new URLSearchParams(location.search).get('auditSweep');
-      const target = ['spaceball','samurai_slice','night_walk','power_calligraphy'].includes(requested) ? requested : 'night_walk';
-      if (mode !== target) startPortedMode(target);
+      const targets = ['karate', 'tweezers', 'spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy'];
+      const target = targets.includes(requested) ? requested : 'night_walk';
+      const label = portedModes[target]?.label ?? (target === 'karate' ? '空手道家' : '节奏脱毛');
+      if (!(mode === target && running)) {
+        if (target === 'karate') start();
+        else if (target === 'tweezers') tweezersStart();
+        else startPortedMode(target);
+      }
       const wait = () => {
-        if (!running || mode !== target || !ported.cues.length) return setTimeout(wait, 50);
-        const result = audit.perfectSweep();
+        // Karate Man and Rhythm Tweezers have no synthetic perfect sweep; the
+        // route just reports their loaded runtime state for a smoke test.
+        if (!running || mode !== target) return setTimeout(wait, 50);
+        if (portedModes[target] && !ported.cues.length) return setTimeout(wait, 50);
+        if (portedModes[target]) {
+          const result = audit.perfectSweep();
+          document.body.dataset.auditSweep = JSON.stringify(result);
+          document.title = `${label} sweep ${result.ok ? 'PASS' : 'FAIL'} (${result.count ?? 0}/${ported.cues.length})`;
+          return;
+        }
+        const result = audit.state();
         document.body.dataset.auditSweep = JSON.stringify(result);
-        document.title = `${portedModes[target].label} sweep ${result.ok ? 'PASS' : 'FAIL'} (${result.count ?? 0}/${ported.cues.length})`;
+        document.title = `${label} state samples ${result.decodedSamples ?? 0} sfx ${result.sfxLoaded ?? 0}`;
       };
       wait();
     };

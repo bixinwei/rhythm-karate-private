@@ -24,7 +24,7 @@ check(game.includes('for (let i = 0; i < 24; i++) resetSpaceballStar(i, initialZ
 check(game.includes('const closeSeq = [[close[1],3],[close[2],3],[close[3],3],[close[4],20]]') && game.includes('const farSeq = [[far[1],3],[far[2],3],[far[3],3],[far[4],20]]'), 'spaceball: batter animation cel durations differ from source');
 check(game.includes('framesBetweenTicks(ported.actionAt, ported.actionAt + 10)') && game.includes('swingFrames < swingDuration'), 'spaceball: swing timer differs from source 0x0A');
 const karateSpawns = [...game.matchAll(/spawnChart\s*=\s*\[/g)].length;
-check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[153,\'rock\']'), 'karate: spawn chart missing or truncated');
+check(karateSpawns === 1 && game.includes('[14,\'pot\']') && game.includes('[154,\'rock\']'), 'karate: spawn chart missing or truncated');
 
 // Every ported game must have a deterministic timeline and at least one music
 // start. This catches incomplete exports before a browser run.
@@ -111,6 +111,38 @@ for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)
     }
   }
 }
+
+// Karate Man's audio is loaded outside portedModes, so it needs its own guard.
+// tools/export_karate_midi.py rewrites the two music tracks *without* their PCM
+// mapping; only tools/export_karate_bgm_samples.py re-attaches it, and losing
+// that step leaves the whole level silent without failing any other check.
+const readKarateAudio = name => {
+  const file = path.join(assets, `${name}.json`);
+  if (!fs.existsSync(file)) return null;
+  const payload = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return { volume: payload.volume, events: payload.events ?? payload };
+};
+for (const name of ['karate_bgm_events', 'karate_fan_events']) {
+  const payload = readKarateAudio(name);
+  check(Boolean(payload), `missing audio asset ${name}.json`);
+  if (!payload) continue;
+  const orphan = payload.events.filter(event => !Number.isFinite(event.sample) && !event.wave).length;
+  check(orphan === 0, `${name}.json: ${orphan} notes lost their original PCM sample (run tools/export_karate_bgm_samples.py)`);
+}
+for (const name of ['fly', 'pot', 'rock', 'ball', 'bulb', 'bomb', 'normal', 'punch', 'barely', 'hard', 'miss_voice', 'score_up', 'score_down']) {
+  const payload = readKarateAudio(`karate_${name}_events`);
+  check(Boolean(payload), `missing Karate SFX asset karate_${name}_events.json (run tools/export_game_audio.py)`);
+  if (!payload) continue;
+  check(Number.isFinite(payload.volume), `karate_${name}_events.json: SongHeader volume missing`);
+  for (const event of payload.events) {
+    check(Number.isFinite(event.sample) || event.wave, `karate_${name}_events.json: note without sample/wave`);
+    if (Number.isFinite(event.sample)) check(fs.existsSync(path.join(assets, 'samples', `sample_${String(event.sample).padStart(3, '0')}.wav`)), `missing PCM sample ${event.sample} for karate_${name}_events.json`);
+  }
+}
+// The playing code must reference only assets that exist: no leftover
+// boxing_* names and no hand-maintained program -> sample table.
+check(!game.includes('boxing_'), 'game.js still references the superseded boxing_* effect assets');
+check(!game.includes('karateSfxSamples'), 'game.js still resolves Karate SFX through a hand-maintained sample table');
 
 if (failures.length) {
   console.error(`Porting audit failed (${failures.length}):`);
