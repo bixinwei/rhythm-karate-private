@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 UP = ROOT / 'reference' / 'rhythmtengoku-upstream'
 OUT = ROOT / 'assets' / 'gba'
+# midi_psg_noise_freq_table (data/lib_midi_data.c), loaded by main().
+NOISE_TABLE = []
 SONGS = {
     'spaceball_bgm_events': ('s_shibafu1_bgm.mid', 20, 75),
     'samurai_bgm1_events': ('s_iai_bgm1.mid', 2, 100),
@@ -130,6 +132,34 @@ def all_banks():
         banks[int(n)]=vals
     return banks
 
+def noise_freq_table():
+    """midi_psg_noise_freq_table: SOUND4CNT_L value per note number 21..80."""
+    text = (UP / 'data' / 'lib_midi_data.c').read_text()
+    body = re.search(r'midi_psg_noise_freq_table\[\]\s*=\s*\{(.*?)\};', text, re.S).group(1)
+    return [int(value, 16) for value in re.findall(r'0x([0-9A-Fa-f]{2})', body)]
+
+
+def apply_psg(event, instrument, note):
+    """Mirror midi_psg_update_id(): the PSG channel decides how a note is voiced."""
+    channel = instrument.get('channel')
+    if channel == 'PSG_NOISE_CHANNEL':
+        # soundChannel->frequency = key for the noise channel, then the table is
+        # indexed with it clamped to 21..80; PSG_NOISE_COUNTER_7 sets bit 3.
+        index = max(0, min(len(NOISE_TABLE) - 1, max(21, min(80, note)) - 21))
+        event['wave'] = 'noise'
+        event['noiseRegister'] = NOISE_TABLE[index]
+        event['noiseShort'] = instrument.get('noise') == 'PSG_NOISE_COUNTER_7'
+    else:
+        # Only the two pulse channels (and the unused wave channel) remain.
+        # PSG_TONE_DUTY_12/25/50/75 -> the GBA duty selector 0..3; Web Audio's
+        # square oscillator is exactly the 50% entry the ROM uses.
+        event['wave'] = 'square'
+        duty = re.search(r'DUTY_(\d+)', instrument.get('tone') or '')
+        if duty:
+            event['duty'] = {12: 0, 25: 1, 50: 2, 75: 3}.get(int(duty.group(1)))
+    event.update({key: value for key, value in instrument.items() if key.startswith('adsr')})
+
+
 def pcm_map():
     result={}; sub={}; psgs={}
     for file in (UP/'audio'/'instruments').glob('instruments_bank*.inc.c'):
@@ -143,12 +173,19 @@ def pcm_map():
             ) if (match:=re.search(rf'ADSR {label}\s+\*/\s*0x([0-9A-Fa-f]+)',body))}
             if sample:
                 result[int(ident)]={'sample':int(sample.group(1)), 'fixed':'INSTRUMENT_PCM_FIXED' in body, 'key':int(key.group(1),16) if key else 60, **adsr}
-        for ident,body in re.findall(r'struct InstrumentPSG instrument_psg_(\d+)\s*=\s*\{(.*?)\n\};',text,re.S):
-            adsr={name:int(match.group(1),16) for name,label in (
-                ('adsrInit','Init'),('adsrSustain','Sus'),('adsrAttack','Atk'),
-                ('adsrDecay','Dec'),('adsrFade','Fade'),('adsrRelease','Rel')
-            ) if (match:=re.search(rf'ADSR {label}\s+\*/\s*0x([0-9A-Fa-f]+)',body))}
-            psgs[int(ident)] = adsr
+        for ident, body in re.findall(r'struct InstrumentPSG instrument_psg_(\d+)\s*=\s*\{(.*?)\n\};', text, re.S):
+            adsr = {name: int(match.group(1), 16) for name, label in (
+                ('adsrInit', 'Init'), ('adsrSustain', 'Sus'), ('adsrAttack', 'Atk'),
+                ('adsrDecay', 'Dec'), ('adsrFade', 'Fade'), ('adsrRelease', 'Rel')
+            ) if (match := re.search(rf'ADSR {label}\s+\*/\s*0x([0-9A-Fa-f]+)', body))}
+            def field(label):
+                match = re.search(rf'/\* {label}\s+\*/\s*([^,\n]+)', body)
+                return match.group(1).strip() if match else None
+            # The PSG channel type, pulse duty and noise counter mode decide how
+            # the note is voiced; keep the ROM values instead of assuming square.
+            psgs[int(ident)] = {**adsr, 'channel': field('PSG Chnl'), 'tone': field('PSG Tone'),
+                                'noise': field('PSG Noise'), 'waveTable': field('PSG Wave'),
+                                'length': field('PSG Len')}
         sub.update({int(a):(int(b),int(c)) for a,b,c in re.findall(r'instrument_rhy_(\d+).*?Base Key\s+\*/\s*(\d+).*?inst_bank_(\d+)',text,re.S)})
     return result,sub,psgs
 
@@ -171,6 +208,8 @@ def pitch_number(name):
     note=name[:-1]; return names.index(note)+int(name[-1])*12
 
 def main():
+    global NOISE_TABLE
+    NOISE_TABLE = noise_freq_table()
     headers=(UP/'audio'/'song_headers.inc.c').read_text()
     dynamic={}
     for output, header in SFX.items():
@@ -195,11 +234,11 @@ def main():
                 if 'loop' in meta: event['sampleLoop']=meta['loop']
                 used.add(sample)
             elif instrument is not None and instrument['kind'] == 'psg':
-                event['wave']='square'
-                event.update({key:value for key,value in instrument.items() if key.startswith('adsr')})
+                apply_psg(event, instrument, event['note'])
             else:
                 entry=banks.get(bank,[])[event['program']] if event['program'] < len(banks.get(bank,[])) else None
-                if entry and entry[0] == 'psg': event['wave']='square'
+                if entry and entry[0] == 'psg':
+                    apply_psg(event, psgs.get(entry[1], {}), event['note'])
         payload={'volume':volume,'events':notes}
         if loop_beats:
             payload['loopStartBeats']=loop_start_beats

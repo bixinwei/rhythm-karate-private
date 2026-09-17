@@ -74,7 +74,7 @@ const portTempos = [...section('const tempoSegments = [', 'function elapsedForBe
 const portVolumes = [...section('const karateMusicVolumeEvents = [', 'function karateMusicVolumeAt').matchAll(/\{\s*beat:\s*(\d+),\s*(?:value:\s*(\d+)|rampTo:\s*(\d+),\s*span:\s*(\d+))\s*\}/g)]
   .map(m => m[2] != null ? { beat: Number(m[1]), value: Number(m[2]) } : { beat: Number(m[1]), rampTo: Number(m[3]), span: Number(m[4]) });
 const portSongEnd = Number(/const SONG_END = (\d+)/.exec(game)?.[1]);
-const portFanBeat = Number(/scheduleOriginalMusic\(originalFanEvents,\s*(\d+)\)/.exec(game)?.[1]);
+const portFanBeat = Number(/scheduleKarateMusicTrack\('fan',\s*originalFanEvents,\s*(\d+)/.exec(game)?.[1]);
 const portAnimations = {};
 for (const match of section('const KARATE_ANIMATIONS = {', '};').matchAll(/(\w+):\s*(\[\[[\s\S]*?\]\])/g)) {
   portAnimations[match[1]] = [...match[2].matchAll(/\[(\d+),\s*(\d+)\]/g)].map(frame => [Number(frame[1]), Number(frame[2])]);
@@ -155,6 +155,49 @@ for (const name of ['karate_bgm_events', 'karate_fan_events']) {
   const orphan = payload?.events.filter(event => !Number.isFinite(event.sample) && !event.wave).length ?? 0;
   check(orphan === 0, `karate: ${orphan} notes in ${name}.json have no PCM sample - run tools/export_karate_bgm_samples.py`);
 }
+
+// --- PSG noise voices must keep the ROM's SOUND4CNT_L register --------------
+const noiseTable = (() => {
+  const body = /midi_psg_noise_freq_table\[\]\s*=\s*\{([\s\S]*?)\};/.exec(
+    fs.readFileSync(path.join(upstream, 'data/lib_midi_data.c'), 'utf8'))?.[1] ?? '';
+  return [...body.matchAll(/0x([0-9A-Fa-f]{2})/g)].map(match => Number.parseInt(match[1], 16));
+})();
+check(noiseTable.length === 60, `karate: expected 60 entries in midi_psg_noise_freq_table, found ${noiseTable.length}`);
+const bomb = readEvents('karate_bomb_events');
+const noiseNotes = bomb?.events.filter(event => event.wave === 'noise') ?? [];
+check(noiseNotes.length === 1, `karate: the bomb's PSG noise program should export exactly one noise voice, found ${noiseNotes.length}`);
+for (const note of noiseNotes) {
+  // midi_psg_update_id(): noise = clamp(key, 21, 80); register = table[key - 21].
+  const expected = noiseTable[Math.max(21, Math.min(80, note.note)) - 21];
+  check(note.noiseRegister === expected, `karate: bomb noise register ${note.noiseRegister} != table[${note.note}] = ${expected}`);
+}
+check(!bomb?.events.some(event => event.wave === 'square' && event.program === 45),
+  'karate: the bomb PSG noise program is still rendered as a square wave');
+check(/function gbaNoiseBuffer\(/.test(game) && /GBA_NOISE_DIVIDERS/.test(game) && /524288 \/ divider/.test(game),
+  'karate: the GBA noise channel LFSR is missing from the browser voice path');
+
+// --- Background palette row 4 follows karate_flow_palette_low/high ----------
+const flowLow = /u8 karate_flow_palette_low\[\]\s*=\s*\{([^}]*)\}/.exec(engine)?.[1].split(',').map(part => Number(part.trim())) ?? [];
+const flowHigh = /u8 karate_flow_palette_high\[\]\s*=\s*\{([^}]*)\}/.exec(engine)?.[1].split(',').map(part => Number(part.trim())) ?? [];
+check(flowLow[0] === 5, `karate: karate_flow_palette_low starts with ${flowLow[0]}, expected palette 5`);
+check(flowHigh[0] === 6 && flowHigh[1] === 7, `karate: karate_flow_palette_high is ${show(flowHigh.slice(0, 3))}, expected 6, 7, -1`);
+check(/BG_PALETTE_BUFFER\(p\)\s+\(\(u16 \*\)D_03004b10\.bgPalette\)\s+\+ \(\(u32\)\(\(p\) \* 16\)\)/.test(fs.readFileSync(path.join(upstream, 'include/graphics.h'), 'utf8')),
+  'karate: BG_PALETTE_BUFFER no longer selects a 16-colour palette row');
+for (const name of ['low', 'high_a', 'high_b']) {
+  check(fs.existsSync(path.join(assets, `karate_man_stage_${name}.png`)), `karate: missing assets/gba/karate_man_stage_${name}.png (run tools/export_karate_frames.py)`);
+}
+check(!fs.existsSync(path.join(assets, 'karate_man_stage.png')),
+  'karate: karate_man_stage.png renders palette 4, which karate_init_gfx3() overwrites before the first frame');
+check(game.includes('karateStages[karateStagePalette]') && game.includes("karateStagePalette = karateStagePalette === 'high_a' ? 'high_b' : 'high_a'"),
+  'karate: the stage does not alternate the High Flow palettes every beat_anim');
+check(game.includes("if (flowLevel <= 2) { karateStagePalette = 'low'; return; }"),
+  'karate: the stage does not fall back to the Low Flow palette');
+
+// --- Karate music must not be inserted as one whole-song batch --------------
+check(game.includes('KARATE_AUDIO_LOOKAHEAD_BEATS') && game.includes('function scheduleKarateMusic()') && game.includes('startKarateAudioScheduler(run)'),
+  'karate: music is no longer scheduled through the audio-clock look-ahead queue');
+check(!game.includes('function scheduleOriginalMusic(') && !game.includes('scheduleOriginalBgm('),
+  'karate: the whole song is still handed to Web Audio in one call');
 
 if (failures.length) {
   console.error(`Karate script audit failed (${failures.length}):`);

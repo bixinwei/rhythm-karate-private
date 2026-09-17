@@ -104,6 +104,12 @@ for (const match of game.matchAll(/music:\s*\[((?:.|\n)*?)\],\s*sfx:\s*\{([^}]*)
       const events = audio.events ?? audio;
       check(Array.isArray(events) && events.length > 0, `empty audio event list ${name}.json`);
       check(Array.isArray(events) && events.every(event => Number.isFinite(event.sample) || event.wave), `audio event without sample/wave ${name}.json`);
+      // PSG voices must carry the ROM's channel data: the noise channel needs its
+      // SOUND4CNT_L register, everything else is a pulse channel.
+      for (const event of (Array.isArray(events) ? events : [])) {
+        if (event.wave === 'noise') check(Number.isFinite(event.noiseRegister), `${name}.json: noise voice without a SOUND4CNT_L register`);
+        else if (event.wave) check(event.wave === 'square', `${name}.json: unexpected PSG wave type ${event.wave}`);
+      }
       if (Array.isArray(events)) for (const event of events) if (Number.isFinite(event.sample)) {
         const sample = path.join(assets, 'samples', `sample_${String(event.sample).padStart(3, '0')}.wav`);
         check(fs.existsSync(sample), `missing PCM sample ${event.sample} referenced by ${name}.json`);

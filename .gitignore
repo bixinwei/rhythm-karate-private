@@ -6,3 +6,5 @@ reference/
 .edge-preview*/
 .edge-capture*/
 tools/__pycache__/
+# Debug screenshots kept out of the repository root.
+captures/

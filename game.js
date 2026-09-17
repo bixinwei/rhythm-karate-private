@@ -10,7 +10,6 @@ let mode = 'karate';
 const localAuditPerfect = (location.hostname === '127.0.0.1' || location.hostname === 'localhost')
   && new URLSearchParams(location.search).has('auditPerfect');
 
-const sprites = {};
 // Local exports composed from the GBA decomp's original 4bpp tiles, palette
 // banks and animation cells.  These replace the temporary hand-drawn sheet.
 const gba = {};
@@ -32,8 +31,24 @@ for (const cell of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
   image.src = `assets/gba/cel${String(cell).padStart(3, '0')}.png?v=obj2d`;
   gba[cell] = image;
 }
-sprites.stage = new Image();
-sprites.stage.src = 'assets/gba/karate_man_stage.png?v=stage3';
+// The stage tilemap only uses BG palette row 4, and karate_init_flow() points
+// bgPalIndex at karate_flow_palette_low before karate_init_gfx3() copies
+// palette 5 into that row - so the authored palette 4 of the tilemap is never
+// displayed.  Low Flow keeps palette 5, High Flow alternates palettes 6 and 7
+// on every beat_anim (the background stripe shimmer).
+const karateStages = {};
+for (const name of ['low', 'high_a', 'high_b']) {
+  const image = new Image();
+  image.src = `assets/gba/karate_man_stage_${name}.png?v=flow1`;
+  karateStages[name] = image;
+}
+let karateStagePalette = 'low';
+
+function karateUpdateBgPalette() {
+  // karate_update_bg_palette(): BG palette row 4 <- BG_PALETTE_BUFFER(5|6|7).
+  if (flowLevel <= 2) { karateStagePalette = 'low'; return; }
+  karateStagePalette = karateStagePalette === 'high_a' ? 'high_b' : 'high_a';
+}
 
 const BPM = 120;
 const BEAT_MS = 60000 / BPM;
@@ -269,47 +284,83 @@ function loadOriginalSamples(neededNumbers) {
 function playMusic(wholeBeat) {
   if (wholeBeat < 0 || wholeBeat === lastMusicBeat) return;
   lastMusicBeat = wholeBeat;
-  // The complete original note timeline is scheduled at start. Keep this only
-  // as a safe fallback if its local JSON has not loaded yet.
+  // Notes are scheduled by the Karate look-ahead queue. Keep this only as a
+  // safe fallback if the local JSON has not loaded yet.
   if (!originalBgmEvents.length) tone(wholeBeat % 4 === 0 ? 92 : 116, .1, 'triangle', .035);
 }
 
-function scheduleOriginalMusic(events, startBeat = 0) {
-  if (!events.length) return;
+// Karate Man's two music tracks are inserted through a short look-ahead queue on
+// the shared audio clock.  Handing the complete song (1487 notes) to Web Audio
+// in one call stalls Safari's renderer, which is why Rhythm Tweezers already
+// uses this shape; the cursor also guarantees every note is placed exactly once.
+const KARATE_AUDIO_LOOKAHEAD_BEATS = 3;
+let karateMusicScheduler = 0;
+const karateMusicCursor = { bgm: 0, fan: 0 };
+
+function scheduleKarateNote(event, absoluteBeat) {
+  const sample = originalSamples[event.sample];
+  if (!sample) return;
   const ac = audio();
-  for (const event of events) {
-    const absoluteBeat = startBeat + event.beat;
-    if (absoluteBeat >= SONG_END) continue;
-    const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
-    const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
-    const percussion = event.program === 127 || event.program === 119 || event.program === 41;
-    // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
-    // is Karate Man's background vocal/call-and-response track.  Keep only
-    // this track in the foreground; all prior guessed sample boosts are gone.
-    // SongHeader 90 x the script's own set_music_volume/mod_music_volume.
-    const volume = GBA_MIX_SCALE * (event.velocity / 127) * (90 / 256) * (karateMusicVolumeAt(absoluteBeat) / 256);
-    const sample = originalSamples[event.sample];
-    const when = Math.max(ac.currentTime + .01, audioSongStart + elapsedForBeat(absoluteBeat) / 1000);
-    if (sample) {
-      const source = ac.createBufferSource(); const gain = ac.createGain();
-      source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
-      gain.gain.value = volume;
-      source.connect(gain).connect(ac.destination);
-      scheduledMusicNodes.push(source);
-      // The old universal 0.48 s cap was cutting the original call-and-
-      // response samples far before their MIDI note-off (many vocals sustain
-      // for 1.5–3.75 beats).  Respect the score duration; the buffer still
-      // naturally ends at its own sample boundary.
-      source.start(when); source.stop(when + duration);
-    }
-  }
+  const endBeat = Math.min(SONG_END, absoluteBeat + event.length);
+  const duration = Math.max(.025, (elapsedForBeat(endBeat) - elapsedForBeat(absoluteBeat)) / 1000);
+  // Confirmed from the isolated original-MIDI audition: Bank 125, channel 0
+  // is Karate Man's background vocal/call-and-response track.  Keep only
+  // this track in the foreground; all prior guessed sample boosts are gone.
+  // SongHeader 90 x the script's own set_music_volume/mod_music_volume.
+  const level = GBA_MIX_SCALE * (event.velocity / 127) * (90 / 256) * (karateMusicVolumeAt(absoluteBeat) / 256);
+  const when = audioSongStart + elapsedForBeat(absoluteBeat) / 1000;
+  const source = ac.createBufferSource(); const gain = ac.createGain();
+  source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
+  gain.gain.value = level;
+  source.connect(gain).connect(ac.destination);
+  scheduledMusicNodes.push(source);
+  // Respect the score duration instead of the old universal 0.48 s cap, which
+  // cut the call-and-response samples short (many sustain 1.5-3.75 beats).  The
+  // buffer still ends at its own sample boundary.
+  source.start(when); source.stop(when + duration);
+  source.onended = () => {
+    source.disconnect(); gain.disconnect();
+    const index = scheduledMusicNodes.indexOf(source); if (index >= 0) scheduledMusicNodes.splice(index, 1);
+  };
 }
 
-function scheduleOriginalBgm() {
-  scheduleOriginalMusic(originalBgmEvents);
-  // The original script switches to s_karate_fan exactly after the `4` cue:
+function scheduleKarateMusicTrack(track, events, startBeat, nowBeat, horizonBeat) {
+  let cursor = karateMusicCursor[track];
+  while (cursor < events.length) {
+    const event = events[cursor];
+    const absoluteBeat = startBeat + event.beat;
+    if (absoluteBeat > horizonBeat) break;
+    cursor += 1;
+    // Advance past anything the render loop missed (backgrounded tab) rather
+    // than dumping a burst of late notes into the mix.
+    if (absoluteBeat >= SONG_END || absoluteBeat < nowBeat) continue;
+    scheduleKarateNote(event, absoluteBeat);
+  }
+  karateMusicCursor[track] = cursor;
+}
+
+function scheduleKarateMusic() {
+  if (!audioCtx || !audioSongStart) return;
+  const nowBeat = beatAtElapsed((audio().currentTime - audioSongStart) * 1000);
+  const horizonBeat = nowBeat + KARATE_AUDIO_LOOKAHEAD_BEATS;
+  scheduleKarateMusicTrack('bgm', originalBgmEvents, 0, nowBeat, horizonBeat);
   // set_music_volume 150 / play_music s_karate_fan_seqData at tick 3648 (beat 152).
-  scheduleOriginalMusic(originalFanEvents, 152);
+  scheduleKarateMusicTrack('fan', originalFanEvents, 152, nowBeat, horizonBeat);
+}
+
+function startKarateAudioScheduler(run) {
+  stopKarateAudioScheduler();
+  const queue = () => {
+    if (run !== songRun || !running || mode !== 'karate') return;
+    scheduleKarateMusic();
+  };
+  queue();
+  karateMusicScheduler = setInterval(queue, 40);
+}
+
+function stopKarateAudioScheduler() {
+  if (karateMusicScheduler) clearInterval(karateMusicScheduler);
+  karateMusicScheduler = 0;
 }
 
 function scheduleTweezersMusic() {
@@ -448,12 +499,15 @@ function start() {
   karateResultUntil.miss = karateResultUntil.barely = karateResultUntil.smirk = karateResultUntil.happy = -Infinity;
   karateBeatAnimKind = 'stand';
   karateBeatAnimStart = -Infinity;
+  karateStagePalette = 'low';
+  karateMusicCursor.bgm = 0;
+  karateMusicCursor.fan = 0;
   Promise.all([bgmLoadPromise, fanLoadPromise, karateManifestLoadPromise, karateSfxLoadPromise]).then(() => loadOriginalSamples()).then(() => {
     if (run !== songRun) return;
     startAt = performance.now() + elapsedForBeat(3);
     audioSongStart = audio().currentTime + elapsedForBeat(3) / 1000;
     running = true;
-    scheduleOriginalBgm();
+    startKarateAudioScheduler(run);
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(loop);
   });
@@ -463,6 +517,7 @@ function quit() {
   running = false;
   songRun += 1;
   stopTweezersAudioScheduler();
+  stopKarateAudioScheduler();
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} }
   scheduledMusicNodes = [];
   cancelAnimationFrame(frame);
@@ -518,6 +573,7 @@ function tweezersStart() {
   const audioContextReady = context.state === 'suspended' ? context.resume() : Promise.resolve();
   mode = 'tweezers'; running = false; songRun += 1; const run = songRun;
   stopTweezersAudioScheduler();
+  stopKarateAudioScheduler();
   // Falling-hair rotation is driven by the GBA engine RNG, so reset the
   // standalone level to a deterministic stream for reproducible replays.
   tweezersRandomState = 0;
@@ -833,19 +889,20 @@ function karateBeatAnimation(beat) {
     : 'beat';
   karateBeatAnimStart = audioClock();
   if (karateBeatAnimKind === 'miss') playKarateSfx('miss_voice');
-  // karate_increment_flow()/karate_decrement_flow() also swap the background
-  // palette at levels 3 and 2; the port keeps the standard palette until the
-  // serious-mode and flow-palette tilemaps are exported.
+  // karate_common_beat_animation() also advances the background palette.
+  karateUpdateBgPalette();
 }
 
-// karate_increment_flow() / karate_decrement_flow(): six meter cels, the
-// ROM plays a short jingle when the meter enters High (3) or Low (2) Flow.
+// karate_increment_flow() / karate_decrement_flow(): six meter cels, a short
+// jingle on entering High (3) or Low (2) Flow, and an immediate palette swap
+// with bg reset to 0 before the next beat_anim continues the alternation.
 function karateFlowLevel(next) {
   const value = Math.max(0, Math.min(5, next));
   if (value === flowLevel) return;
   flowLevel = value;
-  if (value === 3) playKarateSfx('score_up');
-  if (value === 2) playKarateSfx('score_down');
+  if (value === 3) { karateStagePalette = 'high_a'; playKarateSfx('score_up'); }
+  else if (value === 2) { karateStagePalette = 'low'; playKarateSfx('score_down'); }
+  else if (value < 2) karateStagePalette = 'low';
 }
 
 function punch() {
@@ -931,7 +988,8 @@ function drawTop(beat) {
   const h = stage.height;
   ctx.clearRect(0, 0, w, h);
   ctx.imageSmoothingEnabled = false;
-  if (sprites.stage.complete) ctx.drawImage(sprites.stage, 0, 0, w, h);
+  const stageImage = karateStages[karateStagePalette];
+  if (stageImage?.complete) ctx.drawImage(stageImage, 0, 0, w, h);
   else { ctx.fillStyle = '#ff7418'; ctx.fillRect(0, 0, w, h); }
   drawFlowMeter();
   // Native game positions: Joe at (80, 88), hit effect at (158, 54).
@@ -1186,6 +1244,7 @@ function drawTouchScreen() {
 function finish() {
   running = false;
   stopTweezersAudioScheduler();
+  stopKarateAudioScheduler();
   auditStatePublisher();
   setTimeout(quit, 120);
 }
@@ -1466,12 +1525,51 @@ function queuePortedAudio(item) {
   while (low < high) { const mid = (low + high) >> 1; if (ported.audioQueue[mid].when <= item.when) low = mid + 1; else high = mid; }
   ported.audioQueue.splice(low,0,item); pumpPortedAudio();
 }
+// GBA noise channel (midi_psg_update_id case PSG_NOISE_CHANNEL): the note
+// number indexes midi_psg_noise_freq_table, whose value is a SOUND4CNT_L
+// register - bits 0-2 select the divider, bit 3 the short 7-bit LFSR, bits 4-7
+// the shift clock.  The channel is a 1-bit LFSR clocked at
+// 524288 / divider / 2^(shift+1) Hz, so synthesise that sequence directly
+// instead of rendering the ROM's own noise voice as a square wave.
+const GBA_NOISE_DIVIDERS = [.5, 1, 2, 3, 4, 5, 6, 7];
+const gbaNoiseBuffers = new Map();
+
+function gbaNoiseBuffer(ac, register, short, seconds) {
+  const divider = GBA_NOISE_DIVIDERS[register & 7] ?? 1;
+  const shift = (register >> 4) & 0xF;
+  const clock = 524288 / divider / Math.pow(2, shift + 1);
+  const length = Math.max(.25, Math.ceil(seconds / .25) * .25);
+  const key = `${register}:${short}:${length}:${ac.sampleRate}`;
+  const cached = gbaNoiseBuffers.get(key);
+  if (cached) return cached;
+  const buffer = ac.createBuffer(1, Math.max(1, Math.ceil(length * ac.sampleRate)), ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  let lfsr = 0x7fff, level = 1, phase = 0;
+  for (let i = 0; i < data.length; i++) {
+    phase += clock / ac.sampleRate;
+    while (phase >= 1) {
+      phase -= 1;
+      const bit = (lfsr ^ (lfsr >> 1)) & 1;
+      lfsr = (lfsr >> 1) | (bit << 14);
+      if (short) lfsr = (lfsr & ~0x40) | (bit << 6);
+      level = (lfsr & 1) ? 1 : -1;
+    }
+    data[i] = level;
+  }
+  gbaNoiseBuffers.set(key, buffer);
+  return buffer;
+}
+
 function startPortedAudioItem(item) {
   const ac = audio(), event = item.note ?? item.event;
   const when = Math.max(ac.currentTime + .005,item.when);
   const duration = Math.max(.02,item.duration - Math.max(0,when-item.when));
-  const source = event.wave ? ac.createOscillator() : ac.createBufferSource();
-  if (event.wave) {
+  const source = event.wave === 'noise' ? ac.createBufferSource() : event.wave ? ac.createOscillator() : ac.createBufferSource();
+  if (event.wave === 'noise') {
+    // The LFSR rate comes from the register, so the buffer is played at pitch.
+    source.buffer = gbaNoiseBuffer(ac, event.noiseRegister ?? 0x44, Boolean(event.noiseShort), duration + .05);
+  }
+  else if (event.wave) {
     const bend=((event.pitchWheel??0x2000)-0x2000)/0x2000*(event.pitchRange??2);
     source.type=event.wave; source.frequency.value=440*Math.pow(2,(event.note-69+bend+(item.pitchSemitones??0))/12)*(item.rateScale??1);
   }
@@ -1572,6 +1670,7 @@ function schedulePortedTimelineSfx() {
 }
 function startPortedMode(id) {
   mode = id; running = false; const run = ++songRun; audio();
+  stopKarateAudioScheduler();
   for (const node of scheduledMusicNodes) { try { node.stop(); } catch {} } scheduledMusicNodes = [];
   menu.classList.add('hidden'); game.classList.remove('hidden'); game.classList.remove('tweezers-mode'); touchFx = [];
   loadPortedMode(id).then(async data => {
@@ -2317,7 +2416,12 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         decodedSamples: Object.keys(originalSamples).length,
         flowLevel, beatAnim: karateBeatAnimKind, fighterCell: karateFighterCell(),
         judgement, activeObjects: active.length,
-        ouchPunch: lastPunchOuch
+        ouchPunch: lastPunchOuch,
+        stagePalette: karateStagePalette,
+        musicCursor: { ...karateMusicCursor },
+        scheduledMusicNodes: scheduledMusicNodes.length,
+        updatedBeat: lastBeat,
+        noiseBuffers: gbaNoiseBuffers.size
       };
       return { mode, running, beat: songBeat() };
     },
@@ -2326,6 +2430,21 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     jumpToBeat: (beat) => {
       if (!running || portedModes[mode]) return;
       audioSongStart = audio().currentTime - (mode === 'tweezers' ? beat * tweezersBeatMs : elapsedForBeat(beat)) / 1000;
+    },
+    // Local check that the GBA noise channel really is an LFSR at the register's
+    // clock rate: it reports the measured level changes per second.
+    noiseProbe: (register = 0x55, short = false, seconds = 0.5) => {
+      const ac = audio();
+      const buffer = gbaNoiseBuffer(ac, register, short, seconds);
+      const data = buffer.getChannelData(0);
+      let changes = 0, min = 1, max = -1;
+      for (let i = 0; i < data.length; i++) {
+        min = Math.min(min, data[i]); max = Math.max(max, data[i]);
+        if (i && data[i] !== data[i - 1]) changes++;
+      }
+      const divider = GBA_NOISE_DIVIDERS[register & 7] ?? 1;
+      const clock = 524288 / divider / Math.pow(2, ((register >> 4) & 0xF) + 1);
+      return { frames: data.length, sampleRate: ac.sampleRate, min, max, changesPerSecond: changes / (data.length / ac.sampleRate), clock };
     },
     jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
     nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,

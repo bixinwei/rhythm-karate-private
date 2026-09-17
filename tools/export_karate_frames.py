@@ -93,6 +93,17 @@ def compose(entries, raw, palette_banks):
     return image, {"originX": -bounds[0] + pad, "originY": -bounds[1] + pad}
 
 
+def render_background(bg_raw, bg_map, palette_rows):
+    background = Image.new("RGBA", (256, 256))
+    for index in range(32 * 32):
+        entry = int.from_bytes(bg_map[index * 2:index * 2 + 2], "little")
+        tile = tile_image(bg_raw, entry & 0x3FF, palette_rows[(entry >> 12) & 0xF])
+        if entry & 0x400: tile = tile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        if entry & 0x800: tile = tile.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        background.alpha_composite(tile, ((index % 32) * 8, (index // 32) * 8))
+    return background
+
+
 def main():
     raw = (SRC / "karate_man_obj.4bpp").read_bytes()
     colours = palettes()
@@ -111,15 +122,17 @@ def main():
     # point (158,54) are expressed in this same screen coordinate system.
     bg_raw = (SRC / "karate_man_bg_tiles.4bpp").read_bytes()
     bg_map = (SRC / "karate_man_bg_map.tilemap").read_bytes()
-    background = Image.new("RGBA", (256, 256))
-    for index in range(32 * 32):
-        entry = int.from_bytes(bg_map[index * 2:index * 2 + 2], "little")
-        tile = tile_image(bg_raw, entry & 0x3FF, banks[(entry >> 12) & 0xF])
-        if entry & 0x400: tile = tile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-        if entry & 0x800: tile = tile.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
-        background.alpha_composite(tile, ((index % 32) * 8, (index // 32) * 8))
-    background.crop((0, 0, 240, 160)).save(OUT / "karate_man_stage.png")
-    print(f"Exported {len(manifest)} original Karate Man animation cells and stage to {OUT}")
+    # karate_init_flow() points bgPalIndex at karate_flow_palette_low and
+    # karate_init_gfx3() copies palette 5 into BG palette row 4 before the first
+    # frame, so the tilemap's authored palette 4 is never displayed.  Low Flow
+    # keeps palette 5; High Flow alternates palettes 6 and 7 on every
+    # beat_anim.  Export exactly those three variants.
+    for name, palette_id in (("low", 5), ("high_a", 6), ("high_b", 7)):
+        rows = list(banks)
+        rows[4] = colours[palette_id * 16:(palette_id + 1) * 16]
+        viewport = render_background(bg_raw, bg_map, rows).crop((0, 0, 240, 160))
+        viewport.save(OUT / f"karate_man_stage_{name}.png")
+    print(f"Exported {len(manifest)} original Karate Man animation cells and 3 stage palettes to {OUT}")
 
 
 if __name__ == "__main__":
