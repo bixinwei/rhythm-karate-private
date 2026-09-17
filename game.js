@@ -1508,7 +1508,7 @@ function updateSpaceballStars(zoom, frameIndex = null) {
     }
   }
 }
-const PORTED_ASSET_REV = 'gba-ports-13';
+const PORTED_ASSET_REV = 'gba-ports-reskin-14';
 const PORTED_AUDIO_LOOKAHEAD = 5;
 function portedAssetUrl(path) { return `${path}?v=${PORTED_ASSET_REV}`; }
 
@@ -1700,11 +1700,29 @@ function portedScreenFade(tick) {
   if (!fade) return null;
   return { alpha: Math.max(0, Math.min(1, (tick - fade.tick) / fade.span)), colour: fade.colour };
 }
-function configurePortedSample(source, event, pitchSemitones = 0, rateScale = 1) {
+// 派生音效 (derivative audio): the published build ships Spaceball's PCM voices
+// transposed and re-filtered instead of the retail recording's exact timbre.
+// Only playbackRate and one filter pair change, so every note still starts on its
+// ROM tick and the judgement windows keep the source values.
+const AUDIO_RESKIN = { spaceball: { semitones: 3, highpass: 190, shelf: 2800, shelfGain: -5 } };
+const reskinChains = {};
+function reskinProfile() { return AUDIO_RESKIN[mode] ?? null; }
+function reskinRate() { const profile = reskinProfile(); return profile ? Math.pow(2, profile.semitones / 12) : 1; }
+function reskinChain(node) {
+  const profile = reskinProfile(); if (!profile) return node;
+  let chain = reskinChains[mode];
+  if (!chain) {
+    const ac = audio();
+    const high = ac.createBiquadFilter(); high.type = 'highpass'; high.frequency.value = profile.highpass; high.Q.value = .7;
+    const shelf = ac.createBiquadFilter(); shelf.type = 'highshelf'; shelf.frequency.value = profile.shelf; shelf.gain.value = profile.shelfGain;
+    high.connect(shelf); chain = { input: high, output: shelf }; reskinChains[mode] = chain;
+  }
+  node.connect(chain.input); return chain.output;
+}function configurePortedSample(source, event, pitchSemitones = 0, rateScale = 1) {
   const note = event.playNote ?? event.note;
   const baseNote = event.baseNote ?? 60;
   const bend = ((event.pitchWheel ?? 0x2000) - 0x2000) / 0x2000 * (event.pitchRange ?? 2);
-  source.playbackRate.value = (event.fixed ? 1 : Math.pow(2,(note-baseNote+bend)/12)) * Math.pow(2,pitchSemitones/12) * rateScale;
+  source.playbackRate.value = (event.fixed ? 1 : Math.pow(2,(note-baseNote+bend)/12)) * Math.pow(2,pitchSemitones/12) * rateScale * reskinRate();
   if (event.sampleLoop?.length === 2 && source.buffer) {
     const [start,end] = event.sampleLoop;
     if (end > start && end <= source.buffer.length) {
@@ -1742,7 +1760,7 @@ function connectPortedVoice(source, event, level, when, duration, pitchSemitones
     }
   }
   source.connect(envelope).connect(channel);
-  if (panner) channel.connect(panner).connect(master()); else channel.connect(master());
+  if (panner) reskinChain(channel.connect(panner)).connect(master()); else reskinChain(channel).connect(master());
   source.start(when); source.stop(when + voiceDuration + .01); scheduledMusicNodes.push(source);
   source.onended = () => {
     source.disconnect(); envelope.disconnect(); channel.disconnect(); if (panner) panner.disconnect();
@@ -1863,7 +1881,7 @@ function startPortedAudioItem(item) {
   }
   else if (event.wave) {
     const bend=((event.pitchWheel??0x2000)-0x2000)/0x2000*(event.pitchRange??2);
-    source.type=event.wave; source.frequency.value=440*Math.pow(2,(event.note-69+bend+(item.pitchSemitones??0))/12)*(item.rateScale??1);
+    source.type=event.wave; source.frequency.value=440*Math.pow(2,(event.note-69+bend+(item.pitchSemitones??0))/12)*(item.rateScale??1)*reskinRate();
   }
   else {
     const sample=originalSamples[event.sample]; if (!sample) throw new Error(`Unloaded original PCM ${event.sample}`);
