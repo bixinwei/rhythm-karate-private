@@ -51,13 +51,18 @@ function karateUpdateBgPalette() {
 }
 
 const BPM = 120;
-const BEAT_MS = 60000 / BPM;
-// GBA mixer values are 0..256 fixed-point. Web Audio needs one neutral
-// calibration factor to map those ratios to a safe browser output level.
-const GBA_MIX_SCALE = 0.48;
-// CueDefinition uses hit ±3 ticks and barely ±5 ticks; a beat is 24 ticks.
-const PERFECT_WINDOW = 3 / 24;
-const HIT_WINDOW = 5 / 24;
+const BEAT_MS = 60000 / BPM;// GBA mixer values are 0..256 fixed-point.  The ROM sums every voice in its
+// scratch domain and midi_directsound_init fills gMidiSampleTable with
+// clamp(scratch >> 7, -128, 127), so one full-volume voice already reaches full
+// scale and loud passages saturate at the DMA write.  Web Audio clamps the
+// final float sum the same way, so the faithful calibration factor is 1: any
+// smaller value is a browser-only attenuation the ROM does not have (0.48 made
+// every voice 6.4 dB quiet).  tools/measure_mix_levels.mjs measures each level's
+// exported bed in these units: at 1.0 the loudest bed peaks at -3.2 dBFS with no
+// sample over full scale, i.e. the same headroom the ROM mixes into.
+const GBA_MIX_SCALE = 1;
+// Cue windows are frame counts, not tick counts (see framesBetweenTicks): every
+// ported CueDefinition uses ±3 frames for a hit and ±5 for a barely.
 const TRAVEL_BEATS = 1;
 // Karate Man is expanded from games/karate_man/karate_man.bs by
 // tools/export_beatscript_timeline.py (main script plus the scene entry's
@@ -172,6 +177,13 @@ function beatAtElapsed(ms) {
   }
   return beat;
 }
+// Karate Man's cue windows are CueDefinition frame counts, not beats: ±3 frames
+// for a hit and ±5 for a barely (see punch()).
+const KARATE_HIT_FRAMES = 5;
+const KARATE_PERFECT_FRAMES = 3;
+function karateFramesBetween(fromBeat, toBeat) {
+  return (elapsedForBeat(toBeat) - elapsedForBeat(fromBeat)) / 1000 * 60;
+}
 
 // The event type is visual only; every object uses a crop from the supplied sheet.
 
@@ -250,6 +262,18 @@ function audio() {
 // smirk and happy cels) is timed on the shared AudioContext clock so a dropped
 // render frame cannot stretch or truncate it.
 function audioClock() { return audioCtx ? audioCtx.currentTime : performance.now() / 1000; }
+
+// The device delays what the player actually hears by its output buffer
+// (AudioContext.outputLatency, ~20-60 ms on iOS).  Judgement, cue lifetime and
+// the visuals must all be derived from that *heard* clock: otherwise an on-beat
+// tap is judged late by exactly that latency - which is most of the ROM's
+// ±5-tick (about ±100 ms at 128 BPM) Night Walk window - and a cue can be
+// retired before the player has heard it.  Scheduling stays on the raw clock.
+function outputLatency() {
+  if (!audioCtx) return 0;
+  const value = audioCtx.outputLatency ?? audioCtx.baseLatency ?? 0;
+  return Number.isFinite(value) ? Math.max(0, Math.min(.25, value)) : 0;
+}
 
 // The ROM's reverb is fed by the whole mix (its DMA buffer holds dry + wet), so
 // every voice goes through one master bus that also drives the reverb worklet.
@@ -602,10 +626,11 @@ function quit() {
 
 function songBeat() {
   // Both games schedule audio on the Web Audio clock. Derive gameplay beat
-  // from that same clock so visuals, object cues and input judgment cannot
-  // drift away from the music over the course of a song.
+  // from the same clock so visuals, object cues and input judgment cannot
+  // drift away from the music over the course of a song - measured from the
+  // moment the player actually hears it (see outputLatency()).
   if (audioCtx && audioSongStart) {
-    const elapsedMs = (audioCtx.currentTime - audioSongStart) * 1000;
+    const elapsedMs = (audioCtx.currentTime - outputLatency() - audioSongStart) * 1000;
     if (mode === 'tweezers') return elapsedMs / tweezersBeatMs;
     return beatAtElapsed(elapsedMs);
   }
@@ -721,11 +746,13 @@ function tweezersUpdate(beat) {
     }
   }
   for (const hair of tweezers.active) {
-    const missWindow = hair.fast ? 6 / 24 : hair.type === 'long' ? 4 / 24 : 5 / 24;
+    // rhythm_tweezers_cue_* Barely Windows in frames: short ±5, long ±4,
+    // fast ±6 (see framesBetweenBeats).
+    const missFrames = hair.fast ? 6 : hair.type === 'long' ? 4 : 5;
     // `rhythm_tweezers_cue_miss` only re-enables the beat-script loop.  It
     // does not create a falling hair or an extra tweezers sprite; the cue's
     // own hair remains until update_short/update_long despawns it at 2x time.
-    if (hair.state === 'fresh' && beat - hair.hitBeat > missWindow) hair.state = 'miss';
+    if (hair.state === 'fresh' && framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs) > missFrames) hair.state = 'miss';
     // The source retains long-hair cues for two cue lengths.  Its half-beat
     // pull then changes to a stubble cel and starts the normal recovery.
     if (hair.type === 'long' && hair.pull && !hair.pullComplete && beat - hair.pullAt >= hair.pullDuration) {
@@ -761,18 +788,19 @@ function tweezersUpdate(beat) {
 }
 function tweezersPunch(targetBeat = null) {
   if (!running || mode !== 'tweezers') return;
-  const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(h.hitBeat - beat) <= (h.fast ? 6 / 24 : h.type === 'long' ? 4 / 24 : 5 / 24));
+  const beat = Number.isFinite(targetBeat) ? targetBeat : songBeat(); const hair = tweezers.active.find((h) => h.state === 'fresh' && Math.abs(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs)) <= (h.fast ? 6 : h.type === 'long' ? 4 : 5));
   if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; missSound(); createImpact('empty'); return; }
-  const perfectWindow = hair.fast || hair.type === 'long' ? 4 / 24 : 3 / 24;
-  const perfect = Math.abs(hair.hitBeat - beat) <= perfectWindow; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  const perfectFrames = hair.fast || hair.type === 'long' ? 4 : 3;
+  const perfect = Math.abs(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs)) <= perfectFrames; hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
   if (perfect) tweezers.perfectHits++;
   if (hair.type === 'long') {
-    // gameplay_get_last_hit_offset() is in ticks; at 96 BPM one beat is 24
-    // ticks. The engine subtracts that tick offset from the frame duration.
-    const hitOffsetTicks = (beat - hair.hitBeat) * 24;
+    // gameplay_get_last_hit_offset() is the frame offset from gameplay_update_cue;
+    // the ROM subtracts that frame count from ticks_to_frames(0x0C) = 18.75
+    // frames at 96 BPM.
+    const hitOffsetFrames = framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs);
     hair.pull = true; hair.pullAt = beat; hair.pullRotation = tweezersOrbitAt(beat).rotation;
     // Source: ticks_to_frames(0x0C) - gameplay_get_last_hit_offset().
-    hair.pullDuration = Math.max(1, 18.75 - hitOffsetTicks) / 37.5;
+    hair.pullDuration = Math.max(1, 18.75 - hitOffsetFrames) / 37.5;
     tweezers.tweezerAction = { kind: 'hidden', at: beat };
   }
   else tweezers.tweezerAction = { kind: perfect ? 'hit' : 'barely', at: beat };
@@ -993,7 +1021,10 @@ function punch() {
   if (!running) return;
   const beat = songBeat();
   if (beat < 0) return;
-  const candidate = active.find((item) => item.state === 'flying' && Math.abs(item.hitBeat - beat) <= HIT_WINDOW);
+  // karate_cue_* CueDefinitions use the same frame windows as every other game
+  // (hit ±3, barely ±5 frames), and elapsedForBeat() is the karate beat clock's
+  // real-time map, so the window stays 50/83.3 ms across the tempo changes.
+  const candidate = active.find((item) => item.state === 'flying' && Math.abs(karateFramesBetween(item.hitBeat, beat)) <= KARATE_HIT_FRAMES);
   // karate_input_event(): every punch starts Joe's animation (low below flow 3,
   // high at 3+) and plays the punch whoosh, even when it hits nothing.
   punchSound();
@@ -1011,7 +1042,7 @@ function punch() {
     createImpact('empty');
     return;
   }
-  const timedPerfect = cheat || Math.abs(candidate.hitBeat - beat) <= PERFECT_WINDOW;
+  const timedPerfect = cheat || (candidate && Math.abs(karateFramesBetween(candidate.hitBeat, beat)) <= KARATE_PERFECT_FRAMES);
   // karate_cue_hit(): a rock or bomb punched below flow 3 is the "ouch" hit.
   // It still counts, but costs a flow level, plays the hard SFX and never
   // shows the normal punch cels.
@@ -1534,11 +1565,26 @@ function tempoAtTick(tick) {
   for (const segment of ported.tempo) { if (segment.tick > tick) break; bpm=segment.bpm; }
   return bpm;
 }
+// gameplay_update_cue() advances the cue's counter once per 60 Hz frame and
+// gameplay_calculate_input_timing() compares that *frame* counter against
+// `duration + <CueDefinition window>`, so every hit/barely/miss window is a
+// real-time window: ±3 frames = ±50.0 ms for a hit, ±5 frames = ±83.3 ms for a
+// barely, independent of BPM.  The values in the CueDefinitions are frame counts
+// even though the surrounding engine talks about ticks/beats, and
+// gameplay_get_last_hit_offset() hands the hit/barely callbacks that same frame
+// offset.  Judging in ticks instead makes the window BPM-dependent and up to 56%
+// wider than the ROM (Rhythm Tweezers runs at 96 BPM), so the judgment paths use
+// signedFramesBetweenTicks()/framesBetweenBeats() rather than raw tick deltas.
+function framesBetweenBeats(fromBeat, toBeat, beatMs) {
+  return (toBeat - fromBeat) * beatMs / 1000 * 60;
+}
 function portedTick() {
   return portedTickAtAudioTime(audio().currentTime);
 }
 function portedTickAtAudioTime(audioTime) {
-  const elapsed = Math.max(0, audioTime - audioSongStart);
+  // audioTime is an AudioContext timestamp; the player hears it outputLatency()
+  // later, so song time is measured from the heard moment.
+  const elapsed = Math.max(0, audioTime - outputLatency() - audioSongStart);
   let passed = 0;
   for (let i = 0; i < ported.tempo.length; i++) {
     const s = ported.tempo[i], next = ported.tempo[i + 1];
@@ -2136,9 +2182,10 @@ function nightWalkWorldShift(tick) {
     // bounce, which is not what the GBA engine does.
     if (!cue.endOfBridge || cue.state !== 'hit' || cue.actionTick > tick) continue;
     const elapsed = framesBetweenTicks(cue.actionTick,tick);
-    // gameplay_get_last_hit_offset() is reported in BeatScript ticks, while
-    // the base jump duration is ticks_to_frames(0x14), exactly as in GBA.
-    const timingOffset = cue.actionTick - cue.hit;
+    // gameplay_get_last_hit_offset() reports the cue's *frame* offset
+    // (gameplay_update_cue's counter minus the cue duration), and the base jump
+    // duration is ticks_to_frames(0x14), so the subtraction happens in frames.
+    const timingOffset = signedFramesBetweenTicks(cue.hit, cue.actionTick);
     // night_walk_play_yan_jump uses ticks_to_frames(0x14) - timingOffset.
     // An early hit (negative offset) therefore lengthens the jump, while a
     // late hit shortens it, exactly as in the GBA engine.
@@ -2190,12 +2237,15 @@ function portedLoop() {
     if (cue) {
       // Keep the replay exactly on the source judgment tick so a backgrounded
       // browser frame cannot turn an automated perfect replay into a barely.
-      audioSongStart = audio().currentTime - secondsAtTick(cue.hit);
+      audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(cue.hit);
       portedPunch();
     }
   }
+  // gameplay_update_cue(): a cue expires once its frame counter passes
+  // duration + missWindowLate, i.e. 5 frames (12 for the calligraphy cues)
+  // after the judgment tick.
   const lateWindow = mode === 'power_calligraphy' ? 12 : 5;
-  for (const cue of ported.cues) if (cue.state === 'fresh' && tick - cue.hit > lateWindow) {
+  for (const cue of ported.cues) if (cue.state === 'fresh' && signedFramesBetweenTicks(cue.hit, tick) > lateWindow) {
     cue.state = 'miss';
     if (mode === 'power_calligraphy') playPortedSfx('miss');
     if (mode === 'night_walk' && cue.endOfBridge && ported.failedAt < 0) {
@@ -2239,7 +2289,7 @@ function drawPorted(tick, cfg) {
   let actorX = cfg.actor[0], actorY = cfg.actor[1];
   if (mode === 'night_walk' && ported.actionAt >= 0) {
     const elapsed = framesBetweenTicks(ported.actionAt,tick);
-    const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit : 0;
+    const actionOffset = ported.actionCue ? signedFramesBetweenTicks(ported.actionCue.hit, ported.actionAt) : 0;
     const actionBase = ported.actionCue?.hit ?? ported.actionAt;
     const duration = Math.max(1, framesBetweenTicks(actionBase, actionBase + 20) - actionOffset);
     const age = Math.max(0,elapsed/duration);
@@ -2562,19 +2612,20 @@ function portedPunch(inputEvent = null) {
   const tick = inputEvent ? portedTickAtAudioTime(inputAudioTime) : portedTick();
   const cue = ported.cues.find(item => {
     if (item.state !== 'fresh') return false;
-    if (mode === 'power_calligraphy') return tick-item.hit >= -24 && tick-item.hit <= 12;
-    const barelyWindow = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
-    return Math.abs(item.hit - tick) <= barelyWindow;
+    const offsetFrames = signedFramesBetweenTicks(item.hit, tick);
+    if (mode === 'power_calligraphy') return offsetFrames >= -24 && offsetFrames <= 12;
+    const barelyFrames = mode === 'night_walk' && item.kind === 'CUE_STAR_WAND' ? 4 : 5;
+    return Math.abs(offsetFrames) <= barelyFrames;
   });
   ported.actionAt = tick; ported.actionHit = Boolean(cue); ported.actionCue = cue ?? null;
   if (!cue) {
     if (mode === 'night_walk') playPortedSfx('count',tick,128,-0xc00);
     createImpact('empty'); return;
   }
-  cue.state = 'hit'; const offset = tick - cue.hit;
+  cue.state = 'hit'; const offset = signedFramesBetweenTicks(cue.hit, tick);
   cue.actionTick = tick;
-  const perfectWindow = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
-  const perfect = Math.abs(offset) <= perfectWindow;
+  const perfectFrames = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
+  const perfect = Math.abs(offset) <= perfectFrames;
   cue.perfect = perfect;
   if (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND' && perfect) {
     const priorHits = ported.cues.filter(item => item !== cue && item.state === 'hit' && item.perfect && item.hit <= cue.hit).length;
@@ -2614,6 +2665,8 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         musicLevel: ported.timeline ? portedMusicVolumeAt(portedTick()) : null,
         screenFade: ported.timeline ? (portedScreenFade(portedTick())?.alpha ?? 0) : 0,
         reverbWet, reverbReady,
+        outputLatency: outputLatency(),
+        baseLatency: audioCtx ? audioCtx.baseLatency : null,
         textBoxes: ported.textBoxes.map(entry => ({ label: entry.label, from: entry.from, until: entry.until })),
         textBox: activeTextBox?.lines?.[0] ?? null,
         ...(mode === 'night_walk' ? {
@@ -2644,16 +2697,18 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         beatAnimTicks: karateBeatAnimTicks.length,
         screenFade: karateScreenFadeAlpha(songBeat()),
         reverbWet, reverbReady, reverbIndex: karateReverbIndex, reverbEvents: karateReverbEvents.length,
+        outputLatency: outputLatency(),
+        baseLatency: audioCtx ? audioCtx.baseLatency : null,
         textBoxes: karateTextBoxEvents.map(entry => ({ label: entry.label, from: entry.from, until: entry.until })),
         textBox: activeTextBox?.lines?.[0] ?? null
       };
-      return { mode, running, beat: songBeat() };
+      return { mode, running, beat: songBeat(), outputLatency: outputLatency() };
     },
     // Karate Man and Rhythm Tweezers run on their own beat clock, so the local
     // audit needs a way to park them on a source beat before injecting input.
     jumpToBeat: (beat) => {
       if (!running || portedModes[mode]) return;
-      audioSongStart = audio().currentTime - (mode === 'tweezers' ? beat * tweezersBeatMs : elapsedForBeat(beat)) / 1000;
+      audioSongStart = audio().currentTime - outputLatency() - (mode === 'tweezers' ? beat * tweezersBeatMs : elapsedForBeat(beat)) / 1000;
     },
     // Local check that the GBA noise channel really is an LFSR at the register's
     // clock rate: it reports the measured level changes per second.
@@ -2670,9 +2725,50 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
       const clock = 524288 / divider / Math.pow(2, ((register >> 4) & 0xF) + 1);
       return { frames: data.length, sampleRate: ac.sampleRate, min, max, changesPerSecond: changes / (data.length / ac.sampleRate), clock };
     },
-    jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - secondsAtTick(Number(tick)); },
+    // Real output-level measurement on the master bus (the same signal the
+    // player hears, post-gain, pre-destination).  The window is measured on the
+    // AudioContext clock, not performance.now(), so it stays meaningful under a
+    // virtual/headless clock.  Used to decide GBA_MIX_SCALE from data rather
+    // than by ear.
+    levelProbe: async (seconds = 1) => {
+      const ac = audio();
+      const analyser = ac.createAnalyser();
+      analyser.fftSize = 2048;
+      const bus = master();
+      bus.connect(analyser);
+      const buffer = new Float32Array(analyser.fftSize);
+      const start = ac.currentTime;
+      let peak = 0, sumSquares = 0, samples = 0, fullScale = 0;
+      while (ac.currentTime - start < seconds) {
+        analyser.getFloatTimeDomainData(buffer);
+        for (let i = 0; i < buffer.length; i++) {
+          const value = buffer[i];
+          const magnitude = Math.abs(value);
+          if (magnitude > peak) peak = magnitude;
+          if (magnitude >= .999) fullScale++;
+          sumSquares += value * value;
+          samples++;
+        }
+        await new Promise(resolve => setTimeout(resolve, 16));
+      }
+      bus.disconnect(analyser);
+      const rms = Math.sqrt(sumSquares / Math.max(1, samples));
+      return {
+        seconds, sampleRate: ac.sampleRate, mixScale: GBA_MIX_SCALE,
+        peak, peakDb: 20 * Math.log10(Math.max(peak, 1e-6)),
+        rms, rmsDb: 20 * Math.log10(Math.max(rms, 1e-6)),
+        fullScaleSamples: fullScale, measuredSamples: samples,
+        start, end: ac.currentTime
+      };
+    },
+    // Tap point for local level measurement: the master bus is the exact signal
+    // the player hears, so an analyser hung off it reads the real output level.
+    masterNode: () => master(),
+    // Parking the clock must use the same heard-time origin as portedTick(),
+    // otherwise a parked cue would sit outputLatency() away from its own tick.
+    jumpToTick: (tick) => { if (running && ported.timeline) audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(Number(tick)); },
     nextCue: () => ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit ?? null,
-      hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - secondsAtTick(hit); portedPunch(); } }
+    hitNext: () => { const hit = ported.cues.find(cue => cue.state === 'fresh' && cue.hit >= portedTick())?.hit; if (hit != null) { audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(hit); portedPunch(); } }
   };
   // Deterministic source-tick replay used by the local audit. It advances to
   // each cue's spawn tick, then injects the input exactly at its hit tick.
@@ -2685,9 +2781,9 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
     const results = [];
     for (const cue of ported.cues) {
       if (cue.state !== 'fresh') continue;
-      audioSongStart = audio().currentTime - secondsAtTick(cue.spawn);
+      audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(cue.spawn);
       portedLoop();
-      audioSongStart = audio().currentTime - secondsAtTick(cue.hit);
+      audioSongStart = audio().currentTime - outputLatency() - secondsAtTick(cue.hit);
       portedPunch();
       results.push({ tick: cue.hit, state: cue.state, perfect: cue.perfect === true, actionTick: cue.actionTick });
     }

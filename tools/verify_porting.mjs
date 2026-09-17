@@ -77,8 +77,17 @@ check(game.includes('const y = (cue.baseY ?? 120) - nightWalkWorldShift(tick)'),
 check(!game.includes('nightWalkCommittedShift(tick)'), 'night_walk: actor incorrectly applies platform origin to sprite Y');
 check(game.includes('signedFramesBetweenTicks') && game.includes('timingOffset'), 'night_walk: jump timing offset is not applied');
 check(game.includes('framesBetweenTicks(cue.hit, cue.hit + 20) - timingOffset') && game.includes('framesBetweenTicks(actionBase, actionBase + 20) - actionOffset'), 'night_walk: jump timing offset sign differs from source');
-check(game.includes('const timingOffset = cue.actionTick - cue.hit') && game.includes('const actionOffset = ported.actionCue ? ported.actionAt - ported.actionCue.hit'), 'night_walk: hit offset must remain in source tick units');
-check(game.includes('const hitOffsetTicks = (beat - hair.hitBeat) * 24'), 'tweezers: pull timing offset must use source tick units');
+check(game.includes('const timingOffset = signedFramesBetweenTicks(cue.hit, cue.actionTick)') && game.includes('const actionOffset = ported.actionCue ? signedFramesBetweenTicks(ported.actionCue.hit, ported.actionAt) : 0'), 'night_walk: hit offset must be the source frame offset, not a tick delta');
+check(game.includes('const hitOffsetFrames = framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs)') && game.includes('18.75 - hitOffsetFrames'), 'tweezers: pull timing offset must be the source frame offset');
+// gameplay_calculate_input_timing compares the cue's 60 Hz frame counter against
+// duration + the raw CueDefinition window values, so every hit/barely window is
+// a real-time frame window (±3 = 50.0 ms, ±5 = 83.3 ms) at any tempo.  Judging in
+// ticks made the windows BPM-dependent and up to 56% wider than the ROM.
+check(game.includes('const offsetFrames = signedFramesBetweenTicks(item.hit, tick)') && game.includes('return Math.abs(offsetFrames) <= barelyFrames'), 'judgement: barely window is not the source frame window');
+check(game.includes('const perfect = Math.abs(offset) <= perfectFrames') && game.includes('const offset = signedFramesBetweenTicks(cue.hit, tick)'), 'judgement: hit window is not the source frame window');
+check(game.includes('signedFramesBetweenTicks(cue.hit, tick) > lateWindow') && game.includes("const lateWindow = mode === 'power_calligraphy' ? 12 : 5"), 'judgement: cue expiry does not use the source miss window');
+check(game.includes('Math.abs(karateFramesBetween(item.hitBeat, beat)) <= KARATE_HIT_FRAMES') && game.includes('KARATE_PERFECT_FRAMES = 3'), 'karate: cue windows are not the source frame windows');
+check(game.includes('Math.abs(framesBetweenBeats(h.hitBeat, beat, tweezersBeatMs)) <= (h.fast ? 6 : h.type === \'long\' ? 4 : 5)'), 'tweezers: cue windows are not the source frame windows');
 check(game.includes('tweezersRandom(0x1f) - 15') && !game.includes('rotationSpeed: Math.floor(Math.random()'), 'tweezers: falling-hair rotation must use deterministic GBA RNG');
 check(game.includes('tempoAtTick(event.tick) / 120') && game.includes('Calligraphy changes tempo mid-song'), 'calligraphy: timeline SFX ignore active tempo');
 check(game.includes('const effectiveRateScale = atTick == null || rateScale !== 1 ? rateScale : tempoAtTick(atTick) / 120'), 'audio: ported SFX sequence offsets ignore trigger tempo');
