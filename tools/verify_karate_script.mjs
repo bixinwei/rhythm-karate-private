@@ -131,6 +131,29 @@ for (const id of ['spaceball', 'samurai_slice', 'night_walk', 'power_calligraphy
 check(game.includes("event.op === 'fade_music_out'") && game.includes('function portedScreenFade('),
   'game.js: the ported engine no longer applies the scripted music and screen fades');
 
+// --- The ROM's software reverb must stay derived, not guessed ---------------
+const reverbSource = fs.readFileSync(path.join(root, 'reverb-worklet.js'), 'utf8');
+check(fs.existsSync(path.join(root, 'reverb-worklet.js')), 'missing reverb-worklet.js');
+// midi.h: AUDIO_SAMPLE_RATE / DMA_SAMPLE_BUFFER_SIZE; psg.c/player.c: gameplay_set_reverb
+// -> midi_player_set_reverb(clamp(level + 35, 0, 127), 2, 2, 4).
+check(/const ROM_SAMPLE_RATE = 13379;/.test(reverbSource) && /const ROM_RING_SAMPLES = 1568;/.test(reverbSource),
+  'reverb-worklet.js: the ring no longer uses AUDIO_SAMPLE_RATE 13379 and the 1568-sample DMA buffer');
+check(/const ROM_POLE_DECAY = 2;/.test(reverbSource) && /const ROM_WET_SHIFT = 2;/.test(reverbSource) && /const ROM_SCRATCH_TO_SAMPLE = 128;/.test(reverbSource),
+  'reverb-worklet.js: lowCut/decay/wet shift or the gMidiSampleTable scaling changed');
+check(/this\.pole \* this\.low\[index\] \+ delayed/.test(reverbSource) && /delayed - alpha \* low/.test(reverbSource)
+  && /this\.pole \* this\.accumulator\[index\] \+ highPassed/.test(reverbSource) && /ring\[this\.position\] = dry \+ wetSample;/.test(reverbSource),
+  'reverb-worklet.js: the two one-pole sections or the dry+wet ring feedback changed');
+const scriptReverb = [...fs.readFileSync(path.join(upstream, 'games/karate_man/karate_man.bs'), 'utf8')
+  .matchAll(/run gameplay_set_reverb,\s*(\d+)/g)].map(match => ({ level: Number(match[1]) }));
+const timelineReverb = timelineEvents.filter(e => e.op === 'run' && e.args[0] === 'gameplay_set_reverb')
+  .map(e => ({ tick: e.tick, level: Number(e.args[1]) }));
+check(timelineReverb.length === scriptReverb.length && scriptReverb.every((entry, index) => entry.level === timelineReverb[index]?.level),
+  `karate: gameplay_set_reverb events differ from the script (${show(scriptReverb)} vs ${show(timelineReverb)})`);
+check(timelineReverb.some(entry => entry.level === 40) && timelineReverb.at(-1)?.level === 0,
+  'karate: the finale no longer enables the reverb and switches it off again');
+check(game.includes('karateReverbEvents') && game.includes('setReverbLevel(karateReverbEvents') && game.includes('connect(master())'),
+  'game.js: the reverb is not driven by the timeline or voices bypass the master bus');
+
 // The script's Cue definitions all last 0x18 ticks, i.e. exactly one beat, so
 // the browser chart must spawn one beat before each required punch.
 const engine = fs.readFileSync(path.join(upstream, 'games/karate_man/engine.c'), 'utf8');

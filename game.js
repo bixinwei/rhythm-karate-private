@@ -71,6 +71,8 @@ let karateWarnings = [];
 let karateTempo = [{ from: 0, bpm: 120 }];
 let karateVolumeEvents = [];
 let karateBeatAnimTicks = [];
+let karateReverbEvents = [];
+let karateReverbIndex = 0;
 let karateSongEnd = 0;
 let karateFanStartBeat = 0;
 let karateScreenFade = null;
@@ -100,6 +102,9 @@ const karateTimelineLoadPromise = fetch('assets/gba/karate_man_timeline.json')
         : { beat, rampTo: 0, span: Math.max(1, Number(event.args[0])) / 24 };
     });
     karateBeatAnimTicks = events.filter((event) => event.op === 'beat_anim').map((event) => event.tick);
+    // `run gameplay_set_reverb, N` during the finale.
+    karateReverbEvents = events.filter((event) => event.op === 'run' && event.args[0] === 'gameplay_set_reverb')
+      .map((event) => ({ beat: event.tick / 24, level: Number(event.args[1] ?? 0) }));
     karateSongEnd = timeline.endTick / 24;
     const fan = events.find((event) => event.op === 'play_music' && String(event.args[0]).includes('karate_fan'));
     karateFanStartBeat = fan ? fan.tick / 24 : karateSongEnd;
@@ -237,13 +242,53 @@ function audio() {
 // render frame cannot stretch or truncate it.
 function audioClock() { return audioCtx ? audioCtx.currentTime : performance.now() / 1000; }
 
+// The ROM's reverb is fed by the whole mix (its DMA buffer holds dry + wet), so
+// every voice goes through one master bus that also drives the reverb worklet.
+const REVERB_WORKLET_URL = 'reverb-worklet.js?v=reverb1';
+let masterBus = null;
+let reverbNode = null;
+let reverbWet = 0;
+let reverbReady = false;
+
+function master() {
+  const ac = audio();
+  if (!masterBus) {
+    masterBus = ac.createGain();
+    masterBus.connect(ac.destination);
+    if (ac.audioWorklet) {
+      ac.audioWorklet.addModule(REVERB_WORKLET_URL).then(() => {
+        reverbNode = new AudioWorkletNode(ac, 'gba-reverb', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+        reverbNode.parameters.get('wet').value = reverbWet;
+        masterBus.connect(reverbNode).connect(ac.destination);
+        reverbReady = true;
+      }).catch((error) => console.error('Reverb worklet failed to load:', error));
+    }
+  }
+  return masterBus;
+}
+
+// gameplay_set_reverb(level) -> midi_player_set_reverb(clamp(level + 35, 0, 127), 2, 2, 4);
+// the worklet applies the ROM's `wet >> decay` multiplier and filter shifts.
+// Note the ROM starts with gMidiReverb1Wet = 0 (midi_directsound_init) and the
+// +35 offset only applies when the script itself calls gameplay_set_reverb, so
+// the silent state and the scripted state are different values.
+function setReverbLevel(level) {
+  reverbWet = Math.max(0, Math.min(127, Number(level) + 35));
+  if (reverbNode) reverbNode.parameters.get('wet').value = reverbWet;
+}
+
+function resetReverb() {
+  reverbWet = 0;
+  if (reverbNode) reverbNode.parameters.get('wet').value = reverbWet;
+}
+
 function tone(freq, length, type = 'sine', volume = .05, offset = 0) {
   const ac = audio(); const at = ac.currentTime + offset;
   const osc = ac.createOscillator(); const gain = ac.createGain();
   osc.type = type; osc.frequency.setValueAtTime(freq, at);
   gain.gain.setValueAtTime(.0001, at); gain.gain.exponentialRampToValueAtTime(volume, at + .008);
   gain.gain.exponentialRampToValueAtTime(.0001, at + length);
-  osc.connect(gain).connect(ac.destination); osc.start(at); osc.stop(at + length + .02);
+  osc.connect(gain).connect(master()); osc.start(at); osc.stop(at + length + .02);
 }
 
 // GBA sound players run their sequences at the tempo set by
@@ -328,7 +373,7 @@ function scheduleKarateNote(event, absoluteBeat) {
   const source = ac.createBufferSource(); const gain = ac.createGain();
   source.buffer = sample; source.playbackRate.value = event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12);
   gain.gain.value = level;
-  source.connect(gain).connect(ac.destination);
+  source.connect(gain).connect(master());
   scheduledMusicNodes.push(source);
   // Respect the score duration instead of the old universal 0.48 s cap, which
   // cut the call-and-response samples short (many sustain 1.5-3.75 beats).  The
@@ -404,7 +449,7 @@ function scheduleTweezersMusic() {
       // correction: no samples, notes, lengths, or beat positions are changed.
       cleanup.type = 'highpass'; cleanup.frequency.value = 92; cleanup.Q.value = .45;
       clarity.type = 'highshelf'; clarity.frequency.value = 2200; clarity.gain.value = 5.5;
-      source.connect(gain).connect(cleanup).connect(clarity).connect(ac.destination); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
+      source.connect(gain).connect(cleanup).connect(clarity).connect(master()); source.start(when); source.stop(when + duration); scheduledMusicNodes.push(source);
       scheduledTweezersEvents.add(index);
     }
   }
@@ -426,7 +471,7 @@ function playTweezersSfx(name, eventBeat = null) {
       // rhythm_tweezers.c calls play_sound_w_pitch_volume(..., 0xD0, 0):
       // 0xD0 is the volume parameter, while pitch remains neutral.
       source.playbackRate.value = event.rate ?? (event.fixed ? 1 : Math.pow(2, (event.note - 60) / 12));
-      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * (sfxVolumes[name] / 256); source.connect(gain).connect(ac.destination);
+      gain.gain.value = GBA_MIX_SCALE * (event.velocity / 127) * (sfxVolumes[name] / 256); source.connect(gain).connect(master());
       const when = Math.max(ac.currentTime + .005, baseWhen + offset);
       source.start(when); source.stop(when + Math.max(.45, event.length * 60 / 96 + .2));
       scheduledMusicNodes.push(source);
@@ -516,6 +561,8 @@ function start() {
   karateBeatAnimKind = 'stand';
   karateBeatAnimStart = -Infinity;
   karateBeatAnimIndex = 0;
+  karateReverbIndex = 0;
+  resetReverb();
   karateStagePalette = 'low';
   karateMusicCursor.bgm = 0;
   karateMusicCursor.fan = 0;
@@ -862,6 +909,9 @@ function update(beat) {
   while (karateBeatAnimIndex < karateBeatAnimTicks.length && karateBeatAnimTicks[karateBeatAnimIndex] <= beat * 24) {
     karateBeatAnimIndex++;
     karateBeatAnimation(beat);
+  }
+  while (karateReverbIndex < karateReverbEvents.length && karateReverbEvents[karateReverbIndex].beat <= beat) {
+    setReverbLevel(karateReverbEvents[karateReverbIndex++].level);
   }
   while (chartIndex < karateChart.length && karateChart[chartIndex][0] - beat <= TRAVEL_BEATS) {
     const [hitBeat, type] = karateChart[chartIndex++];
@@ -1292,7 +1342,7 @@ const portedModes = {
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
 };
-const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, cueSpawningDisabled: false, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false };
+const ported = { data: {}, mode: null, timeline: null, frames: {}, manifest: {}, bg: null, overlays: [], peopleFrames: {}, peopleManifest: {}, sfx: {}, cueIndex: 0, cues: [], balloons: [], nightStars: [], actionAt: -99, actionHit: false, actionCue: null, peopleStumbleAt: -99, failedAt: -1, failedCue: null, cueSpawningDisabled: false, actionGood: false, starWandAt: -1, scheduled: new Set(), tempo: [], audioQueue: [], audioQueueIndex: 0, audioQueueReady: false, reverb: [], reverbIndex: 0 };
 // Match the GBA engine's 16-bit LCG used by PLATFORM_TYPE_RANDOM.
 let gbaRandomState = 0;
 function gbaRandom(max) {
@@ -1500,7 +1550,7 @@ function connectPortedVoice(source, event, level, when, duration, pitchSemitones
     }
   }
   source.connect(envelope).connect(channel);
-  if (panner) channel.connect(panner).connect(ac.destination); else channel.connect(ac.destination);
+  if (panner) channel.connect(panner).connect(master()); else channel.connect(master());
   source.start(when); source.stop(when + voiceDuration + .01); scheduledMusicNodes.push(source);
   source.onended = () => {
     source.disconnect(); envelope.disconnect(); channel.disconnect(); if (panner) panner.disconnect();
@@ -1786,6 +1836,11 @@ function startPortedMode(id) {
       return cue;
     });
     ported.cueIndex = 0; ported.actionAt = -99; ported.actionHit = false; ported.actionCue = null; ported.peopleStumbleAt = -99; ported.failedAt = -1; ported.failedCue = null; ported.cueSpawningDisabled = false; ported.starWandAt = -1; ported.nightWalkBaseY = 120; ported.audioQueue=[]; ported.audioQueueIndex=0; ported.audioQueueReady=false; setPortedTempo(data.timeline); drawPorted(-1, portedModes[id]);
+    // `run gameplay_set_reverb, N` (currently only Karate Man uses it).
+    ported.reverb = data.timeline.events.filter(event => event.op === 'run' && event.args[0] === 'gameplay_set_reverb')
+      .map(event => ({ tick: event.tick, level: Number(event.args[1] ?? 0) }));
+    ported.reverbIndex = 0;
+    resetReverb();
     await loadOriginalSamples(data.needed);
     if (run !== songRun || mode !== id) return;
     // BeatScript rests provide the original lead-in; there is no extra web countdown.
@@ -2022,6 +2077,9 @@ function portedLoop() {
   pumpPortedAudio();
   const tick = portedTick(), cfg = portedModes[mode];
   if (tick > ported.timeline.endTick) return finish();
+  while (ported.reverbIndex < ported.reverb.length && ported.reverb[ported.reverbIndex].tick <= tick) {
+    setReverbLevel(ported.reverb[ported.reverbIndex++].level);
+  }
   if (mode === 'night_walk') {
     // Match the engine's cue-spawn order. Pre-resolving every random platform
     // at startup lets later input RNG calls change the wrong cue.
@@ -2459,6 +2517,7 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         failedAt: ported.failedAt, actionAt: ported.actionAt, actionHit: ported.actionHit,
         musicLevel: ported.timeline ? portedMusicVolumeAt(portedTick()) : null,
         screenFade: ported.timeline ? (portedScreenFade(portedTick())?.alpha ?? 0) : 0,
+        reverbWet, reverbReady,
         ...(mode === 'night_walk' ? {
           worldShift: nightWalkWorldShift(portedTick()),
           nextBridgeBaseY: ported.nightWalkBaseY,
@@ -2485,7 +2544,8 @@ if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && 
         timelineReady: karateTimelineReady,
         musicLevel: karateMusicVolumeAt(songBeat()),
         beatAnimTicks: karateBeatAnimTicks.length,
-        screenFade: karateScreenFadeAlpha(songBeat())
+        screenFade: karateScreenFadeAlpha(songBeat()),
+        reverbWet, reverbReady, reverbIndex: karateReverbIndex, reverbEvents: karateReverbEvents.length
       };
       return { mode, running, beat: songBeat() };
     },
