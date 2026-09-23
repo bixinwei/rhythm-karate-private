@@ -1130,8 +1130,8 @@ function createImpact(kind) {
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
     fx.rings = [
-      { flight: 0.32, settle: 0.42, radius: 150, count: 10, randomColor: true, size: 26, spin: 0.5 },
-      { flight: 0.32, settle: 0.42, radius: 120, count: 10, randomColor: true, size: 13, spin: 0 }
+      { flight: 0.32, settle: 0.42, radius: 100, count: 10, randomColor: true, size: 26, spin: Math.PI / 4 },
+      { flight: 0.32, settle: 0.42, radius: 80, count: 10, randomColor: true, size: 13, spin: 0 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
