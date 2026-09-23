@@ -1119,26 +1119,24 @@ function createImpact(kind) {
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
     totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
-  // 完美命中：Heaven Studio 完整结构（子发射器机制）：
-//   Just00 主环（speed 5, life 0.45, scale 1）+ Just01 副环（speed 4, life 0.4, scale 0.685），
-//   主星飞散死亡后，在终点触发 JustSub 子星（speed 0, life 0.3, 原地）。
-//   startSize 是常量 0.7（minMaxState 0），所以同一环的星星一样大，只有不同环（scale）不同。
+  // 完美命中：严格照搬 Heaven Studio TimingAccuracy.prefab：
+//   Just00 主环（speed 5, life 0.45, scale 1, startSize 0.7）+ Just01 副环（speed 4, life 0.4, scale 0.685），
+//   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true, scale: 1, size: 15 },
-      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true, scale: 0.685, size: 15 }
+      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 15 },
+      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 15 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
       for (let i = 0; i < ring.count; i++) {
         ring.stars.push({
-          angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
+          angle: i * Math.PI * 2 / ring.count,   // arc 360 均匀，无角度偏移
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          size: ring.size * ring.scale,   // 同一环一样大，不同环按 scale 缩放
-          rotation: Math.random() * Math.PI * 2,
-          // 子星（JustSub）：主星死亡后在终点触发，原地，life 0.3
-          sub: { color: '#FFFFFF', size: 10 * ring.scale }
+          size: ring.size * ring.scale,          // startSize 常量，同一环一样大
+          rotation: Math.random() * Math.PI * 2, // startRotation 2π 随机范围
+          sub: { color: '#FFFFFF', size: 13 * ring.scale }  // JustSub startSize 0.6
         });
       }
     }
@@ -1472,9 +1470,9 @@ function drawTouchScreen() {
         const ringLife = 1 - (audioClock() - fx.startedAt) / ring.life;
         if (ringLife <= 0) continue;
         const ringProgress = 1 - ringLife;
-        const ease = 1 - Math.pow(1 - ringProgress, 3);
         for (const star of ring.stars) {
-          const dist = ease * ring.speed * 20;
+          // 匀速飞散（startSpeed 恒定，无缓动、无重力）：dist = speed × time
+          const dist = ringProgress * ring.speed * 20;
           const x = cx + Math.cos(star.angle) * dist;
           const y = cy + Math.sin(star.angle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5
