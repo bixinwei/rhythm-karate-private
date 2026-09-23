@@ -1374,17 +1374,23 @@ function drawObjectShadow(position) {
 // 照搬 AceColorCycle shader 的"贴图 alpha 蒙版 + 色带颜色"逻辑。模块级预加载。
 const starImage = new Image();
 starImage.src = 'assets/star-main.png';
+// 离屏 canvas：把 main.png 的白色替换成指定颜色，避免 source-in 污染主 canvas。
+const starTintCanvas = document.createElement('canvas');
+starTintCanvas.width = 64; starTintCanvas.height = 64;
+const starTintCtx = starTintCanvas.getContext('2d');
 function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   const size = radius * 2;
   if (starImage.complete && starImage.naturalWidth) {
-    // 用 main.png 的 alpha 蒙版画彩虹色五角星（source-in 保留贴图 alpha）
-    context.drawImage(starImage, -size / 2, -size / 2, size, size);
-    context.globalCompositeOperation = 'source-in';
-    context.fillStyle = color;
-    context.fillRect(-size / 2, -size / 2, size, size);
-    context.globalCompositeOperation = 'source-over';
+    // 在离屏 canvas 上把 main.png 的白色替换成 color，再画到主 canvas
+    starTintCtx.clearRect(0, 0, 64, 64);
+    starTintCtx.drawImage(starImage, 0, 0, 64, 64);
+    starTintCtx.globalCompositeOperation = 'source-in';
+    starTintCtx.fillStyle = color;
+    starTintCtx.fillRect(0, 0, 64, 64);
+    starTintCtx.globalCompositeOperation = 'source-over';
+    context.drawImage(starTintCanvas, -size / 2, -size / 2, size, size);
   } else {
     // 贴图未加载时回退到 canvas 五角星
     context.beginPath();
