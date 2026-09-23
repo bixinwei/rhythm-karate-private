@@ -1118,13 +1118,14 @@ function createImpact(kind) {
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
   };
-  // 完美命中：预生成一圈星星（Heaven Studio Just00 粒子：随机彩虹色、随机角度、
-  // 随机大小、随机速度，不旋转，alpha 渐隐）。
+  // 完美命中：预生成一圈星星（Heaven Studio Just00 粒子：Circle 圆形发射 arc 360、
+  // 从中心点均匀放射，随机彩虹色、随机大小、随机速度，不旋转，alpha 渐隐）。
   if (kind === 'perfect') {
     fx.stars = [];
-    for (let i = 0; i < 10; i++) {
+    const count = 10;
+    for (let i = 0; i < count; i++) {
       fx.stars.push({
-        angle: Math.random() * Math.PI * 2,
+        angle: i * Math.PI * 2 / count,   // 均匀 360° 分布（arc 360）
         color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)],
         size: 9 + Math.random() * 8,
         speed: 60 + Math.random() * 50
