@@ -95,14 +95,16 @@ for key, m in manifest.items():
         new = orig.resize((W * SCALE, H * SCALE), Image.NEAREST)
         tiles[idx] = new
         continue
-    # fit the HD art into the original content bbox (x4), bottom-centre aligned
+    # fit the HD art into the original content bbox (x4), centre-aligned to the
+    # GBA origin (the sprite anchor).  Bottom-aligning made the body jump between
+    # swing frames because the GBA anchor is the waist, not the feet.
     tw, th = obb[2] - obb[0], obb[3] - obb[1]
     scale = min((tw * SCALE) / new.width, (th * SCALE) / new.height)
     nw, nh = max(1, round(new.width * scale)), max(1, round(new.height * scale))
     new = new.resize((nw, nh), Image.LANCZOS)
     tile = Image.new('RGBA', (W * SCALE, H * SCALE), (0, 0, 0, 0))
-    px = obb[0] * SCALE + (tw * SCALE - nw) // 2
-    py = obb[1] * SCALE + th * SCALE - nh
+    px = m['originX'] * SCALE - nw // 2
+    py = m['originY'] * SCALE - nh // 2
     tile.alpha_composite(new, (px, py))
     tiles[idx] = tile
 
