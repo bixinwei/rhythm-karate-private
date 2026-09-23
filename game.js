@@ -1133,7 +1133,7 @@ function createImpact(kind) {
       { flight: TOUCH_W / 2, life: 0.45, count: 14, randomColor: true, scale: 1, size: 25 },
       { flight: TOUCH_W / 2 * 0.685, life: 0.4, count: 14, randomColor: true, scale: 0.685, size: 25 }
     ];
-    const SPREAD = Math.PI * 0.5;   // 左右各一个 ±45° 的水平扇面
+    const SPREAD = Math.PI * 0.25;  // 左右各一个 ±45° 的水平扇面（光带只朝左右，不朝上下）
     for (const ring of fx.rings) {
       ring.stars = [];
       const perSide = Math.floor(ring.count / 2);
