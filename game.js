@@ -1118,18 +1118,26 @@ function createImpact(kind) {
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
   };
-  // 完美命中：预生成一圈星星（Heaven Studio Just00 粒子：Circle 圆形发射 arc 360、
-  // 从中心点均匀放射，随机彩虹色、随机大小、随机速度，不旋转，alpha 渐隐）。
+  // 完美命中：多层星星环（Heaven Studio 完整结构，共用一个中心）：
+//   Just00 主环 = 椭圆（scale 18×10，横向 1.8 倍），speed 5，life 0.45，随机彩虹色
+//   Just01 副环 = 圆形（scale 1×1），speed 4，life 0.4，随机彩虹色
+//   JustSub 子环 = 原地星（speed 0），life 0.3，固定色
+// 椭圆环 + 圆环叠加、不同速度飞散，形成"星环旋转"感。
   if (kind === 'perfect') {
-    fx.stars = [];
-    const count = 10;
-    for (let i = 0; i < count; i++) {
-      fx.stars.push({
-        angle: i * Math.PI * 2 / count,   // 均匀 360° 分布（arc 360）
-        color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)],
-        size: 9 + Math.random() * 8,
-        speed: 60 + Math.random() * 50
-      });
+    fx.rings = [
+      { speed: 5, life: 0.45, count: 10, rx: 1.8, ry: 1.0, offset: 0, randomColor: true },
+      { speed: 4, life: 0.4, count: 10, rx: 1.0, ry: 1.0, offset: 18, randomColor: true },
+      { speed: 0, life: 0.3, count: 6, rx: 0.5, ry: 0.5, offset: 9, randomColor: false }
+    ];
+    for (const ring of fx.rings) {
+      ring.stars = [];
+      for (let i = 0; i < ring.count; i++) {
+        ring.stars.push({
+          angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
+          color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
+          size: 9 + Math.random() * 8
+        });
+      }
     }
   }
   touchFx.push(fx);
@@ -1427,22 +1435,26 @@ function drawTouchScreen() {
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
-      // Heaven Studio Just00 粒子：一圈随机彩虹色五角星，随机角度/大小/速度向外
-      // 飞散，不旋转，alpha 渐隐（startColor atime 1→0）。
-      const travel = Math.min(1, progress);
-      const ease = 1 - Math.pow(1 - travel, 3);
+      // Heaven Studio 完整结构：多层星星环（椭圆主环 + 圆形副环 + 原地星），
+      // 共用一个中心，每层独立生命周期和飞散速度。
       // 中心黄色光晕（Ace SpriteRenderer）
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life) * 0.094;
       touchCtx.fillStyle = '#FFFF00';
-      touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + travel * .4), 0, Math.PI * 2); touchCtx.fill();
+      touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + progress * .4), 0, Math.PI * 2); touchCtx.fill();
       touchCtx.restore();
-      // 一圈随机彩虹色五角星
-      for (const star of (fx.stars ?? [])) {
-        const dist = ease * star.speed;
-        const x = cx + Math.cos(star.angle) * dist;
-        const y = cy + Math.sin(star.angle) * dist;
-        drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, life), 0);
+      // 多层星星环
+      for (const ring of (fx.rings ?? [])) {
+        const ringLife = 1 - (audioClock() - fx.startedAt) / ring.life;
+        if (ringLife <= 0) continue;
+        const ringProgress = 1 - ringLife;
+        const ease = 1 - Math.pow(1 - ringProgress, 3);
+        for (const star of ring.stars) {
+          const dist = ease * ring.speed * 20;
+          const x = cx + Math.cos(star.angle) * dist * ring.rx;
+          const y = cy + Math.sin(star.angle) * dist * ring.ry;
+          drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, ringLife), 0);
+        }
       }
     } else if (fx.kind === 'normal') {
       // 普通命中：白色星 + 白色圆环（比 perfect 小、无变色）。
