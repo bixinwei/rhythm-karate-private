@@ -220,6 +220,8 @@ let lastBeat = -1;
 let judgement = '';
 let active = [];
 let touchFx = [];
+// 最近一次命中的时机偏移（帧，正=偏晚，负=偏早），驱动下屏的时机精度条。
+let lastHitOffsetFrames = 0;
 let frame = 0;
 // No-op in normal gameplay. Local audit mode replaces this with a publisher
 // so a browser replay can sample state without changing the visible UI.
@@ -813,6 +815,7 @@ function tweezersPunch(targetBeat = null) {
   if (!hair) { tweezers.tweezerAction = { kind: 'miss', at: beat }; armMissPunishment(tweezersBeatMs * .5 / 1000); missSound(); createImpact('empty'); return; }
   const perfectFrames = hair.fast || hair.type === 'long' ? 4 : 3;
   const perfect = withinFrames(framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs), punishedHitFrames(perfectFrames)); hair.state = 'hit'; hair.hitAt = beat; hair.perfect = perfect;
+  lastHitOffsetFrames = framesBetweenBeats(hair.hitBeat, beat, tweezersBeatMs);
   if (perfect) tweezers.perfectHits++;
   if (hair.type === 'long') {
     // gameplay_get_last_hit_offset() is the frame offset from gameplay_update_cue;
@@ -1069,6 +1072,7 @@ function punch() {
     return;
   }
   const timedPerfect = cheat || (candidate && withinFrames(karateFramesBetween(candidate.hitBeat, beat), punishedHitFrames(KARATE_PERFECT_FRAMES)));
+  if (candidate) lastHitOffsetFrames = karateFramesBetween(candidate.hitBeat, beat);
   // karate_cue_hit(): a rock or bomb punched below flow 3 is the "ouch" hit.
   // It still counts, but costs a flow level, plays the hard SFX and never
   // shows the normal punch cels.
@@ -1344,8 +1348,10 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
-  // Five-point, soft-glowing 3DS star sprite silhouette.
+// Heaven Studio 配方：白色五角星 + 描边（OverlayStarShader）+ 光晕（StarGlowMap），
+// 颜色可随时间循环（AceColorCycle）。hue 传 null 时为纯白星。
+function drawGlowStar(context, x, y, radius, hue, alpha = 1, rotation = 0) {
+  const color = hue == null ? '#ffffff' : `hsl(${((hue % 360) + 360) % 360}, 100%, 62%)`;
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   context.beginPath();
@@ -1355,15 +1361,14 @@ function draw3dsStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
     if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
   }
   context.closePath();
-  context.shadowColor = color; context.shadowBlur = radius * .72;
+  context.shadowColor = color; context.shadowBlur = radius * .9;
   context.fillStyle = color; context.fill();
   context.shadowBlur = 0;
+  context.strokeStyle = 'rgba(255,255,255,.85)'; context.lineWidth = Math.max(1, radius * .12); context.stroke();
   context.restore();
 }
 
-// The captures show a single ten-star circle for a perfect hit.
-const PERFECT_COLORS = ['#d8ff20', '#ff20d4', '#14f5ff', '#4dff7e', '#b6ff18', '#fff000', '#ff32d7', '#ffd91a', '#2dff8d', '#ff8a25'];
-// Result animations run for ~28 rendered frames in the reference captures.
+// 命中反馈的持续时间（约 28 帧）。
 const TOUCH_FX_SECONDS = 28 / 60;
 
 function drawTouchScreen() {
@@ -1408,41 +1413,41 @@ function drawTouchScreen() {
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
-      // Unlike the normal yellow ring, perfect stars keep travelling past
-      // the checkerboard and finally leave the lower screen.
+      // Heaven Studio 配方：中心变色主星（AceColorCycle）+ 白色圆环扩散（circle）
+      // + 一圈白色小星飞散（star1）。
       const travel = Math.min(1, progress);
-      const ease = travel;
-      for (let i = 0; i < PERFECT_COLORS.length; i++) {
-        const angle = -Math.PI / 2 + i * Math.PI * 2 / PERFECT_COLORS.length;
-        const targetX = cx + Math.cos(angle) * 150, targetY = cy + Math.sin(angle) * 150;
-        const startX = cx + Math.cos(angle) * 34, startY = cy + Math.sin(angle) * 34;
-        const x = startX + (targetX - startX) * ease, y = startY + (targetY - startY) * ease;
-        const spin = i * .19;
-        // Stars begin small in the centre cluster, growing continuously as
-        // the ring expands to its final diameter.
-        const scale = .55 + travel * .68;
-        draw3dsStar(touchCtx, x, y, 22.88 * scale, PERFECT_COLORS[i], Math.max(0, life), spin);
-      }
-    } else if (fx.kind === 'normal') {
-      const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
+      const hue = (audioClock() * 240) % 360;
+      drawGlowStar(touchCtx, cx, cy, 24 * (1 + travel * .35), hue, Math.max(0, life), 0);
+      const ringR = 18 + travel * 92;
+      touchCtx.save(); touchCtx.globalAlpha = Math.max(0, life) * (1 - travel * .55);
+      touchCtx.strokeStyle = '#ffffff'; touchCtx.lineWidth = 4;
+      touchCtx.beginPath(); touchCtx.arc(cx, cy, ringR, 0, Math.PI * 2); touchCtx.stroke();
+      touchCtx.restore();
       for (let i = 0; i < 8; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / 4;
-        const x = cx + Math.cos(angle) * 150 * ease, y = cy + Math.sin(angle) * 150 * ease;
-        draw3dsStar(touchCtx, x, y, 8.712 + travel * 13.464, '#ffe229', Math.max(0, life), 0);
-        draw3dsStar(touchCtx, cx + Math.cos(angle) * 78 * ease, cy + Math.sin(angle) * 78 * ease, 2.376 + travel * 3.96, '#ffe229', Math.max(0, life * .9), 0);
+        const x = cx + Math.cos(angle) * (30 + travel * 118);
+        const y = cy + Math.sin(angle) * (30 + travel * 118);
+        drawGlowStar(touchCtx, x, y, 9 + travel * 6, null, Math.max(0, life), i * .3);
       }
+    } else if (fx.kind === 'normal') {
+      // 普通命中：白色星 + 白色圆环（比 perfect 小、无变色）。
+      const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
+      drawGlowStar(touchCtx, cx, cy, 18 * (1 - travel * .4), null, Math.max(0, life), 0);
+      touchCtx.save(); touchCtx.globalAlpha = Math.max(0, life) * (1 - travel);
+      touchCtx.strokeStyle = '#ffffff'; touchCtx.lineWidth = 3;
+      touchCtx.beginPath(); touchCtx.arc(cx, cy, 16 + ease * 58, 0, Math.PI * 2); touchCtx.stroke();
+      touchCtx.restore();
     } else if (fx.kind === 'empty') {
-      // An empty punch produces only the single yellow centre star.
+      // 空挥：单颗白色小星。
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
-      draw3dsStar(touchCtx, cx, cy, 19.008 * pop, '#ffe229', Math.max(0, life), 0);
+      drawGlowStar(touchCtx, cx, cy, 14 * pop, null, Math.max(0, life), 0);
     }
     // Judgement belongs to the touch display, not over the GBA playfield.
     if (fx.label) {
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life);
-      // 3DS-style result hierarchy: a perfect carries colour, while a miss
-      // stays plain white. A normal hit has no text label.
-      touchCtx.fillStyle = fx.kind === 'perfect' ? '#ff4cdb' : '#ffffff';
+      // perfect 标签跟随变色星（AceColorCycle），miss 保持白色。
+      touchCtx.fillStyle = fx.kind === 'perfect' ? `hsl(${(audioClock() * 240) % 360}, 100%, 62%)` : '#ffffff';
       touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
       touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
       touchCtx.fillText(fx.label, cx, cy + 96);
@@ -1451,9 +1456,31 @@ function drawTouchScreen() {
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((item) => audioClock() - item.startedAt < TOUCH_FX_SECONDS);
+  // 时机精度条（TimingMetre）：常驻显示最近一次命中的早/晚偏移。
+  drawTimingMetre(touchCtx, w, h);
   // 双人联机: the lower screen doubles as the turn/score panel, exactly where a
   // 3DS game would put it.
   versusDrawLower(touchCtx, portedModes[mode] ? portedTick() : 0, TOUCH_W, TOUCH_H);
+}
+
+// Heaven Studio 的 TimingMetre：一条精度条 + 箭头，指示最近一次命中偏早还是偏晚。
+function drawTimingMetre(context, w, h) {
+  const cx = w / 2, y = 34, half = 96;
+  context.save();
+  context.fillStyle = 'rgba(255,255,255,.14)';
+  context.fillRect(cx - half, y - 3, half * 2, 6);
+  context.fillStyle = 'rgba(255,255,255,.55)';
+  context.fillRect(cx - 1, y - 9, 2, 18);
+  const clamped = Math.max(-5, Math.min(5, lastHitOffsetFrames));
+  const px = cx + clamped / 5 * half;
+  context.fillStyle = '#ffffff';
+  context.beginPath();
+  context.moveTo(px, y - 13); context.lineTo(px - 7, y - 22); context.lineTo(px + 7, y - 22);
+  context.closePath(); context.fill();
+  context.fillStyle = 'rgba(255,255,255,.6)'; context.font = '600 13px DM Mono, monospace'; context.textAlign = 'center';
+  context.fillText('早', cx - half - 16, y + 4);
+  context.fillText('晚', cx + half + 16, y + 4);
+  context.restore();
 }
 
 function finish() {
@@ -2793,6 +2820,7 @@ function portedPunch(inputEvent = null) {
     createImpact('empty'); return;
   }
   cue.state = 'hit'; const offset = signedFramesBetweenTicks(cue.hit, tick);
+  lastHitOffsetFrames = offset;
   cue.actionTick = tick;
   const basePerfectFrames = mode === 'power_calligraphy' || (mode === 'night_walk' && cue.kind === 'CUE_STAR_WAND') ? 4 : 3;
   const perfect = withinFrames(offset, punishedHitFrames(basePerfectFrames));
