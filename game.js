@@ -1371,39 +1371,41 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-// Heaven Studio 的 main.png（白色五角星 + 淡描边），用它的 alpha 蒙版画彩虹色五角星，
-// 照搬 AceColorCycle shader 的"贴图 alpha 蒙版 + 色带颜色"逻辑。模块级预加载。
+// Heaven Studio 的 child.png（白色四角星芒：中心光点 + 四条细长光线），用它的 alpha
+// 蒙版画彩虹色星芒，照搬 AceColorCycle shader 的"贴图 alpha 蒙版 + 色带颜色"逻辑。
 const starImage = new Image();
-starImage.src = 'assets/star-main.png';
-// 离屏 canvas：把 main.png 的白色替换成指定颜色，避免 source-in 污染主 canvas。
+starImage.src = 'assets/star-main.png?v=child';
+// 离屏 canvas：把 child.png 的白色替换成指定颜色，避免 source-in 污染主 canvas。
 const starTintCanvas = document.createElement('canvas');
-starTintCanvas.width = 64; starTintCanvas.height = 64;
+starTintCanvas.width = 128; starTintCanvas.height = 128;
 const starTintCtx = starTintCanvas.getContext('2d');
 function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   const size = radius * 2;
   if (starImage.complete && starImage.naturalWidth) {
-    // 在离屏 canvas 上把 main.png 的白色替换成 color，再画到主 canvas
-    starTintCtx.clearRect(0, 0, 64, 64);
-    starTintCtx.drawImage(starImage, 0, 0, 64, 64);
+    // 在离屏 canvas 上把 child.png 的白色替换成 color，再画到主 canvas
+    starTintCtx.clearRect(0, 0, 128, 128);
+    starTintCtx.drawImage(starImage, 0, 0, 128, 128);
     starTintCtx.globalCompositeOperation = 'source-in';
     starTintCtx.fillStyle = color;
-    starTintCtx.fillRect(0, 0, 64, 64);
+    starTintCtx.fillRect(0, 0, 128, 128);
     starTintCtx.globalCompositeOperation = 'source-over';
     context.drawImage(starTintCanvas, -size / 2, -size / 2, size, size);
   } else {
-    // 贴图未加载时回退到 canvas 五角星
+    // 贴图未加载时回退到 canvas 四角星芒
+    const long = radius, short = radius * .16;
     context.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = -Math.PI / 2 + i * Math.PI / 5;
-      const r = i % 2 ? radius * .47 : radius;
-      if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      context.moveTo(dx * short, dy * short);
+      context.lineTo(dx * long, dy * long);
     }
     context.closePath();
     context.shadowColor = color; context.shadowBlur = radius * .5;
-    context.fillStyle = color; context.fill();
+    context.strokeStyle = color; context.lineWidth = short * 2; context.stroke();
     context.shadowBlur = 0;
+    context.fillStyle = color;
+    context.beginPath(); context.arc(0, 0, short * 1.6, 0, Math.PI * 2); context.fill();
   }
   context.restore();
 }
