@@ -1109,15 +1109,14 @@ function punch() {
 }
 
 function createImpact(kind) {
-  // 下屏：三种结果动画。完美命中特效在时机条上（顶部），随命中精度上下偏移
-  // （MakeAccuracyVfx: barTransform.position + barScale.y * y）。
+  // 下屏：三种结果动画。完美命中特效在下屏中央（3DS 下屏的击中特效位置）。
   const safeRadius = 181;
   const fx = {
     startedAt: audioClock(),
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
-    x: kind === 'perfect' ? TOUCH_W / 2 : safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
-    y: kind === 'perfect' ? 34 + (lastHitOffsetFrames / 5) * 96 : safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
+    x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
+    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
     totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
   // 完美命中：Heaven Studio 完整结构（子发射器机制）：
