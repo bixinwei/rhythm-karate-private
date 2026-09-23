@@ -220,6 +220,8 @@ let lastBeat = -1;
 let judgement = '';
 let active = [];
 let touchFx = [];
+// 上屏命中特效（Skill Star 彩色星星 + 流光），记录命中点的上屏坐标。
+let stageFx = [];
 // 最近一次命中的时机偏移（帧，正=偏晚，负=偏早），驱动下屏的时机精度条。
 let lastHitOffsetFrames = 0;
 let frame = 0;
@@ -1108,11 +1110,8 @@ function punch() {
   setTimeout(() => { flash.className = ''; }, 180);
 }
 
-function createImpact(kind) {
-  // The 3DS lower screen has three distinct result animations.
-  // At their largest, the outer stars reach about 181px from the origin.
-  // Constrain the random origin by that radius so the completed ring remains
-  // entirely inside the 640 × 480 lower screen.
+function createImpact(kind, x, y) {
+  // 下屏：三种结果动画（棋盘格上的命中反馈）。
   const safeRadius = 181;
   touchFx.push({
     startedAt: audioClock(),
@@ -1121,6 +1120,14 @@ function createImpact(kind) {
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
   });
+  // 上屏：完美命中时在命中点爆出 Skill Star 彩色星星 + 流光（Heaven Studio 配方）。
+  if (kind === 'perfect') {
+    stageFx.push({
+      startedAt: audioClock(),
+      x: x ?? VIEW_W / 2,
+      y: y ?? VIEW_H / 2
+    });
+  }
 }
 
 function render(beat) {
@@ -1349,9 +1356,8 @@ function drawObjectShadow(position) {
 }
 
 // Heaven Studio 配方：白色五角星 + 描边（OverlayStarShader）+ 光晕（StarGlowMap），
-// 颜色可随时间循环（AceColorCycle）。hue 传 null 时为纯白星。
-function drawGlowStar(context, x, y, radius, hue, alpha = 1, rotation = 0) {
-  const color = hue == null ? '#ffffff' : `hsl(${((hue % 360) + 360) % 360}, 100%, 62%)`;
+// 颜色由 AceColorCycle 的彩虹色带映射决定。color 传 CSS 颜色字符串。
+function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
   context.beginPath();
@@ -1366,6 +1372,44 @@ function drawGlowStar(context, x, y, radius, hue, alpha = 1, rotation = 0) {
   context.shadowBlur = 0;
   context.strokeStyle = 'rgba(255,255,255,.85)'; context.lineWidth = Math.max(1, radius * .12); context.stroke();
   context.restore();
+}
+
+// acecolors.png 的完整彩虹色带（青→绿→黄→橙→红粉→粉紫），AceColorCycle shader 用它
+// 给星星着色，并按 _Speed/4 的速度随时间滚动。
+const RAINBOW = ['#00FFFF', '#27FFD4', '#75FF7B', '#C6FF26', '#FFFF00', '#FFC626', '#FF757C', '#FF27D4'];
+
+// 上屏完美命中特效，照搬 Heaven Studio TimingAccuracy.prefab 的 Just00 粒子系统：
+//   * 中心一个黄色光晕（Ace SpriteRenderer，m_Color 黄、alpha 0.094）
+//   * 一圈五角星（main.png），startColor 彩虹渐变、startRotation 2π 随机旋转、
+//     startSpeed 5 向外飞散、startLifetime 0.45 秒、无重力
+// 坐标是原生 240×160 空间（×4 后落到 960 画布）。
+const STAGE_FX_SECONDS = 0.45;
+function drawStageFx(ctx) {
+  for (const fx of stageFx) {
+    const life = 1 - (audioClock() - fx.startedAt) / STAGE_FX_SECONDS;
+    if (life <= 0) continue;
+    const progress = 1 - life;
+    const cx = fx.x * 4, cy = fx.y * 4;
+    // 中心黄色光晕（Ace SpriteRenderer）
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, life) * 0.094;
+    ctx.fillStyle = '#FFFF00';
+    ctx.beginPath(); ctx.arc(cx, cy, 44 * (1 + progress * .4), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // 一圈彩色五角星，彩虹色带 + 颜色随时间滚动（AceColorCycle _Speed/4）+ 随机旋转
+    const scroll = Math.floor(audioClock() * 2.5 * RAINBOW.length) % RAINBOW.length;
+    for (let i = 0; i < 10; i++) {
+      const angle = i * Math.PI * 2 / 10;
+      const dist = progress * 92;
+      const x = cx + Math.cos(angle) * dist;
+      const y = cy + Math.sin(angle) * dist;
+      const color = RAINBOW[(i + scroll) % RAINBOW.length];
+      const size = 9 + (i % 3) * 2.5;
+      const rot = (i * 137.5) % 360;
+      drawGlowStar(ctx, x, y, size, color, Math.max(0, life), rot * Math.PI / 180);
+    }
+  }
+  stageFx = stageFx.filter(fx => audioClock() - fx.startedAt < STAGE_FX_SECONDS);
 }
 
 // 命中反馈的持续时间（约 28 帧）。
@@ -2783,6 +2827,7 @@ function drawPorted(tick, cfg) {
     ctx.restore();
   }
   drawTextBox();
+  drawStageFx(ctx);
   versusDrawUpper(ctx, tick, VIEW_W, VIEW_H);
   drawTouchScreen();
 }
@@ -2841,7 +2886,10 @@ function portedPunch(inputEvent = null) {
   if (sound) playPortedSfx(sound);
   if (mode === 'night_walk') playNightWalkDrum(cue,perfect,tick);
   if (versusActive()) RhythmVersus.recordLocal(versus.session, cue.index, perfect ? 'perfect' : 'barely', offset);
-  createImpact(perfect ? 'perfect' : 'normal');
+  // 太空棒球：命中点在击球手位置（球被击中的地方）。
+  const impactX = mode === 'spaceball' ? portedModes.spaceball.actor[0] : undefined;
+  const impactY = mode === 'spaceball' ? portedModes.spaceball.actor[1] : undefined;
+  createImpact(perfect ? 'perfect' : 'normal', impactX, impactY);
 }
 
 // Local-only inspection hook used by the automated browser audit. It is not
