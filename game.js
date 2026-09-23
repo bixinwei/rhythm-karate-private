@@ -1125,12 +1125,14 @@ function createImpact(kind) {
 //   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
-    // 完美命中：下屏中央向外喷一圈彩虹五角星。完整圆环（arc 360，上下不缺角）。
+    // 完美命中：下屏中央向外喷一圈彩虹五角星，完整圆环（arc 360，上下不缺角）。
+    // 原版结构：外层主环（speed 5, scale 1）在爆开后星环整体顺时针旋一个小角度；
+    // 内层副环（speed 4, scale 0.685）星星更小、爆开后位置固定不旋转。
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 25 },
-      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 25 }
+      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 25, drift: 0.436 },
+      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 25, drift: 0 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1459,13 +1461,15 @@ function drawTouchScreen() {
         const ringProgress = 1 - ringLife;
         for (const star of ring.stars) {
           // 匀速飞散（无缓动、无重力）：dist = speed × 折算像素。
+          // 星环整体角度 = 基础角 + 顺时针漂移（drift）。外层 drifts 顺时针一小角度，内层 drift=0 固定。
+          const ringAngle = star.angle + (ring.drift ?? 0) * ringProgress;
           const dist = ringProgress * ring.speed * 30;
-          const x = cx + Math.cos(star.angle) * dist;
-          const y = cy + Math.sin(star.angle) * dist;
+          const x = cx + Math.cos(ringAngle) * dist;
+          const y = cy + Math.sin(ringAngle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5
           const sizeScale = ringProgress < 0.9 ? 1 : 1 - (ringProgress - 0.9) / 0.1 * 0.5;
-          // RotationModule：飞散中旋转 25°（0.436 弧度）
-          const rotation = star.rotation + 0.436 * ringProgress;
+          // 每颗五角星只做自身随机朝向，不再整体自转（旋转交给星环 drift）。
+          const rotation = star.rotation;
           drawGlowStar(touchCtx, x, y, star.size * sizeScale, star.color, Math.max(0, ringLife), rotation);
           // 子发射器（JustSub）：主星死亡后，在终点触发原地子星（life 0.3）
           if (ringProgress >= 1) {
