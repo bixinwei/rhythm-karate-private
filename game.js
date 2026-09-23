@@ -1468,14 +1468,16 @@ function drawTouchScreen() {
           const y = cy + Math.sin(ringAngle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5
           const sizeScale = ringProgress < 0.9 ? 1 : 1 - (ringProgress - 0.9) / 0.1 * 0.5;
+          // 透明度：全程全不透明，只在最后 10% 生命周期淡出到 0（不要从出生就逐渐透明）。
+          const starAlpha = ringProgress < 0.9 ? 1 : 1 - (ringProgress - 0.9) / 0.1;
           // 每颗五角星只做自身随机朝向，不再整体自转（旋转交给星环 drift）。
           const rotation = star.rotation;
-          drawGlowStar(touchCtx, x, y, star.size * sizeScale, star.color, Math.max(0, ringLife), rotation);
+          drawGlowStar(touchCtx, x, y, star.size * sizeScale, star.color, starAlpha, rotation);
           // 子发射器（JustSub）：主星死亡后，在终点触发原地子星（life 0.3）
           if (ringProgress >= 1) {
             const subLife = 1 - (audioClock() - fx.startedAt - ring.life) / 0.3;
             if (subLife > 0) {
-              drawGlowStar(touchCtx, x, y, star.sub.size, star.sub.color, Math.max(0, subLife), star.rotation);
+              drawGlowStar(touchCtx, x, y, star.sub.size, star.sub.color, subLife < 0.8 ? 1 : subLife / 0.8, star.rotation);
             }
           }
         }
