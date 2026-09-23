@@ -1412,28 +1412,28 @@ function drawTouchScreen() {
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
-      // Heaven Studio TimingAccuracy.prefab 的 Just00 粒子系统（下屏）：
-      // 中心黄色光晕（Ace SpriteRenderer）+ 一圈彩虹色五角星（main.png），
-      // 颜色随时间滚动（AceColorCycle _Speed/4）、随机旋转（startRotation 2π）、
-      // 向外飞散（startSpeed 5）、生命周期 0.45 秒。
+      // Heaven Studio 完美命中（Rating.Just）粒子：一圈彩虹色五角星（main.png），
+      // 每颗星固定彩虹色（不快速滚动）、持续旋转（rotationOverLifetime）、
+      // 向外飞散（startSpeed 5）、平滑渐隐（0.45 秒生命周期）。
       const travel = Math.min(1, progress);
-      const scroll = Math.floor(audioClock() * 2.5 * RAINBOW.length) % RAINBOW.length;
-      // 中心黄色光晕
+      const ease = 1 - Math.pow(1 - travel, 3);
+      // 中心黄色光晕（Ace SpriteRenderer）
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life) * 0.094;
       touchCtx.fillStyle = '#FFFF00';
       touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + travel * .4), 0, Math.PI * 2); touchCtx.fill();
       touchCtx.restore();
-      // 一圈彩虹色五角星
+      // 一圈彩虹色五角星：固定颜色 + 持续旋转 + 平滑渐隐
       for (let i = 0; i < 10; i++) {
         const angle = i * Math.PI * 2 / 10;
-        const dist = travel * 92;
+        const dist = ease * 92;
         const x = cx + Math.cos(angle) * dist;
         const y = cy + Math.sin(angle) * dist;
-        const color = RAINBOW[(i + scroll) % RAINBOW.length];
+        const color = RAINBOW[i % RAINBOW.length];
         const size = 11 + (i % 3) * 3;
-        const rot = (i * 137.5) % 360;
-        drawGlowStar(touchCtx, x, y, size, color, Math.max(0, life), rot * Math.PI / 180);
+        const rot = (i * 137.5) % 360 + travel * 72;   // 初始随机角 + 飞散中旋转一个对称周期（五角星 72° 对称）
+        const fade = Math.max(0, life) * (1 - travel * .3);  // 平滑渐隐
+        drawGlowStar(touchCtx, x, y, size, color, fade, rot * Math.PI / 180);
       }
     } else if (fx.kind === 'normal') {
       // 普通命中：白色星 + 白色圆环（比 perfect 小、无变色）。
@@ -1502,7 +1502,7 @@ function finish() {
 // BeatScripts.  Their clocks, image manifests and original PCM music all load
 // before the lead-in begins; no render-frame clock is used for judgement.
 const portedModes = {
-  spaceball: { label: '太空棒球', bg: 'spaceball_bg_map.png', backdrop: '#000070', assetScale: 4, idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
+  spaceball: { label: '太空棒球', bg: 'spaceball_bg_map.png', backdrop: '#000070', idle: 1, action: [1,2,3,4,5], actor: [190,105], object: 6, duration: { CUE_LOW_FAST:12, CUE_LOW:24, CUE_HIGH:48, CUE_HIGH_FAST:36 }, music: [['spaceball_bgm_events',75]], sfx: { spawn:'spaceball_throw_events', high:'spaceball_high_events', hit:'spaceball_hit_events', barely:'spaceball_barely_events', land:'spaceball_land_events' } },
   samurai_slice: { label: '拔刀术', bg: 'samurai_slice_bg_map.png', backdrop: '#f8f8f8', overlays: ['samurai_slice_bg_map_fog_bottom.png','samurai_slice_bg_map_fog_top.png'], idle: 20, action: [21,22,23,24,25,26,27], actor: [105,108], object: 58, duration: { CUE_FIRST:24, CUE_SECOND:24 }, music: [['samurai_bgm1_events',100],['samurai_bgm2_events',100],['samurai_bgm3_events',100],['samurai_result_events',100]], sfx: { spawn:'samurai_appear_events', phrase1a:'samurai_phrase1a_events', phrase2a:'samurai_phrase2a_events', phrase3a:'samurai_phrase3a_events', phrase1b:'samurai_phrase1b_events', phrase2b:'samurai_phrase2b_events', phrase3b:'samurai_phrase3b_events', hit:'samurai_cut1_events', hit2:'samurai_cut2_events', barely:'samurai_miss_events' } },
   night_walk: { label: '夜空漫步', bg: 'night_walk_bg_map.png', backdrop: '#000000', idle: 7, action: [3,4,5,4,3,7,8,9,10], actor: [64,120], object: 29, duration: { CUE_KICK:192, CUE_SNARE:192, CUE_ROLL:192, CUE_CYMBAL:192, CUE_STAR_WAND:192 }, music: [['night_walk_bgm_events',80]], sfx: { count:'night_walk_count_events', kick:'night_walk_kick_events', snare:'night_walk_snare_events', cymbal:'night_walk_cymbal_events', roll:'night_walk_roll_events', default:'night_walk_default_events', open:'night_walk_open_events', barely:'night_walk_barely_events', barelySnare:'night_walk_barely_snare_events', miss:'night_walk_miss_events', fall:'night_walk_fall_events', damage:'night_walk_damage_events' } },
   power_calligraphy: { label: '节奏写书', bg: 'power_calligraphy_bg_map.png', backdrop: '#f8f8f8', idle: 128, action: [128,129], actor: [120,84], object: 0, duration: {}, music: [['calligraphy_bgm1_events',80],['calligraphy_bgm2_events',80],['calligraphy_bgm3_events',80],['calligraphy_end_events',80]], sfx: { hit:'calligraphy_hit_events', hit2:'calligraphy_hit2_events', barely:'calligraphy_barely_events', barelyUnuu:'calligraphy_unuu_events', barelyOuch:'calligraphy_ouch_events', miss:'calligraphy_miss_events', ho:'calligraphy_ho_events', start:'calligraphy_start_events', swing1:'calligraphy_swing1_events', chargeVoice:'calligraphy_charge_voice_events', ha1:'calligraphy_ha1_events', ha2:'calligraphy_ha2_events', ha3:'calligraphy_ha3_events', break:'calligraphy_break_events', swing2:'calligraphy_swing2_events', furi:'calligraphy_furi_events' } }
