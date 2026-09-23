@@ -1118,16 +1118,16 @@ function createImpact(kind) {
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
   };
-  // 完美命中：多层星星环（Heaven Studio 完整结构，共用一个中心）：
-//   Just00 主环 = 椭圆（scale 18×10，横向 1.8 倍），speed 5，life 0.45，随机彩虹色
+  // 完美命中：多层圆形星星环（Heaven Studio 完整结构，共用一个中心）：
+//   Just00 主环 = 圆形（scale 1×1），speed 5，life 0.45，随机彩虹色
 //   Just01 副环 = 圆形（scale 1×1），speed 4，life 0.4，随机彩虹色
 //   JustSub 子环 = 原地星（speed 0），life 0.3，固定色
-// 椭圆环 + 圆环叠加、不同速度飞散，形成"星环旋转"感。
+// 每颗星随机旋转 0-360°（startRotation 2π 随机范围），多层叠加形成"星环旋转"感。
   if (kind === 'perfect') {
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, rx: 1.8, ry: 1.0, offset: 0, randomColor: true },
-      { speed: 4, life: 0.4, count: 10, rx: 1.0, ry: 1.0, offset: 18, randomColor: true },
-      { speed: 0, life: 0.3, count: 6, rx: 0.5, ry: 0.5, offset: 9, randomColor: false }
+      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true },
+      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true },
+      { speed: 0, life: 0.3, count: 6, offset: 9, randomColor: false }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1135,7 +1135,8 @@ function createImpact(kind) {
         ring.stars.push({
           angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          size: 9 + Math.random() * 8
+          size: 9 + Math.random() * 8,
+          rotation: Math.random() * Math.PI * 2   // startRotation 2π 随机范围
         });
       }
     }
@@ -1443,7 +1444,7 @@ function drawTouchScreen() {
       touchCtx.fillStyle = '#FFFF00';
       touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + progress * .4), 0, Math.PI * 2); touchCtx.fill();
       touchCtx.restore();
-      // 多层星星环
+      // 多层圆形星星环
       for (const ring of (fx.rings ?? [])) {
         const ringLife = 1 - (audioClock() - fx.startedAt) / ring.life;
         if (ringLife <= 0) continue;
@@ -1451,9 +1452,9 @@ function drawTouchScreen() {
         const ease = 1 - Math.pow(1 - ringProgress, 3);
         for (const star of ring.stars) {
           const dist = ease * ring.speed * 20;
-          const x = cx + Math.cos(star.angle) * dist * ring.rx;
-          const y = cy + Math.sin(star.angle) * dist * ring.ry;
-          drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, ringLife), 0);
+          const x = cx + Math.cos(star.angle) * dist;
+          const y = cy + Math.sin(star.angle) * dist;
+          drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, ringLife), star.rotation);
         }
       }
     } else if (fx.kind === 'normal') {
