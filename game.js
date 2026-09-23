@@ -1369,21 +1369,34 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-// Heaven Studio 配方：实心五角星（main.png），颜色由 AceColorCycle 的彩虹色带映射，
-// 纯色填充 + 轻微光晕（StarGlowMap），不加白色描边（描边会让颜色发白变淡）。
+// Heaven Studio 的 main.png（白色五角星 + 淡描边），用它的 alpha 蒙版画彩虹色五角星，
+// 照搬 AceColorCycle shader 的"贴图 alpha 蒙版 + 色带颜色"逻辑。模块级预加载。
+const starImage = new Image();
+starImage.src = 'assets/star-main.png';
 function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
-  context.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + i * Math.PI / 5;
-    const r = i % 2 ? radius * .47 : radius;
-    if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  const size = radius * 2;
+  if (starImage.complete && starImage.naturalWidth) {
+    // 用 main.png 的 alpha 蒙版画彩虹色五角星（source-in 保留贴图 alpha）
+    context.drawImage(starImage, -size / 2, -size / 2, size, size);
+    context.globalCompositeOperation = 'source-in';
+    context.fillStyle = color;
+    context.fillRect(-size / 2, -size / 2, size, size);
+    context.globalCompositeOperation = 'source-over';
+  } else {
+    // 贴图未加载时回退到 canvas 五角星
+    context.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const r = i % 2 ? radius * .47 : radius;
+      if (i) context.lineTo(Math.cos(a) * r, Math.sin(a) * r); else context.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    context.closePath();
+    context.shadowColor = color; context.shadowBlur = radius * .5;
+    context.fillStyle = color; context.fill();
+    context.shadowBlur = 0;
   }
-  context.closePath();
-  context.shadowColor = color; context.shadowBlur = radius * .5;
-  context.fillStyle = color; context.fill();
-  context.shadowBlur = 0;
   context.restore();
 }
 
@@ -1454,7 +1467,11 @@ function drawTouchScreen() {
           const dist = ease * ring.speed * 20;
           const x = cx + Math.cos(star.angle) * dist;
           const y = cy + Math.sin(star.angle) * dist;
-          drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, ringLife), star.rotation);
+          // SizeModule：最后 10% 生命周期缩小到 0.5
+          const sizeScale = ringProgress < 0.9 ? 1 : 1 - (ringProgress - 0.9) / 0.1 * 0.5;
+          // RotationModule：飞散中旋转 25°（0.436 弧度）
+          const rotation = star.rotation + 0.436 * ringProgress;
+          drawGlowStar(touchCtx, x, y, star.size * sizeScale, star.color, Math.max(0, ringLife), rotation);
         }
       }
     } else if (fx.kind === 'normal') {
