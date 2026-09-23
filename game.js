@@ -1122,11 +1122,12 @@ function createImpact(kind) {
   // 完美命中：Heaven Studio 完整结构（子发射器机制）：
 //   Just00 主环（speed 5, life 0.45, scale 1）+ Just01 副环（speed 4, life 0.4, scale 0.685），
 //   主星飞散死亡后，在终点触发 JustSub 子星（speed 0, life 0.3, 原地）。
+//   startSize 是常量 0.7（minMaxState 0），所以同一环的星星一样大，只有不同环（scale）不同。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true, scale: 1 },
-      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true, scale: 0.685 }
+      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true, scale: 1, size: 15 },
+      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true, scale: 0.685, size: 15 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1134,10 +1135,10 @@ function createImpact(kind) {
         ring.stars.push({
           angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          size: (9 + Math.random() * 8) * ring.scale,
+          size: ring.size * ring.scale,   // 同一环一样大，不同环按 scale 缩放
           rotation: Math.random() * Math.PI * 2,
           // 子星（JustSub）：主星死亡后在终点触发，原地，life 0.3
-          sub: { color: '#FFFFFF', size: (6 + Math.random() * 4) * ring.scale }
+          sub: { color: '#FFFFFF', size: 10 * ring.scale }
         });
       }
     }
