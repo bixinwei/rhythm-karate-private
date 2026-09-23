@@ -1457,14 +1457,13 @@ function drawTouchScreen() {
         const total = ring.flight + ring.settle;
         if (age >= total) continue;
         const flightT = Math.min(1, age / ring.flight);
-        // 爆开（飞散）完成后才开始的整圈顺时针旋转：progress 只在 settle 阶段推进。
-        const settleT = age <= ring.flight ? 0 : Math.min(1, (age - ring.flight) / ring.settle);
+        // 内圈 spin=0 固定；外圈的顺时针旋转在飞散（爆开）过程中同步进行，而不是等到最大半径后。
         const dist = flightT * ring.radius;
         const lifeT = age / total;
         // 透明度：全程不透明，只在最后 15% 淡出。
         const alpha = lifeT < 0.85 ? 1 : Math.max(0, 1 - (lifeT - 0.85) / 0.15);
         for (const star of ring.stars) {
-          const ringAngle = star.angle + (ring.spin || 0) * settleT;
+          const ringAngle = star.angle + (ring.spin || 0) * flightT;
           const x = cx + Math.cos(ringAngle) * dist;
           const y = cy + Math.sin(ringAngle) * dist;
           drawGlowStar(touchCtx, x, y, ring.size, star.color, alpha, star.rotation);
