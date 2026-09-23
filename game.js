@@ -1125,25 +1125,18 @@ function createImpact(kind) {
 //   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
-    // 视频实测（captures-frames/frame_023–035）：完美命中特效以下屏中央为原点，
-    // 向左右两侧射出彩虹光线，彩色区域落在画面左右两边，而不是 360° 均匀星环。
+    // 完美命中：下屏中央向外喷一圈彩虹五角星。完整圆环（arc 360，上下不缺角）。
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
     fx.rings = [
-      { flight: TOUCH_W / 2, life: 0.45, count: 14, randomColor: true, scale: 1, size: 25 },
-      { flight: TOUCH_W / 2 * 0.685, life: 0.4, count: 14, randomColor: true, scale: 0.685, size: 25 }
+      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 25 },
+      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 25 }
     ];
-    const SPREAD = Math.PI * 0.25;  // 左右各一个 ±45° 的水平扇面（光带只朝左右，不朝上下）
     for (const ring of fx.rings) {
       ring.stars = [];
-      const perSide = Math.floor(ring.count / 2);
       for (let i = 0; i < ring.count; i++) {
-        const side = (i % 2 === 0) ? 0 : Math.PI;      // 0 = 向右, π = 向左
-        const k = Math.floor(i / 2);
-        const t = perSide > 1 ? k / (perSide - 1) : 0;  // 0..1 在扇面内均匀展开
-        const angle = side + (t - 0.5) * 2 * SPREAD;
         ring.stars.push({
-          angle,
+          angle: i * Math.PI * 2 / ring.count,   // 360° 均匀，构成完整圆环
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
           size: ring.size * ring.scale,
           rotation: Math.random() * Math.PI * 2,
@@ -1380,42 +1373,23 @@ function drawObjectShadow(position) {
   ctx.restore();
 }
 
-// Heaven Studio 的 child.png（白色四角星芒：中心光点 + 四条细长光线），用它的 alpha
-// 蒙版画彩虹色星芒，照搬 AceColorCycle shader 的"贴图 alpha 蒙版 + 色带颜色"逻辑。
-const starImage = new Image();
-starImage.src = 'assets/star-main.png?v=child';
-// 离屏 canvas：把 child.png 的白色替换成指定颜色，避免 source-in 污染主 canvas。
-const starTintCanvas = document.createElement('canvas');
-starTintCanvas.width = 128; starTintCanvas.height = 128;
-const starTintCtx = starTintCanvas.getContext('2d');
+// 五角星（实体填充），中心带光晕。颜色 = 色带里的彩虹色，旋转随飞散推进。
 function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save(); context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = alpha;
-  const size = radius * 2;
-  if (starImage.complete && starImage.naturalWidth) {
-    // 在离屏 canvas 上把 child.png 的白色替换成 color，再画到主 canvas
-    starTintCtx.clearRect(0, 0, 128, 128);
-    starTintCtx.drawImage(starImage, 0, 0, 128, 128);
-    starTintCtx.globalCompositeOperation = 'source-in';
-    starTintCtx.fillStyle = color;
-    starTintCtx.fillRect(0, 0, 128, 128);
-    starTintCtx.globalCompositeOperation = 'source-over';
-    context.drawImage(starTintCanvas, -size / 2, -size / 2, size, size);
-  } else {
-    // 贴图未加载时回退到 canvas 四角星芒
-    const long = radius, short = radius * .16;
-    context.beginPath();
-    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
-      context.moveTo(dx * short, dy * short);
-      context.lineTo(dx * long, dy * long);
-    }
-    context.closePath();
-    context.shadowColor = color; context.shadowBlur = radius * .5;
-    context.strokeStyle = color; context.lineWidth = short * 2; context.stroke();
-    context.shadowBlur = 0;
-    context.fillStyle = color;
-    context.beginPath(); context.arc(0, 0, short * 1.6, 0, Math.PI * 2); context.fill();
+  // 五角星外顶点在 r，内顶点在 r * 0.5，10 个点交替构成经典五角星。
+  const outer = radius, inner = radius * .5;
+  context.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const rr = (i % 2 === 0) ? outer : inner;
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    const px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+    if (i === 0) context.moveTo(px, py); else context.lineTo(px, py);
   }
+  context.closePath();
+  context.shadowColor = color; context.shadowBlur = radius * .6;
+  context.fillStyle = color; context.fill();
+  context.shadowBlur = 0;
   context.restore();
 }
 
@@ -1484,8 +1458,8 @@ function drawTouchScreen() {
         if (ringLife <= 0) continue;
         const ringProgress = 1 - ringLife;
         for (const star of ring.stars) {
-          // 匀速飞散（无缓动、无重力）：主环飞到左右屏幕边缘，副环飞到 68.5% 处。
-          const dist = ringProgress * (ring.flight ?? ring.speed * 30);
+          // 匀速飞散（无缓动、无重力）：dist = speed × 折算像素。
+          const dist = ringProgress * ring.speed * 30;
           const x = cx + Math.cos(star.angle) * dist;
           const y = cy + Math.sin(star.angle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5
