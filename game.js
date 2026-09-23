@@ -1124,9 +1124,11 @@ function createImpact(kind) {
 //   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
+    // 飞散距离 = speed × life（世界单位），星星直径 = startSize 0.7，比例 0.31。
+    // 飞散距离映射到约 150 像素（下屏中央到边缘），星星半径约 0.31/2 × 150 ≈ 23。
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 15 },
-      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 15 }
+      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 23 },
+      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 23 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1472,7 +1474,7 @@ function drawTouchScreen() {
         const ringProgress = 1 - ringLife;
         for (const star of ring.stars) {
           // 匀速飞散（startSpeed 恒定，无缓动、无重力）：dist = speed × time
-          const dist = ringProgress * ring.speed * 20;
+          const dist = ringProgress * ring.speed * 30;
           const x = cx + Math.cos(star.angle) * dist;
           const y = cy + Math.sin(star.angle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5
