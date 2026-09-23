@@ -1116,18 +1116,17 @@ function createImpact(kind) {
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
-    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
+    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
+    totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
-  // 完美命中：多层圆形星星环（Heaven Studio 完整结构，共用一个中心）：
-//   Just00 主环 = 圆形（scale 1×1），speed 5，life 0.45，随机彩虹色
-//   Just01 副环 = 圆形（scale 1×1），speed 4，life 0.4，随机彩虹色
-//   JustSub 子环 = 原地星（speed 0），life 0.3，固定色
-// 每颗星随机旋转 0-360°（startRotation 2π 随机范围），多层叠加形成"星环旋转"感。
+  // 完美命中：Heaven Studio 完整结构（子发射器机制）：
+//   Just00 主环（speed 5, life 0.45）+ Just01 副环（speed 4, life 0.4），
+//   主星飞散死亡后，在终点触发 JustSub 子星（speed 0, life 0.3, 原地）。
+//   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
     fx.rings = [
       { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true },
-      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true },
-      { speed: 0, life: 0.3, count: 6, offset: 9, randomColor: false }
+      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1136,7 +1135,9 @@ function createImpact(kind) {
           angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
           size: 9 + Math.random() * 8,
-          rotation: Math.random() * Math.PI * 2   // startRotation 2π 随机范围
+          rotation: Math.random() * Math.PI * 2,
+          // 子星（JustSub）：主星死亡后在终点触发，原地，life 0.3
+          sub: { color: '#FFFFFF', size: 6 + Math.random() * 4 }
         });
       }
     }
@@ -1457,7 +1458,7 @@ function drawTouchScreen() {
       touchCtx.fillStyle = '#FFFF00';
       touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + progress * .4), 0, Math.PI * 2); touchCtx.fill();
       touchCtx.restore();
-      // 多层圆形星星环
+      // 多层圆形星星环（子发射器机制）
       for (const ring of (fx.rings ?? [])) {
         const ringLife = 1 - (audioClock() - fx.startedAt) / ring.life;
         if (ringLife <= 0) continue;
@@ -1472,6 +1473,13 @@ function drawTouchScreen() {
           // RotationModule：飞散中旋转 25°（0.436 弧度）
           const rotation = star.rotation + 0.436 * ringProgress;
           drawGlowStar(touchCtx, x, y, star.size * sizeScale, star.color, Math.max(0, ringLife), rotation);
+          // 子发射器（JustSub）：主星死亡后，在终点触发原地子星（life 0.3）
+          if (ringProgress >= 1) {
+            const subLife = 1 - (audioClock() - fx.startedAt - ring.life) / 0.3;
+            if (subLife > 0) {
+              drawGlowStar(touchCtx, x, y, star.sub.size, star.sub.color, Math.max(0, subLife), star.rotation);
+            }
+          }
         }
       }
     } else if (fx.kind === 'normal') {
@@ -1500,7 +1508,7 @@ function drawTouchScreen() {
     }
   }
   touchCtx.globalAlpha = 1;
-  touchFx = touchFx.filter((item) => audioClock() - item.startedAt < TOUCH_FX_SECONDS);
+  touchFx = touchFx.filter((item) => audioClock() - item.startedAt < (item.totalLife ?? TOUCH_FX_SECONDS));
   // 时机精度条（TimingMetre）：常驻显示最近一次命中的早/晚偏移。
   drawTimingMetre(touchCtx, w, h);
   // 双人联机: the lower screen doubles as the turn/score panel, exactly where a
