@@ -1111,13 +1111,27 @@ function punch() {
 function createImpact(kind) {
   // 下屏：三种结果动画（棋盘格上的命中反馈）。
   const safeRadius = 181;
-  touchFx.push({
+  const fx = {
     startedAt: audioClock(),
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2)
-  });
+  };
+  // 完美命中：预生成一圈星星（Heaven Studio Just00 粒子：随机彩虹色、随机角度、
+  // 随机大小、随机速度，不旋转，alpha 渐隐）。
+  if (kind === 'perfect') {
+    fx.stars = [];
+    for (let i = 0; i < 10; i++) {
+      fx.stars.push({
+        angle: Math.random() * Math.PI * 2,
+        color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)],
+        size: 9 + Math.random() * 8,
+        speed: 60 + Math.random() * 50
+      });
+    }
+  }
+  touchFx.push(fx);
 }
 
 function render(beat) {
@@ -1412,9 +1426,8 @@ function drawTouchScreen() {
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
-      // Heaven Studio 完美命中（Rating.Just）粒子：一圈彩虹色五角星（main.png），
-      // 每颗星固定彩虹色（不快速滚动）、持续旋转（rotationOverLifetime）、
-      // 向外飞散（startSpeed 5）、平滑渐隐（0.45 秒生命周期）。
+      // Heaven Studio Just00 粒子：一圈随机彩虹色五角星，随机角度/大小/速度向外
+      // 飞散，不旋转，alpha 渐隐（startColor atime 1→0）。
       const travel = Math.min(1, progress);
       const ease = 1 - Math.pow(1 - travel, 3);
       // 中心黄色光晕（Ace SpriteRenderer）
@@ -1423,17 +1436,12 @@ function drawTouchScreen() {
       touchCtx.fillStyle = '#FFFF00';
       touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + travel * .4), 0, Math.PI * 2); touchCtx.fill();
       touchCtx.restore();
-      // 一圈彩虹色五角星：固定颜色 + 持续旋转 + 平滑渐隐
-      for (let i = 0; i < 10; i++) {
-        const angle = i * Math.PI * 2 / 10;
-        const dist = ease * 92;
-        const x = cx + Math.cos(angle) * dist;
-        const y = cy + Math.sin(angle) * dist;
-        const color = RAINBOW[i % RAINBOW.length];
-        const size = 11 + (i % 3) * 3;
-        const rot = (i * 137.5) % 360 + travel * 72;   // 初始随机角 + 飞散中旋转一个对称周期（五角星 72° 对称）
-        const fade = Math.max(0, life) * (1 - travel * .3);  // 平滑渐隐
-        drawGlowStar(touchCtx, x, y, size, color, fade, rot * Math.PI / 180);
+      // 一圈随机彩虹色五角星
+      for (const star of (fx.stars ?? [])) {
+        const dist = ease * star.speed;
+        const x = cx + Math.cos(star.angle) * dist;
+        const y = cy + Math.sin(star.angle) * dist;
+        drawGlowStar(touchCtx, x, y, star.size, star.color, Math.max(0, life), 0);
       }
     } else if (fx.kind === 'normal') {
       // 普通命中：白色星 + 白色圆环（比 perfect 小、无变色）。
