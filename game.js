@@ -220,6 +220,7 @@ let lastBeat = -1;
 let judgement = '';
 let active = [];
 let touchFx = [];
+window.__touchFx = touchFx;
 // 最近一次命中的时机偏移（帧，正=偏晚，负=偏早），驱动下屏的时机精度条。
 let lastHitOffsetFrames = 0;
 let frame = 0;
@@ -1124,20 +1125,28 @@ function createImpact(kind) {
 //   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
-    // 飞散距离 = speed × life（世界单位），星星直径 = startSize 0.7，比例 0.31。
-    // 飞散距离映射到约 150 像素（下屏中央到边缘），星星半径约 0.31/2 × 150 ≈ 23。
+    // 视频实测（captures-frames/frame_023–035）：完美命中特效以下屏中央为原点，
+    // 向左右两侧射出彩虹光线，彩色区域落在画面左右两边，而不是 360° 均匀星环。
+    fx.x = TOUCH_W / 2;
+    fx.y = TOUCH_H / 2;
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, randomColor: true, scale: 1, size: 23 },
-      { speed: 4, life: 0.4, count: 10, randomColor: true, scale: 0.685, size: 23 }
+      { flight: TOUCH_W / 2, life: 0.45, count: 14, randomColor: true, scale: 1, size: 25 },
+      { flight: TOUCH_W / 2 * 0.685, life: 0.4, count: 14, randomColor: true, scale: 0.685, size: 25 }
     ];
+    const SPREAD = Math.PI * 0.5;   // 左右各一个 ±45° 的水平扇面
     for (const ring of fx.rings) {
       ring.stars = [];
+      const perSide = Math.floor(ring.count / 2);
       for (let i = 0; i < ring.count; i++) {
+        const side = (i % 2 === 0) ? 0 : Math.PI;      // 0 = 向右, π = 向左
+        const k = Math.floor(i / 2);
+        const t = perSide > 1 ? k / (perSide - 1) : 0;  // 0..1 在扇面内均匀展开
+        const angle = side + (t - 0.5) * 2 * SPREAD;
         ring.stars.push({
-          angle: i * Math.PI * 2 / ring.count,   // arc 360 均匀，无角度偏移
+          angle,
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          size: ring.size * ring.scale,          // startSize 常量，同一环一样大
-          rotation: Math.random() * Math.PI * 2, // startRotation 2π 随机范围
+          size: ring.size * ring.scale,
+          rotation: Math.random() * Math.PI * 2,
           sub: { color: '#FFFFFF', size: 13 * ring.scale }  // JustSub startSize 0.6
         });
       }
@@ -1475,8 +1484,8 @@ function drawTouchScreen() {
         if (ringLife <= 0) continue;
         const ringProgress = 1 - ringLife;
         for (const star of ring.stars) {
-          // 匀速飞散（startSpeed 恒定，无缓动、无重力）：dist = speed × time
-          const dist = ringProgress * ring.speed * 30;
+          // 匀速飞散（无缓动、无重力）：主环飞到左右屏幕边缘，副环飞到 68.5% 处。
+          const dist = ringProgress * (ring.flight ?? ring.speed * 30);
           const x = cx + Math.cos(star.angle) * dist;
           const y = cy + Math.sin(star.angle) * dist;
           // SizeModule：最后 10% 生命周期缩小到 0.5

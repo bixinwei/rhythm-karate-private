@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>节奏天国 · Rhythm Tengoku Web</title>
+    <link rel="stylesheet" href="style.css?v=tweezers-audio-5" />
+  </head>
+  <body>
+    <main class="console">
+      <section id="menu" class="menu screen">
+        <h1>节奏天国</h1>
+        <div class="menu-actions">
+          <button id="startBtn" class="start">空手道家</button>
+          <button id="tweezersBtn" class="start secondary">节奏脱毛</button>
+          <button id="spaceballBtn" class="start secondary">太空棒球</button>
+          <button id="samuraiBtn" class="start secondary">拔刀术</button>
+          <button id="nightWalkBtn" class="start secondary">夜空漫步</button>
+          <button id="calligraphyBtn" class="start secondary">节奏写书</button>
+          <button id="versusBtn" class="start versus">双人联机 · 太空棒球</button>
+        </div>
+      </section>
+      <section id="versus" class="screen hidden">
+        <h1>双人联机 · 太空棒球</h1>
+        <div class="versus-row">
+          <label>房间码 <input id="versusRoom" value="MOON" maxlength="8" /></label>
+          <label>连接方式
+            <select id="versusKind">
+              <option value="webrtc">互联网（手动交换邀请码）</option>
+              <option value="broadcast">同机多标签页（本机测试）</option>
+            </select>
+          </label>
+        </div>
+        <div id="versus-create" class="versus-row">
+          <button id="versusHost" class="start">创建房间（我是 A）</button>
+          <button id="versusJoin" class="start secondary">加入房间（我是 B）</button>
+        </div>
+        <div id="versus-invite" class="versus-panel hidden">
+          <label>① 把这段邀请码发给对手<textarea id="versusInvite" readonly></textarea></label>
+          <button id="versusAccept" class="start secondary">② 粘贴对手的应答码后连接</button>
+          <textarea id="versusAnswer" placeholder="在这里粘贴对手发回的应答码"></textarea>
+        </div>
+        <div id="versus-join" class="versus-panel hidden">
+          <label>① 把对手发来的邀请码粘到这里<textarea id="versusInviteIn"></textarea></label>
+          <button id="versusJoinGo" class="start secondary">② 生成应答码并发回给对手</button>
+          <textarea id="versusReply" readonly placeholder="生成后出现在这里"></textarea>
+        </div>
+        <div class="versus-row">
+          <button id="versusStartBtn" class="start" disabled>开始对局（房主）</button>
+          <button id="versusBack" class="start secondary">返回</button>
+        </div>
+        <div id="versusStatus" class="versus-status">未连接</div>
+        <p class="versus-help">判定在各自本地完成，跨城延迟不影响押拍；每人连续打 8 个球，换人前 3 拍有倒计时；高球是双人卡点，两边必须同时按。轮到对手时你的按键会被锁定，但两边看到的是同一幅画面。</p>
+      </section>      <section id="game" class="screen hidden">
+        <div class="screens">
+          <div class="upper">
+          <canvas id="stage" width="960" height="640"></canvas>
+            <div id="upperFlash"></div>
+          </div>
+          <div class="hinge"><span></span><span></span><span></span></div>
+          <aside class="lower">
+          <canvas id="lower" width="640" height="480"></canvas>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <script>
+      window.addEventListener('load', () => {
+        document.getElementById('spaceballBtn').click();
+        const wait = () => {
+          const state = window.__rhythmAudit?.state?.();
+          if (!state?.cueCount || !state?.running) return setTimeout(wait, 100);
+          document.getElementById('menu').classList.add('hidden');
+          document.getElementById('game').classList.remove('hidden');
+          const hit = window.__rhythmAudit.nextCue();
+          window.__rhythmAudit.punchAtTick(hit);
+          // 模拟时间流逝：把 fx.startedAt 往前拨，让特效 progress 推进到 0.3
+          setTimeout(() => {
+            const fx = window.__touchFx[0];
+            if (fx) fx.startedAt = fx.startedAt - 0.15;   // progress ≈ 0.33
+            setInterval(() => {
+              const f = window.__touchFx[0];
+              if (f) f.startedAt = f.startedAt;  // 保持进度
+            }, 8);
+          }, 100);
+        };
+        setTimeout(wait, 700);
+      });
+    </script>  <script src="net.js"></script>
+  <script src="versus.js"></script>
+  <script src="game.js?v=fx-46"></script>
+  </body>
+</html>
