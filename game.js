@@ -1109,24 +1109,25 @@ function punch() {
 }
 
 function createImpact(kind) {
-  // 下屏：三种结果动画（棋盘格上的命中反馈）。
+  // 下屏：三种结果动画。完美命中特效在时机条上（顶部），随命中精度上下偏移
+  // （MakeAccuracyVfx: barTransform.position + barScale.y * y）。
   const safeRadius = 181;
   const fx = {
     startedAt: audioClock(),
     kind,
     label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
-    x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
-    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
+    x: kind === 'perfect' ? TOUCH_W / 2 : safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
+    y: kind === 'perfect' ? 34 + (lastHitOffsetFrames / 5) * 96 : safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
     totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
   // 完美命中：Heaven Studio 完整结构（子发射器机制）：
-//   Just00 主环（speed 5, life 0.45）+ Just01 副环（speed 4, life 0.4），
+//   Just00 主环（speed 5, life 0.45, scale 1）+ Just01 副环（speed 4, life 0.4, scale 0.685），
 //   主星飞散死亡后，在终点触发 JustSub 子星（speed 0, life 0.3, 原地）。
 //   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
   if (kind === 'perfect') {
     fx.rings = [
-      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true },
-      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true }
+      { speed: 5, life: 0.45, count: 10, offset: 0, randomColor: true, scale: 1 },
+      { speed: 4, life: 0.4, count: 10, offset: 18, randomColor: true, scale: 0.685 }
     ];
     for (const ring of fx.rings) {
       ring.stars = [];
@@ -1134,10 +1135,10 @@ function createImpact(kind) {
         ring.stars.push({
           angle: (i * 360 / ring.count + ring.offset) * Math.PI / 180,
           color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          size: 9 + Math.random() * 8,
+          size: (9 + Math.random() * 8) * ring.scale,
           rotation: Math.random() * Math.PI * 2,
           // 子星（JustSub）：主星死亡后在终点触发，原地，life 0.3
-          sub: { color: '#FFFFFF', size: 6 + Math.random() * 4 }
+          sub: { color: '#FFFFFF', size: (6 + Math.random() * 4) * ring.scale }
         });
       }
     }
@@ -1452,11 +1453,13 @@ function drawTouchScreen() {
     if (fx.kind === 'perfect') {
       // Heaven Studio 完整结构：多层星星环（椭圆主环 + 圆形副环 + 原地星），
       // 共用一个中心，每层独立生命周期和飞散速度。
-      // 中心黄色光晕（Ace SpriteRenderer）
+      // 中心黄色光晕（Ace SpriteRenderer，scale (1, 0.111) 扁平椭圆）
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life) * 0.094;
       touchCtx.fillStyle = '#FFFF00';
-      touchCtx.beginPath(); touchCtx.arc(cx, cy, 44 * (1 + progress * .4), 0, Math.PI * 2); touchCtx.fill();
+      touchCtx.beginPath();
+      touchCtx.ellipse(cx, cy, 44 * (1 + progress * .4), 44 * 0.111 * (1 + progress * .4), 0, 0, Math.PI * 2);
+      touchCtx.fill();
       touchCtx.restore();
       // 多层圆形星星环（子发射器机制）
       for (const ring of (fx.rings ?? [])) {
