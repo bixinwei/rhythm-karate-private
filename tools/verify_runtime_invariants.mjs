@@ -43,14 +43,14 @@ check(game.includes("pointerdown', (event) => portedModes[mode] ? portedPunch(ev
 check(game.includes('audit.perfectSweep') && game.includes('results.filter(item => !item.perfect'), 'night_walk: deterministic perfect-tick browser sweep missing');
 check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') && game.includes('sweep ${result.ok'), 'night_walk: browser sweep route missing');
 
-// HeavenStudio's TimingAccuracy Just effect is a pair of random radial
-// particle systems, never the old hand-drawn concentric rings.  Keep these
-// source constants visible to catch accidental visual regressions.
-check(game.includes('emit(10, .45, 5, 1, .7, true)'), 'touch VFX: HeavenStudio Just00 parameters drifted');
-check(game.includes('emit(10, .40, 4, .6851956, .7, false)'), 'touch VFX: HeavenStudio Just01 parameters drifted');
+// HeavenStudio's TimingAccuracy Just effect is two 360-degree ShapeModule
+// particle rings. Keep the source count, lifetime, speed, scale and spawn
+// radius explicit so a later edit cannot turn the ring into loose dots.
+check(game.includes('emit(10, .45, 5, 1, .7, .1, true)'), 'touch VFX: HeavenStudio Just00 parameters drifted');
+check(game.includes('emit(10, .40, 4, .6851956, .7, .25, false)'), 'touch VFX: HeavenStudio Just01 parameters drifted');
 check(game.includes("JustSub: .3 s, speed 0, startSize .6"), 'touch VFX: HeavenStudio JustSub timing missing');
 check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('age * 2.5'), 'touch VFX: AceColorCycle palette scroll missing');
-check(!game.includes('fx.rings'), 'touch VFX: old concentric-ring implementation remains');
+check(game.includes('i * Math.PI * 2 / count'), 'touch VFX: 360-degree star-ring placement missing');
 
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,

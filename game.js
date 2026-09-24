@@ -1122,10 +1122,10 @@ function createImpact(kind) {
     totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
   // HeavenStudio / Assets/Prefabs/Common/Overlays/TimingAccuracy.prefab:
-  // Just00: life=.45, speed=5, size=.7, 10 particles; Just01: life=.4,
-  // speed=4, parent scale=.6851956, another 10 particles.  They are random
-  // radial particles, not a fixed circular ring.  JustSub is emitted when a
-  // Just00 particle dies and remains still for .3 seconds.
+  // Just00: life=.45, speed=5, size=.7, circle radius=.1, 10 particles;
+  // Just01: life=.4, speed=4, parent scale=.6851956, circle radius=.25,
+  // another 10 particles.  The ShapeModule uses a full 360° circle, so the
+  // burst must retain the visible star ring rather than becoming loose dots.
   if (kind === 'perfect') {
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
@@ -1406,7 +1406,7 @@ function drawHeavenStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 // HeavenStudio AceStarParticle: acecolors.png + AceColorCycle.shader. The
 // shader scrolls the gradient at _Speed / 4 = 2.5 cycles/sec.
 const HEAVEN_ACE_COLORS = ['#ef10df', '#bb1cff', '#5857ff', '#00d9ff', '#00f0cb', '#64ff35', '#d8ff18', '#ffe70a'];
-const HEAVEN_PIXELS_PER_UNIT = 16;
+const HEAVEN_PIXELS_PER_UNIT = 26;
 
 function heavenAceColor(phase) {
   const wrapped = ((phase % 1) + 1) % 1;
@@ -1415,20 +1415,22 @@ function heavenAceColor(phase) {
 
 function createHeavenJustParticles() {
   const stars = [];
-  const emit = (count, life, speed, parentScale, size, child) => {
+  const emit = (count, life, speed, parentScale, size, spawnRadius, child) => {
+    const phase = Math.random() * Math.PI * 2;
     for (let i = 0; i < count; i++) {
-      // ParticleSystem ShapeModule emits independent directions over 360°.
-      const angle = Math.random() * Math.PI * 2;
-      // A slight per-particle speed variance produces the same loose cloud
-      // visible in captures-frames, without turning it into a geometric ring.
-      const velocity = speed * parentScale * (0.72 + Math.random() * .28) * HEAVEN_PIXELS_PER_UNIT;
-      stars.push({ angle, velocity, life, size: size * parentScale * 17,
+      // ShapeModule type 10 / arc 360 creates the ring.  A single random
+      // phase changes the ring's orientation per hit; it never randomises
+      // each star's position independently.
+      const angle = phase + i * Math.PI * 2 / count;
+      stars.push({ angle, velocity: speed * parentScale * HEAVEN_PIXELS_PER_UNIT,
+        spawnRadius: spawnRadius * parentScale * HEAVEN_PIXELS_PER_UNIT,
+        life, size: size * parentScale * 17,
         colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
         child });
     }
   };
-  emit(10, .45, 5, 1, .7, true);         // Just00
-  emit(10, .40, 4, .6851956, .7, false); // Just01
+  emit(10, .45, 5, 1, .7, .1, true);          // Just00
+  emit(10, .40, 4, .6851956, .7, .25, false); // Just01
   return stars;
 }
 
@@ -1488,14 +1490,17 @@ function drawTouchScreen() {
       const age = audioClock() - fx.startedAt;
       for (const star of (fx.heavenStars ?? [])) {
         const elapsed = Math.min(age, star.life);
-        const dist = star.velocity * elapsed;
+        const dist = star.spawnRadius + star.velocity * elapsed;
         const x = cx + Math.cos(star.angle) * dist;
         const y = cy + Math.sin(star.angle) * dist;
         if (age < star.life) {
           // AceColorCycle maps a random grayscale seed through acecolors.png.
           const color = heavenAceColor(star.colorPhase + age * 2.5);
-          const fade = age < star.life * .82 ? 1 : (star.life - age) / (star.life * .18);
-          drawHeavenStar(touchCtx, x, y, star.size, color, fade, star.rotation);
+          const t = age / star.life;
+          const fade = t < .82 ? 1 : (1 - t) / .18;
+          // Source SizeModule is 1 through .5, then falls to .5 by .9.
+          const shrink = t < .5 ? 1 : Math.max(.5, 1 - (t - .5) * 1.25);
+          drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation);
         } else if (star.child && age < star.life + .3) {
           // JustSub: .3 s, speed 0, startSize .6, emitted at parent death.
           const childAge = age - star.life;
