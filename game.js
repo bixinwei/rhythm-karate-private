@@ -1422,8 +1422,19 @@ function heavenCurve(t, points) {
   if (t <= points[0][0]) return points[0][1];
   for (let i = 1; i < points.length; i++) {
     if (t <= points[i][0]) {
-      const [t0, v0] = points[i - 1], [t1, v1] = points[i];
-      return v0 + (v1 - v0) * (t - t0) / (t1 - t0);
+      const p0 = points[i - 1], p1 = points[i];
+      const [t0, v0] = p0, [t1, v1] = p1;
+      const u = (t - t0) / (t1 - t0);
+      // Unity serialises curve tangents with each key.  Preserve them when
+      // present instead of turning source easing into a straight line.
+      if (p0.length >= 4 && p1.length >= 4 && Number.isFinite(p0[3]) && Number.isFinite(p1[2])) {
+        const u2 = u * u, u3 = u2 * u, span = t1 - t0;
+        return (2 * u3 - 3 * u2 + 1) * v0
+          + (u3 - 2 * u2 + u) * span * p0[3]
+          + (-2 * u3 + 3 * u2) * v1
+          + (u3 - u2) * span * p1[2];
+      }
+      return v0 + (v1 - v0) * u;
     }
   }
   return points[points.length - 1][1];
@@ -1435,15 +1446,16 @@ function heavenParticlePosition(star, age) {
   // browser refresh rates while accurately preserving the short initial curl.
   const steps = Math.max(1, Math.ceil(elapsed * 240));
   const dt = elapsed / steps;
-  let radius = star.spawnRadius, angle = star.angle;
+  let radius = star.spawnRadius, angle = star.angle, rotation = 0;
   for (let i = 0; i < steps; i++) {
     const t = ((i + .5) * dt) / star.life;
     const radial = star.radialScale * heavenCurve(t, star.radialCurve);
     radius = Math.max(.0001, radius + (star.speed + radial) * dt);
     const orbital = star.orbitalScale * heavenCurve(t, star.orbitalCurve);
     angle += orbital * dt / radius;
+    rotation += star.spinScale * heavenCurve(t, star.spinCurve) * dt;
   }
-  return { radius: radius * star.parentScale * HEAVEN_PIXELS_PER_UNIT, angle };
+  return { radius: radius * star.parentScale * HEAVEN_PIXELS_PER_UNIT, angle, rotation };
 }
 
 function heavenMainAlpha(t) {
@@ -1468,7 +1480,7 @@ function heavenSubAlpha(t) {
 function createHeavenJustParticles() {
   const stars = [];
   const emit = (count, life, speed, parentScale, size, spawnRadius,
-    orbitalScale, orbitalCurve, radialScale, radialCurve, spin, child) => {
+    orbitalScale, orbitalCurve, radialScale, radialCurve, spinScale, spinCurve, child) => {
     const phase = Math.random() * Math.PI * 2;
     for (let i = 0; i < count; i++) {
       // ShapeModule type 10 / arc 360 creates the ring.  A single random
@@ -1477,18 +1489,20 @@ function createHeavenJustParticles() {
       const angle = phase + i * Math.PI * 2 / count;
       stars.push({ angle, speed, parentScale, spawnRadius,
         life, size: size * parentScale * 17, orbitalScale, orbitalCurve,
-        radialScale, radialCurve, spin,
+        radialScale, radialCurve, spinScale, spinCurve,
         colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
         child });
     }
   };
   // Exact normalized source curve knots from TimingAccuracy.prefab.
   emit(10, .45, 5, 1, .7, .1, 6,
-    [[0, -.19677734], [.1, -.8], [.25, -1]], 2,
-    [[.25, 1], [.75, .2]], .43633232, true);                 // Just00
+    [[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]], 2,
+    [[.25, 1, -.06833042, -.06833042], [.75, .2, -4.021868, -4.021868]], .43633232,
+    [[0, 1, 0, 0], [1, 1, 0, 0]], true);                     // Just00
   emit(10, .40, 4, .6851956, .7, .25, 1,
-    [[0, 0], [.1, -.8], [.25, -1]], 2,
-    [[.22450256, 1], [.683319, .24618271]], 8.807386, false); // Just01
+    [[0, 0, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]], 2,
+    [[.22450256, 1, -.06833042, -.06833042], [.683319, .24618271, -4.021868, -4.021868]], 8.807386,
+    [[0, .5950268, -.15419024, -.15419024], [.80586225, 1, .98350674, .98350674]], false); // Just01
   // Just00's SubModule is type 0 (Unity ParticleSystemSubEmitterType.Birth),
   // so its delayed .45s one-particle burst starts at the parent *birth*
   // position.  Ten parent particles therefore yield one compact 10-star
@@ -1568,8 +1582,11 @@ function drawTouchScreen() {
           const t = age / star.life;
           const fade = star.child ? heavenMainAlpha(t) : heavenMinorAlpha(t);
           // Source SizeModule is 1 through .5, then falls to .5 by .9.
-          const shrink = t < .5 ? 1 : Math.max(.5, 1 - (t - .5) * 1.25);
-          drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + star.spin * elapsed);
+          const sizeCurve = star.child
+            ? [[0, 1, 0, 0], [.40679932, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]]
+            : [[0, 1, 0, 0], [.5, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]];
+          const shrink = heavenCurve(t, sizeCurve);
+          drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + particle.rotation);
         }
       }
       if (age >= .45 && age < .75) {
