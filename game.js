@@ -1413,9 +1413,45 @@ function heavenAceColor(phase) {
   return HEAVEN_ACE_COLORS[Math.floor(wrapped * HEAVEN_ACE_COLORS.length) % HEAVEN_ACE_COLORS.length];
 }
 
+// Integrates TimingAccuracy's VelocityModule.orbitalZ curve.  Just00 uses
+// scalar 6 and Just01 scalar 1; its -0.1968 → -0.8 → -1 curve is what makes
+// the expanding ring wind like a small galaxy rather than merely grow.
+function heavenOrbitIntegral(t) {
+  if (t <= 0) return 0;
+  if (t < .1) {
+    const u = t / .1;
+    return .1 * ((-.19677734 * u) + ((-.8 + .19677734) * u * u / 2));
+  }
+  const first = .1 * (-.19677734 - .8) / 2;
+  if (t < .25) {
+    const u = (t - .1) / .15;
+    return first + .15 * ((-.8 * u) + ((-.2) * u * u / 2));
+  }
+  return first + .15 * (-.8 - 1) / 2 - (t - .25);
+}
+
+function heavenMainAlpha(t) {
+  // ColorModule alpha keys: 0→.5454 opaque, fade out by .8512.
+  return t <= .545 ? 1 : Math.max(0, 1 - (t - .545) / (.851 - .545));
+}
+
+function heavenMinorAlpha(t) {
+  // Just01: fade in to .0952, keep through .6, fade by the end.
+  if (t < .095) return t / .095;
+  if (t <= .6) return 1;
+  return Math.max(0, 1 - (t - .6) / .4);
+}
+
+function heavenSubAlpha(t) {
+  // JustSub ColorModule: nearly instant fade in, hold to .4445, fade by .9028.
+  if (t < .014) return t / .014;
+  if (t <= .444) return 1;
+  return Math.max(0, 1 - (t - .444) / (.903 - .444));
+}
+
 function createHeavenJustParticles() {
   const stars = [];
-  const emit = (count, life, speed, parentScale, size, spawnRadius, child) => {
+  const emit = (count, life, speed, parentScale, size, spawnRadius, orbitalScale, spin, child) => {
     const phase = Math.random() * Math.PI * 2;
     for (let i = 0; i < count; i++) {
       // ShapeModule type 10 / arc 360 creates the ring.  A single random
@@ -1424,13 +1460,13 @@ function createHeavenJustParticles() {
       const angle = phase + i * Math.PI * 2 / count;
       stars.push({ angle, velocity: speed * parentScale * HEAVEN_PIXELS_PER_UNIT,
         spawnRadius: spawnRadius * parentScale * HEAVEN_PIXELS_PER_UNIT,
-        life, size: size * parentScale * 17,
+        life, size: size * parentScale * 17, orbitalScale, spin,
         colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
         child });
     }
   };
-  emit(10, .45, 5, 1, .7, .1, true);          // Just00
-  emit(10, .40, 4, .6851956, .7, .25, false); // Just01
+  emit(10, .45, 5, 1, .7, .1, 6, .43633232, true);          // Just00
+  emit(10, .40, 4, .6851956, .7, .25, 1, 8.807386, false); // Just01
   return stars;
 }
 
@@ -1491,20 +1527,26 @@ function drawTouchScreen() {
       for (const star of (fx.heavenStars ?? [])) {
         const elapsed = Math.min(age, star.life);
         const dist = star.spawnRadius + star.velocity * elapsed;
-        const x = cx + Math.cos(star.angle) * dist;
-        const y = cy + Math.sin(star.angle) * dist;
+        const orbit = star.orbitalScale * star.life * heavenOrbitIntegral(elapsed / star.life);
+        const ringAngle = star.angle + orbit;
+        const x = cx + Math.cos(ringAngle) * dist;
+        const y = cy + Math.sin(ringAngle) * dist;
         if (age < star.life) {
           // AceColorCycle maps a random grayscale seed through acecolors.png.
           const color = heavenAceColor(star.colorPhase + age * 2.5);
           const t = age / star.life;
-          const fade = t < .82 ? 1 : (1 - t) / .18;
+          const fade = star.child ? heavenMainAlpha(t) : heavenMinorAlpha(t);
           // Source SizeModule is 1 through .5, then falls to .5 by .9.
           const shrink = t < .5 ? 1 : Math.max(.5, 1 - (t - .5) * 1.25);
-          drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation);
+          drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + star.spin * elapsed);
         } else if (star.child && age < star.life + .3) {
-          // JustSub: .3 s, speed 0, startSize .6, emitted at parent death.
+          // JustSub inherits the parent particle properties (SubModule flags
+          // = 7), so it keeps the animated AceColorCycle colour rather than
+          // changing into a white star at the end.
           const childAge = age - star.life;
-          drawHeavenStar(touchCtx, x, y, 10.2, '#ffffff', 1 - childAge / .3, star.rotation);
+          const childT = childAge / .3;
+          drawHeavenStar(touchCtx, x, y, 10.2, heavenAceColor(star.colorPhase + age * 2.5),
+            heavenSubAlpha(childT), star.rotation + star.spin * star.life);
         }
       }
     } else if (fx.kind === 'normal') {
