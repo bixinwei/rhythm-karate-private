@@ -47,10 +47,10 @@ check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') 
 // particle rings. Keep the source count, lifetime, speed, scale and spawn
 // radius explicit so a later edit cannot turn the ring into loose dots.
 check(game.includes('emit(10, .45, 5, 1, .7, .1, 6,') && game.includes('[[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]]'), 'touch VFX: HeavenStudio Just00 parameters drifted');
-check(game.includes('emit(10, .40, 4, .6851956, .7, .25, 1,') && game.includes('[[0, 0, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]]'), 'touch VFX: HeavenStudio Just01 parameters drifted');
-check(game.includes('function heavenParticlePosition') && game.includes('orbital * dt / radius') && game.includes('radialScale * heavenCurve'), 'touch VFX: source orbital/radial velocity integration missing');
-check(game.includes('function heavenSubAlpha') && game.includes('ParticleSystemSubEmitterType.Birth') && game.includes('age >= .45 && age < .75'), 'touch VFX: JustSub birth/lifecycle mapping missing');
-check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('age * 2.5'), 'touch VFX: AceColorCycle palette scroll missing');
+check(!game.includes('emit(10, .40, 4, .6851956') && game.includes('TimingAccuracyDisplay.MakeAccuracyVfx() calls Play() on Just00 only'), 'touch VFX: perfect effect incorrectly includes the separate OK particle system');
+check(game.includes('function heavenParticlePosition') && game.includes('angle += orbital * dt') && game.includes('radialScale * heavenCurve'), 'touch VFX: Just00 source orbital/radial integration missing');
+check(!game.includes('function heavenSubAlpha') && game.includes("totalLife: kind === 'perfect' ? 0.45"), 'touch VFX: perfect burst must fade outward without a return layer');
+check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('heavenAceColor(star.colorPhase + age * 2.5)'), 'touch VFX: AceStarParticle shader palette offset missing');
 check(game.includes('i * Math.PI * 2 / count'), 'touch VFX: 360-degree star-ring placement missing');
 
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic

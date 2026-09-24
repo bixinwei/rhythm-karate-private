@@ -1119,7 +1119,7 @@ function createImpact(kind) {
     label: kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
-    totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
+    totalLife: kind === 'perfect' ? 0.45 : TOUCH_FX_SECONDS
   };
   // HeavenStudio / Assets/Prefabs/Common/Overlays/TimingAccuracy.prefab:
   // Just00: life=.45, speed=5, size=.7, circle radius=.1, 10 particles;
@@ -1129,7 +1129,7 @@ function createImpact(kind) {
   if (kind === 'perfect') {
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
-    fx.totalLife = .75;
+    fx.totalLife = .45;
     fx.heavenParticles = createHeavenJustParticles();
   }
   touchFx.push(fx);
@@ -1413,11 +1413,10 @@ function heavenAceColor(phase) {
   return HEAVEN_ACE_COLORS[Math.floor(wrapped * HEAVEN_ACE_COLORS.length) % HEAVEN_ACE_COLORS.length];
 }
 
-// The source's VelocityModule values are *linear* orbital/radial velocities,
-// not a direct "radians per second" ring rotation.  Unity applies orbitalZ
-// tangentially around the particle-system origin, so its visible angular speed
-// falls as the particle gets farther away.  Treating it as a raw angle was the
-// cause of the over-spinning web effect.
+// TimingAccuracyDisplay plays Just00 for a perfect hit.  Its orbitalZ curve
+// is the source's angular orbit around the system origin; radial is the
+// independent outward velocity.  Just01 is the separate OK-rating object and
+// must never be mixed into the perfect effect.
 function heavenCurve(t, points) {
   if (t <= points[0][0]) return points[0][1];
   for (let i = 1; i < points.length; i++) {
@@ -1452,7 +1451,7 @@ function heavenParticlePosition(star, age) {
     const radial = star.radialScale * heavenCurve(t, star.radialCurve);
     radius = Math.max(.0001, radius + (star.speed + radial) * dt);
     const orbital = star.orbitalScale * heavenCurve(t, star.orbitalCurve);
-    angle += orbital * dt / radius;
+    angle += orbital * dt;
     rotation += star.spinScale * heavenCurve(t, star.spinCurve) * dt;
   }
   return { radius: radius * star.parentScale * HEAVEN_PIXELS_PER_UNIT, angle, rotation };
@@ -1468,13 +1467,6 @@ function heavenMinorAlpha(t) {
   if (t < .095) return t / .095;
   if (t <= .6) return 1;
   return Math.max(0, 1 - (t - .6) / .4);
-}
-
-function heavenSubAlpha(t) {
-  // JustSub ColorModule: nearly instant fade in, hold to .4445, fade by .9028.
-  if (t < .014) return t / .014;
-  if (t <= .444) return 1;
-  return Math.max(0, 1 - (t - .444) / (.903 - .444));
 }
 
 function createHeavenJustParticles() {
@@ -1494,25 +1486,13 @@ function createHeavenJustParticles() {
         child });
     }
   };
-  // Exact normalized source curve knots from TimingAccuracy.prefab.
+  // TimingAccuracyDisplay.MakeAccuracyVfx() calls Play() on Just00 only.
+  // These are its exact particle count/lifetime/speed/shape curve values.
   emit(10, .45, 5, 1, .7, .1, 6,
     [[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]], 2,
     [[.25, 1, -.06833042, -.06833042], [.75, .2, -4.021868, -4.021868]], .43633232,
     [[0, 1, 0, 0], [1, 1, 0, 0]], true);                     // Just00
-  emit(10, .40, 4, .6851956, .7, .25, 1,
-    [[0, 0, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]], 2,
-    [[.22450256, 1, -.06833042, -.06833042], [.683319, .24618271, -4.021868, -4.021868]], 8.807386,
-    [[0, .5950268, -.15419024, -.15419024], [.80586225, 1, .98350674, .98350674]], false); // Just01
-  // Just00's SubModule is type 0 (Unity ParticleSystemSubEmitterType.Birth),
-  // so its delayed .45s one-particle burst starts at the parent *birth*
-  // position.  Ten parent particles therefore yield one compact 10-star
-  // central after-layer, not ten explosions at the outer ring's endpoints.
-  const subPhase = Math.random() * Math.PI * 2;
-  const subStars = Array.from({ length: 10 }, (_, i) => ({
-    angle: subPhase + i * Math.PI * 2 / 10,
-    colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2
-  }));
-  return { stars, subStars };
+  return { stars };
 }
 
 // 命中反馈的持续时间（约 28 帧）。
@@ -1556,7 +1536,7 @@ function drawTouchScreen() {
     // Result animations last ~28 rendered frames in the reference capture and
     // must not speed up on a 120 Hz display, so their age comes from the shared
     // clock instead of one step per animation frame.
-    // Perfect uses the complete Just00 (.45s) + JustSub (.3s) lifecycle;
+    // The visible perfect-star burst ends with the outer stars fading at .45s;
     // ordinary effects retain the original short feedback duration.
     const life = 1 - (audioClock() - fx.startedAt) / (fx.totalLife ?? TOUCH_FX_SECONDS);
     if (life <= 0) continue;
@@ -1577,7 +1557,8 @@ function drawTouchScreen() {
         const x = cx + Math.cos(particle.angle) * particle.radius;
         const y = cy + Math.sin(particle.angle) * particle.radius;
         if (age < star.life) {
-          // AceColorCycle maps a random grayscale seed through acecolors.png.
+          // AceStarParticle's shader offsets every particle's grayscale seed
+          // by (_Speed / 4) * _Time, preserving its relative palette position.
           const color = heavenAceColor(star.colorPhase + age * 2.5);
           const t = age / star.life;
           const fade = star.child ? heavenMainAlpha(t) : heavenMinorAlpha(t);
@@ -1587,17 +1568,6 @@ function drawTouchScreen() {
             : [[0, 1, 0, 0], [.5, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]];
           const shrink = heavenCurve(t, sizeCurve);
           drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + particle.rotation);
-        }
-      }
-      if (age >= .45 && age < .75) {
-        // JustSub: life=.3, speed=0, size=.6, delayed burst=.45.  It keeps
-        // AceStarParticle's colour cycle; there is no white end-state.
-        const childT = (age - .45) / .3;
-        for (const star of (fx.heavenParticles?.subStars ?? [])) {
-          const r = 3.5;
-          drawHeavenStar(touchCtx, cx + Math.cos(star.angle) * r,
-            cy + Math.sin(star.angle) * r, 10.2,
-            heavenAceColor(star.colorPhase + age * 2.5), heavenSubAlpha(childT), star.rotation);
         }
       }
     } else if (fx.kind === 'normal') {
@@ -1617,8 +1587,8 @@ function drawTouchScreen() {
     if (fx.label) {
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life);
-      // perfect 标签跟随变色星（AceColorCycle），miss 保持白色。
-      touchCtx.fillStyle = fx.kind === 'perfect' ? `hsl(${(audioClock() * 240) % 360}, 100%, 62%)` : '#ffffff';
+      // 文字不参与彩星粒子效果；miss 保持白色。
+      touchCtx.fillStyle = '#ffffff';
       touchCtx.shadowColor = '#000000'; touchCtx.shadowBlur = 5;
       touchCtx.font = '700 29px DM Mono, monospace'; touchCtx.textAlign = 'center';
       touchCtx.fillText(fx.label, cx, cy + 96);
