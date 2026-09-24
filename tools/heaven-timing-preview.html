@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh"><meta charset="utf-8"><title>TimingAccuracy 生命周期检查</title>
+<style>body{margin:20px;background:#202530;color:#fff;font:15px sans-serif}canvas{width:100%;max-width:1200px}button{margin:8px;padding:10px}</style>
+<p>同一随机种子，主星及子星的完整生命周期；使用游戏内同一渲染模块。</p>
+<button id="ace">彩星</button><button id="ok">黄星</button><button id="play">播放</button>
+<canvas id="sheet" width="1200" height="620"></canvas>
+<script type="module">
+import {loadTimingRenderer} from '../heaven-timing-runtime.js';
+const renderer=await loadTimingRenderer(),canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');
+let variant='Just00',burst,start=0,playing=false;
+function frame(){
+  ctx.fillStyle='#202530';ctx.fillRect(0,0,1200,620);
+  const times=[.025,.10,.20,.30,.40,.65];
+  for(let i=0;i<times.length;i++){
+    const x=200+i%3*400,y=140+Math.floor(i/3)*300;
+    const age=playing?((performance.now()-start)/1000)%1.1:times[i];
+    ctx.fillStyle='#111';ctx.fillRect(x-8,y-73,16,146);
+    renderer.draw(ctx,burst,age,x,y,146/2.8,10+age);
+    ctx.fillStyle='#fff';ctx.font='17px sans-serif';ctx.fillText(`${variant} ${age.toFixed(3)} s`,x-90,y+135);
+  }
+  if(playing)requestAnimationFrame(frame);
+}
+function reset(v){variant=v;burst=renderer.create(v,{seed:20260924});playing=false;frame();document.body.dataset.ready='true';}
+document.querySelector('#ace').onclick=()=>reset('Just00');document.querySelector('#ok').onclick=()=>reset('Just01');
+document.querySelector('#play').onclick=()=>{if(playing)return;playing=true;start=performance.now();frame();};reset(variant);
+</script></html>
