@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {createBurst,statesAt} from '../heaven-timing-runtime.js';
+import {createBurst,statesAt,renderedBounds,safePlacement} from '../heaven-timing-runtime.js';
 const source=JSON.parse(fs.readFileSync(new URL('../assets/heaven-timing/source.json',import.meta.url)));
 for(const variant of ['Just00','Just01']){
   const b=createBurst(source,variant,{seed:1234}),same=createBurst(source,variant,{seed:1234});
@@ -20,5 +20,13 @@ for(const variant of ['Just00','Just01']){
   const scaled=createBurst(source,variant,{seed:1234,scale:.5});
   const a=statesAt(b,.2),c=statesAt(scaled,.2);
   a.forEach((p,i)=>{assert.equal(c[i].x,p.x*.5);assert.equal(c[i].size,p.size*.5);});
-  console.log(`${variant}: deterministic lifetime, ten-star burst, finite trajectories, stationary children, scaling PASS`);
+  const main=createBurst(source,variant,{seed:1234,mainSize:.8});
+  assert.equal(main.particles.filter(p=>p.birth===0)[0].size,.8);
+  const ppu=146/2.8,bounds=renderedBounds(main,ppu);
+  for(const random of [()=>0,()=>.5,()=>1]) {
+    const at=safePlacement(main,640,480,ppu,random);
+    assert.ok(at.x+bounds.minX>=0 && at.x+bounds.maxX<=640);
+    assert.ok(at.y+bounds.minY>=0 && at.y+bounds.maxY<=480);
+  }
+  console.log(`${variant}: deterministic lifetime, 0.8 main stars, safe random placement, finite trajectories, stationary children, scaling PASS`);
 }

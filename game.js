@@ -1110,19 +1110,23 @@ function punch() {
 }
 
 function createImpact(kind) {
-  // Source-driven TimingAccuracy particles; see the audit for remaining native
-  // Unity simulation differences. Keep a single emitter on the lower display.
-  const meter = heavenTimingMeterHit(kind, lastHitOffsetFrames);
+  let particles;
+  if (kind === 'perfect') particles = createHeavenAccuracyParticles('Just00');
+  if (kind === 'normal') particles = createHeavenAccuracyParticles('Just01');
+  // Choose the origin only after the complete burst is known. The safe area
+  // accounts for every main/sub star at its maximum expansion and rotation.
+  const point = particles
+    ? window.HeavenTiming.safePlacement(particles, TOUCH_W, TOUCH_H, HEAVEN_PIXELS_PER_UNIT)
+    : { x: 30 + Math.random() * (TOUCH_W - 60), y: 30 + Math.random() * (TOUCH_H - 60) };
   const fx = {
     startedAt: audioClock(),
     kind,
     label: kind === 'land' ? 'MISS' : '',
-    x: meter.x,
-    y: meter.y,
+    x: point.x,
+    y: point.y,
     totalLife: kind === 'perfect' ? .45 : kind === 'normal' ? .4 : TOUCH_FX_SECONDS
   };
-  if (kind === 'perfect') fx.heavenParticles = createHeavenAccuracyParticles('Just00');
-  if (kind === 'normal') fx.heavenParticles = createHeavenAccuracyParticles('Just01', meter.scale);
+  if (particles) fx.heavenParticles = particles;
   if (fx.heavenParticles) fx.totalLife = fx.heavenParticles.life;
   touchFx.push(fx);
 }
@@ -1374,22 +1378,9 @@ function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 
 // Particle settings and assets come from the original TimingAccuracy prefab.
 const HEAVEN_PIXELS_PER_UNIT = 146 / 2.8;
-function createHeavenAccuracyParticles(variant, scale = 1) {
-  return window.HeavenTiming.create(variant, {scale});
-}
-
-function heavenTimingMeterHit(kind, offsetFrames) {
-  const x = TOUCH_W / 2;
-  const y = TOUCH_H / 2;
-  if (!Number.isFinite(offsetFrames) || !['perfect', 'normal'].includes(kind)) return { x, y };
-  // Source: barTransform scale Y=2.8, Just child scale Y=.111.  For Ace
-  // timings MakeAccuracyVfx maps AceEarly..AceLate onto this 11.1% band.
-  const perfectWindow = Math.max(1, mode === 'tweezers' ? 4 : 3);
-  if (kind === 'perfect') return { x, y: y + Math.max(-1, Math.min(1, offsetFrames / perfectWindow)) * 4.05 };
-  // Just01 is positioned in the adjacent OK section of the same bar.
-  const side = offsetFrames < 0 ? -1 : 1;
-  const magnitude = Math.min(1, Math.max(0, (Math.abs(offsetFrames) - perfectWindow) / Math.max(1, perfectWindow)));
-  return { x, y: y + side * (11 + magnitude * 16), scale: 1 - magnitude / 2 };
+const HEAVEN_MAIN_STAR_SIZE = .8;
+function createHeavenAccuracyParticles(variant) {
+  return window.HeavenTiming.create(variant, {mainSize: HEAVEN_MAIN_STAR_SIZE});
 }
 
 // 命中反馈的持续时间（约 28 帧）。
@@ -1429,25 +1420,6 @@ function drawTouchScreen() {
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (cellW + gap) + 12, top + row * (cellH + gap) + 54);
   touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.textAlign = 'right'; touchCtx.fillText('TOUCH', w - 26, h - 25); touchCtx.textAlign = 'left';
-  // One central copy of HeavenStudio's TimingAccuracy metre.  The source
-  // prefab's barTransform is (.32, 2.8); the two white arrow cels belong to
-  // arrowTransform and stay at its centre.  We retain that geometry while
-  // moving the otherwise side-mounted overlay into this lower display.
-  const meterX = w / 2, meterY = h / 2, meterW = 14, meterH = 146;
-  touchCtx.save();
-  touchCtx.fillStyle = '#060609';
-  touchCtx.beginPath(); touchCtx.roundRect(meterX - meterW / 2, meterY - meterH / 2, meterW, meterH, 4); touchCtx.fill();
-  touchCtx.fillStyle = '#202027'; touchCtx.fillRect(meterX - 3, meterY - meterH / 2 + 7, 6, meterH - 14);
-  touchCtx.fillStyle = '#08080d'; touchCtx.fillRect(meterX - 1.5, meterY - meterH / 2 + 7, 3, meterH - 14);
-  touchCtx.fillStyle = '#fbfbff';
-  for (const direction of [-1, 1]) {
-    touchCtx.beginPath();
-    touchCtx.moveTo(meterX + direction * (meterW / 2 + 3), meterY);
-    touchCtx.lineTo(meterX + direction * (meterW / 2 + 10), meterY - 6);
-    touchCtx.lineTo(meterX + direction * (meterW / 2 + 10), meterY + 6);
-    touchCtx.closePath(); touchCtx.fill();
-  }
-  touchCtx.restore();
   for (const fx of touchFx) {
     // Result animations last ~28 rendered frames in the reference capture and
     // must not speed up on a 120 Hz display, so their age comes from the shared
@@ -1479,32 +1451,11 @@ function drawTouchScreen() {
   }
   touchCtx.globalAlpha = 1;
   touchFx = touchFx.filter((item) => audioClock() - item.startedAt < (item.totalLife ?? TOUCH_FX_SECONDS));
-  // 时机精度条（TimingMetre）：常驻显示最近一次命中的早/晚偏移。
-  drawTimingMetre(touchCtx, w, h);
   // 双人联机: the lower screen doubles as the turn/score panel, exactly where a
   // 3DS game would put it.
   versusDrawLower(touchCtx, portedModes[mode] ? portedTick() : 0, TOUCH_W, TOUCH_H);
 }
 
-// Heaven Studio 的 TimingMetre：一条精度条 + 箭头，指示最近一次命中偏早还是偏晚。
-function drawTimingMetre(context, w, h) {
-  const cx = w / 2, y = 34, half = 96;
-  context.save();
-  context.fillStyle = 'rgba(255,255,255,.14)';
-  context.fillRect(cx - half, y - 3, half * 2, 6);
-  context.fillStyle = 'rgba(255,255,255,.55)';
-  context.fillRect(cx - 1, y - 9, 2, 18);
-  const clamped = Math.max(-5, Math.min(5, lastHitOffsetFrames));
-  const px = cx + clamped / 5 * half;
-  context.fillStyle = '#ffffff';
-  context.beginPath();
-  context.moveTo(px, y - 13); context.lineTo(px - 7, y - 22); context.lineTo(px + 7, y - 22);
-  context.closePath(); context.fill();
-  context.fillStyle = 'rgba(255,255,255,.6)'; context.font = '600 13px DM Mono, monospace'; context.textAlign = 'center';
-  context.fillText('早', cx - half - 16, y + 4);
-  context.fillText('晚', cx + half + 16, y + 4);
-  context.restore();
-}
 
 function finish() {
   running = false;

@@ -20,12 +20,16 @@ function appearance(p,age) {
   const color=mul(p.color,s.ColorModule.enabled?gv(s.ColorModule.gradient,t,p.random):[1,1,1,1]);
   return {size,color};
 }
-export function createBurst(source, variant, {seed=Date.now(),scale=1}={}) {
+export function createBurst(source, variant, {seed=Date.now(),scale=1,mainSize}={}) {
   const random=rng(seed),system=source.systems[source.roots[variant]],s=system.particleSystem;
   const particles=[];
   function particle(sys,birth,position,angle,inherit) {
     const m=sys.particleSystem,i=m.InitialModule,r=random(),life=cv(i.startLifetime,0,r);
-    const p={system:sys,birth,life,random:r,size:cv(i.startSize,0,r),color:gv(i.startColor,0,random()),path:[],rotation:cv(i.startRotation,0,random())};
+    const p={system:sys,birth,life,random:r,
+      // Requested presentation size for the root stars. Child stars inherit it
+      // only when the prefab explicitly enables size inheritance.
+      size: sys === system && mainSize !== undefined ? mainSize : cv(i.startSize,0,r),
+      color:gv(i.startColor,0,random()),path:[],rotation:cv(i.startRotation,0,random())};
     if(inherit){
       if(inherit.flags&1)p.color=mul(p.color,inherit.color);
       if(inherit.flags&2)p.size*=inherit.size;
@@ -91,6 +95,28 @@ export function statesAt(burst,age){
   });
 }
 
+// Compute the whole effect's rendered footprint before choosing its centre.
+// The half diagonal covers a rotated square sprite, rather than only its
+// unrotated width, so no tip can be clipped by the lower display.
+export function renderedBounds(burst, ppu) {
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(let age=0;age<burst.life;age+=DT) for(const state of statesAt(burst,age)) {
+    const half=state.size*ppu*Math.SQRT1_2;
+    const x=state.x*ppu,y=-state.y*ppu;
+    minX=Math.min(minX,x-half);maxX=Math.max(maxX,x+half);
+    minY=Math.min(minY,y-half);maxY=Math.max(maxY,y+half);
+  }
+  return {minX,maxX,minY,maxY};
+}
+
+export function safePlacement(burst, width, height, ppu, random=Math.random, padding=2) {
+  const b=renderedBounds(burst,ppu);
+  const minX=-b.minX+padding,maxX=width-b.maxX-padding;
+  const minY=-b.minY+padding,maxY=height-b.maxY-padding;
+  if(minX>maxX||minY>maxY) throw new Error('Timing effect cannot fit the requested surface');
+  return {x:minX+(maxX-minX)*random(),y:minY+(maxY-minY)*random(),bounds:b};
+}
+
 export async function loadTimingRenderer(){
   const response=await fetch(new URL('./assets/heaven-timing/source.json',import.meta.url));
   if(!response.ok)throw new Error(`Timing VFX manifest: ${response.status}`);
@@ -101,6 +127,7 @@ export async function loadTimingRenderer(){
   const tc=tint.getContext('2d');
   return {
     create:(variant,options)=>createBurst(source,variant,options),
+    safePlacement:(burst,width,height,ppu,random,padding)=>safePlacement(burst,width,height,ppu,random,padding),
     draw(ctx,burst,age,x,y,ppu,globalSeconds){
       ctx.save();ctx.imageSmoothingEnabled=true;
       for(const state of statesAt(burst,age)){

@@ -19,7 +19,7 @@ function frame(){
   }
   if(playing)requestAnimationFrame(frame);
 }
-function reset(v){variant=v;burst=renderer.create(v,{seed:20260924});playing=false;frame();document.body.dataset.ready='true';}
+function reset(v){variant=v;burst=renderer.create(v,{seed:20260924,mainSize:.8});playing=false;frame();document.body.dataset.ready='true';}
 document.querySelector('#ace').onclick=()=>reset('Just00');document.querySelector('#ok').onclick=()=>reset('Just01');
 document.querySelector('#play').onclick=()=>{if(playing)return;playing=true;start=performance.now();frame();};reset(variant);
 </script></html>
