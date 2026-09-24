@@ -1378,7 +1378,7 @@ function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
 
 // Particle settings and assets come from the original TimingAccuracy prefab.
 const HEAVEN_PIXELS_PER_UNIT = 146 / 2.8;
-const HEAVEN_MAIN_STAR_SIZE = .8;
+const HEAVEN_MAIN_STAR_SIZE = 1.0;
 function createHeavenAccuracyParticles(variant) {
   return window.HeavenTiming.create(variant, {mainSize: HEAVEN_MAIN_STAR_SIZE});
 }

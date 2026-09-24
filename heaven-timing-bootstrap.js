@@ -1,8 +1,8 @@
-import {loadTimingRenderer} from './heaven-timing-runtime.js?v=63';
+import {loadTimingRenderer} from './heaven-timing-runtime.js?v=64';
 try {
   window.HeavenTiming=await loadTimingRenderer();
   const script=document.createElement('script');
-  script.src=new URL('./game.js?v=heaven-source-particles-63',import.meta.url).href;
+  script.src=new URL('./game.js?v=heaven-source-particles-64',import.meta.url).href;
   document.body.append(script);
 } catch(error) {
   console.error(error);
