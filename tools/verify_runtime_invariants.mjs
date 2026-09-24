@@ -43,6 +43,15 @@ check(game.includes("pointerdown', (event) => portedModes[mode] ? portedPunch(ev
 check(game.includes('audit.perfectSweep') && game.includes('results.filter(item => !item.perfect'), 'night_walk: deterministic perfect-tick browser sweep missing');
 check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') && game.includes('sweep ${result.ok'), 'night_walk: browser sweep route missing');
 
+// HeavenStudio's TimingAccuracy Just effect is a pair of random radial
+// particle systems, never the old hand-drawn concentric rings.  Keep these
+// source constants visible to catch accidental visual regressions.
+check(game.includes('emit(10, .45, 5, 1, .7, true)'), 'touch VFX: HeavenStudio Just00 parameters drifted');
+check(game.includes('emit(10, .40, 4, .6851956, .7, false)'), 'touch VFX: HeavenStudio Just01 parameters drifted');
+check(game.includes("JustSub: .3 s, speed 0, startSize .6"), 'touch VFX: HeavenStudio JustSub timing missing');
+check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('age * 2.5'), 'touch VFX: AceColorCycle palette scroll missing');
+check(!game.includes('fx.rings'), 'touch VFX: old concentric-ring implementation remains');
+
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,
 // then decrements unk4 for the next cue; it never mutates unk6 until a jump

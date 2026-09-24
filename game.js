@@ -1110,39 +1110,27 @@ function punch() {
 }
 
 function createImpact(kind) {
-  // 下屏：三种结果动画。完美命中特效在下屏中央（3DS 下屏的击中特效位置）。
+  // 下屏：三种结果动画。完美命中使用 HeavenStudio TimingAccuracy 的 Just 粒子。
   const safeRadius = 181;
   const fx = {
     startedAt: audioClock(),
     kind,
-    label: kind === 'perfect' ? 'PERFECT' : kind === 'land' ? 'MISS' : '',
+    // TimingAccuracy 的 Just VFX 本身没有文字；只保留它的彩星粒子。
+    label: kind === 'land' ? 'MISS' : '',
     x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
     y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
     totalLife: kind === 'perfect' ? 0.75 : TOUCH_FX_SECONDS   // perfect 含子星 0.45+0.3
   };
-  // 完美命中：严格照搬 Heaven Studio TimingAccuracy.prefab：
-//   Just00 主环（speed 5, life 0.45, scale 1, startSize 0.7）+ Just01 副环（speed 4, life 0.4, scale 0.685），
-//   主星匀速飞散（无缓动、无重力），死亡后在终点触发 JustSub 子星（speed 0, life 0.3, startSize 0.6）。
-//   每颗星随机彩虹色、随机旋转 0-360°、飞散中旋转 25°、最后 10% 缩小到 0.5。
+  // HeavenStudio / Assets/Prefabs/Common/Overlays/TimingAccuracy.prefab:
+  // Just00: life=.45, speed=5, size=.7, 10 particles; Just01: life=.4,
+  // speed=4, parent scale=.6851956, another 10 particles.  They are random
+  // radial particles, not a fixed circular ring.  JustSub is emitted when a
+  // Just00 particle dies and remains still for .3 seconds.
   if (kind === 'perfect') {
-    // 完美命中：下屏中央两圈彩虹五角星，完整圆环。
-    // 外层主环星更大、爆开后星环整体顺时针转一个小角度；内层副环星明显更小、爆开后固定不动。
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
-    fx.rings = [
-      { flight: 0.32, settle: 0.42, radius: 100, count: 10, randomColor: true, size: 26, spin: Math.PI / 4 },
-      { flight: 0.32, settle: 0.42, radius: 80, count: 10, randomColor: true, size: 13, spin: 0 }
-    ];
-    for (const ring of fx.rings) {
-      ring.stars = [];
-      for (let i = 0; i < ring.count; i++) {
-        ring.stars.push({
-          angle: i * Math.PI * 2 / ring.count,   // 360° 均匀，构成完整圆环
-          color: ring.randomColor ? RAINBOW[Math.floor(Math.random() * RAINBOW.length)] : '#FFFFFF',
-          rotation: Math.random() * Math.PI * 2
-        });
-      }
-    }
+    fx.totalLife = .75;
+    fx.heavenStars = createHeavenJustParticles();
   }
   touchFx.push(fx);
 }
@@ -1392,9 +1380,57 @@ function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.restore();
 }
 
-// acecolors.png 的完整彩虹色带（青→绿→黄→橙→红粉→粉紫），AceColorCycle shader 用它
-// 给星星着色，并按 _Speed/4 的速度随时间滚动。
-const RAINBOW = ['#00FFFF', '#27FFD4', '#75FF7B', '#C6FF26', '#FFFF00', '#FFC626', '#FF757C', '#FF27D4'];
+// Canvas equivalent of HeavenStudio's Star.png particle: a compact, sharp
+// five-point cel with the source particle's small dark offset, not a glowing
+// vector emblem.  Rotation is random at emission and remains fixed because
+// TimingAccuracy has no RotationOverLifetime module.
+function drawHeavenStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
+  const trace = (dx, dy) => {
+    context.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 ? radius * .46 : radius;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const px = dx + Math.cos(a) * r, py = dy + Math.sin(a) * r;
+      if (i) context.lineTo(px, py); else context.moveTo(px, py);
+    }
+    context.closePath();
+  };
+  context.save();
+  context.translate(x, y); context.rotate(rotation);
+  context.globalAlpha = Math.max(0, alpha);
+  trace(1.5, 2); context.fillStyle = 'rgba(11, 12, 24, .32)'; context.fill();
+  trace(0, 0); context.fillStyle = color; context.fill();
+  context.restore();
+}
+
+// HeavenStudio AceStarParticle: acecolors.png + AceColorCycle.shader. The
+// shader scrolls the gradient at _Speed / 4 = 2.5 cycles/sec.
+const HEAVEN_ACE_COLORS = ['#ef10df', '#bb1cff', '#5857ff', '#00d9ff', '#00f0cb', '#64ff35', '#d8ff18', '#ffe70a'];
+const HEAVEN_PIXELS_PER_UNIT = 16;
+
+function heavenAceColor(phase) {
+  const wrapped = ((phase % 1) + 1) % 1;
+  return HEAVEN_ACE_COLORS[Math.floor(wrapped * HEAVEN_ACE_COLORS.length) % HEAVEN_ACE_COLORS.length];
+}
+
+function createHeavenJustParticles() {
+  const stars = [];
+  const emit = (count, life, speed, parentScale, size, child) => {
+    for (let i = 0; i < count; i++) {
+      // ParticleSystem ShapeModule emits independent directions over 360°.
+      const angle = Math.random() * Math.PI * 2;
+      // A slight per-particle speed variance produces the same loose cloud
+      // visible in captures-frames, without turning it into a geometric ring.
+      const velocity = speed * parentScale * (0.72 + Math.random() * .28) * HEAVEN_PIXELS_PER_UNIT;
+      stars.push({ angle, velocity, life, size: size * parentScale * 17,
+        colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
+        child });
+    }
+  };
+  emit(10, .45, 5, 1, .7, true);         // Just00
+  emit(10, .40, 4, .6851956, .7, false); // Just01
+  return stars;
+}
 
 // 命中反馈的持续时间（约 28 帧）。
 const TOUCH_FX_SECONDS = 28 / 60;
@@ -1441,9 +1477,7 @@ function drawTouchScreen() {
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
-      // Heaven Studio 完整结构：多层星星环（椭圆主环 + 圆形副环 + 原地星），
-      // 共用一个中心，每层独立生命周期和飞散速度。
-      // 中心黄色光晕（Ace SpriteRenderer，scale (1, 0.111) 扁平椭圆）
+      // TimingAccuracy's faint yellow centre sprite (alpha .09411765).
       touchCtx.save();
       touchCtx.globalAlpha = Math.max(0, life) * 0.094;
       touchCtx.fillStyle = '#FFFF00';
@@ -1451,22 +1485,21 @@ function drawTouchScreen() {
       touchCtx.ellipse(cx, cy, 44 * (1 + progress * .4), 44 * 0.111 * (1 + progress * .4), 0, 0, Math.PI * 2);
       touchCtx.fill();
       touchCtx.restore();
-      // 两圈星星环：外圈大星顺时针小角度旋转，内圈小星固定。
-      for (const ring of (fx.rings ?? [])) {
-        const age = audioClock() - fx.startedAt;
-        const total = ring.flight + ring.settle;
-        if (age >= total) continue;
-        const flightT = Math.min(1, age / ring.flight);
-        // 内圈 spin=0 固定；外圈的顺时针旋转在飞散（爆开）过程中同步进行，而不是等到最大半径后。
-        const dist = flightT * ring.radius;
-        const lifeT = age / total;
-        // 透明度：全程不透明，只在最后 15% 淡出。
-        const alpha = lifeT < 0.85 ? 1 : Math.max(0, 1 - (lifeT - 0.85) / 0.15);
-        for (const star of ring.stars) {
-          const ringAngle = star.angle + (ring.spin || 0) * flightT;
-          const x = cx + Math.cos(ringAngle) * dist;
-          const y = cy + Math.sin(ringAngle) * dist;
-          drawGlowStar(touchCtx, x, y, ring.size, star.color, alpha, star.rotation);
+      const age = audioClock() - fx.startedAt;
+      for (const star of (fx.heavenStars ?? [])) {
+        const elapsed = Math.min(age, star.life);
+        const dist = star.velocity * elapsed;
+        const x = cx + Math.cos(star.angle) * dist;
+        const y = cy + Math.sin(star.angle) * dist;
+        if (age < star.life) {
+          // AceColorCycle maps a random grayscale seed through acecolors.png.
+          const color = heavenAceColor(star.colorPhase + age * 2.5);
+          const fade = age < star.life * .82 ? 1 : (star.life - age) / (star.life * .18);
+          drawHeavenStar(touchCtx, x, y, star.size, color, fade, star.rotation);
+        } else if (star.child && age < star.life + .3) {
+          // JustSub: .3 s, speed 0, startSize .6, emitted at parent death.
+          const childAge = age - star.life;
+          drawHeavenStar(touchCtx, x, y, 10.2, '#ffffff', 1 - childAge / .3, star.rotation);
         }
       }
     } else if (fx.kind === 'normal') {
