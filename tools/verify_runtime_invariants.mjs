@@ -43,15 +43,15 @@ check(game.includes("pointerdown', (event) => portedModes[mode] ? portedPunch(ev
 check(game.includes('audit.perfectSweep') && game.includes('results.filter(item => !item.perfect'), 'night_walk: deterministic perfect-tick browser sweep missing');
 check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') && game.includes('sweep ${result.ok'), 'night_walk: browser sweep route missing');
 
-// HeavenStudio's TimingAccuracy Just effect is two 360-degree ShapeModule
-// particle rings. Keep the source count, lifetime, speed, scale and spawn
-// radius explicit so a later edit cannot turn the ring into loose dots.
-check(game.includes('emit(10, .45, 5, 1, .7, .1, 6,') && game.includes('[[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]]'), 'touch VFX: HeavenStudio Just00 parameters drifted');
-check(!game.includes('emit(10, .40, 4, .6851956') && game.includes('TimingAccuracyDisplay.MakeAccuracyVfx() calls Play() on Just00 only'), 'touch VFX: perfect effect incorrectly includes the separate OK particle system');
+// HeavenStudio TimingAccuracyDisplay.MakeAccuracyVfx() chooses Just00 for an
+// Ace and Just01 for an OK.  Keep both source systems explicit: they are the
+// visible timing-metre burst, not the separate SkillStar animation.
+check(game.includes("createHeavenAccuracyParticles('Just00')") && game.includes("createHeavenAccuracyParticles('Just01')") && game.includes("const life = ace ? .45 : .4"), 'touch VFX: TimingAccuracy Just00/Just01 call path drifted');
+check(game.includes('const parentScale = ace ? 1 : .6851956') && game.includes('const spawnRadius = ace ? .1 : .25') && game.includes('const speed = ace ? 5 : 4'), 'touch VFX: HeavenStudio Just00/Just01 source parameters drifted');
 check(game.includes('function heavenParticlePosition') && game.includes('angle += orbital * dt') && game.includes('radialScale * heavenCurve'), 'touch VFX: Just00 source orbital/radial integration missing');
-check(!game.includes('function heavenSubAlpha') && game.includes("totalLife: kind === 'perfect' ? 0.45"), 'touch VFX: perfect burst must fade outward without a return layer');
+check(game.includes("totalLife: kind === 'perfect' ? .45") && game.includes('function heavenTimingMeterHit') && game.includes('const meterX = w / 2'), 'touch VFX: source lifetime or central timing metre missing');
 check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('heavenAceColor(star.colorPhase + age * 2.5)'), 'touch VFX: AceStarParticle shader palette offset missing');
-check(game.includes('i * Math.PI * 2 / count'), 'touch VFX: 360-degree star-ring placement missing');
+check(game.includes('i * Math.PI * 2 / 10'), 'touch VFX: 360-degree star-ring placement missing');
 
 // Reconstruct the source's Night Walk unk4 sequence for all deterministic
 // bridge/gap sections. A gap captures the current unk4 as its own sprite Y,

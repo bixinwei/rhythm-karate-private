@@ -1110,28 +1110,20 @@ function punch() {
 }
 
 function createImpact(kind) {
-  // 下屏：三种结果动画。完美命中使用 HeavenStudio TimingAccuracy 的 Just 粒子。
-  const safeRadius = 181;
+  // The lower display is a direct translation of HeavenStudio's
+  // TimingAccuracyDisplay.MakeAccuracyVfx().  The effect belongs to the timing
+  // metre, not to a random point on the touch screen.
+  const meter = heavenTimingMeterHit(kind, lastHitOffsetFrames);
   const fx = {
     startedAt: audioClock(),
     kind,
-    // TimingAccuracy 的 Just VFX 本身没有文字；只保留它的彩星粒子。
     label: kind === 'land' ? 'MISS' : '',
-    x: safeRadius + Math.random() * (TOUCH_W - safeRadius * 2),
-    y: safeRadius + Math.random() * (TOUCH_H - safeRadius * 2),
-    totalLife: kind === 'perfect' ? 0.45 : TOUCH_FX_SECONDS
+    x: meter.x,
+    y: meter.y,
+    totalLife: kind === 'perfect' ? .45 : kind === 'normal' ? .4 : TOUCH_FX_SECONDS
   };
-  // HeavenStudio / Assets/Prefabs/Common/Overlays/TimingAccuracy.prefab:
-  // Just00: life=.45, speed=5, size=.7, circle radius=.1, 10 particles;
-  // Just01: life=.4, speed=4, parent scale=.6851956, circle radius=.25,
-  // another 10 particles.  The ShapeModule uses a full 360° circle, so the
-  // burst must retain the visible star ring rather than becoming loose dots.
-  if (kind === 'perfect') {
-    fx.x = TOUCH_W / 2;
-    fx.y = TOUCH_H / 2;
-    fx.totalLife = .45;
-    fx.heavenParticles = createHeavenJustParticles();
-  }
+  if (kind === 'perfect') fx.heavenParticles = createHeavenAccuracyParticles('Just00');
+  if (kind === 'normal') fx.heavenParticles = createHeavenAccuracyParticles('Just01');
   touchFx.push(fx);
 }
 
@@ -1380,10 +1372,10 @@ function drawGlowStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.restore();
 }
 
-// Canvas equivalent of HeavenStudio's Star.png particle: a compact, sharp
-// five-point cel with the source particle's small dark offset, not a glowing
-// vector emblem.  Rotation is random at emission and remains fixed because
-// TimingAccuracy has no RotationOverLifetime module.
+// Canvas-side translation of Assets/Prefabs/Common/Overlays/TimingAccuracy.prefab.
+// It intentionally mirrors the two particle systems used by
+// TimingAccuracyDisplay.MakeAccuracyVfx(): Just00 for an Ace and Just01 for an
+// OK hit.  This is not the unrelated SkillStar animation.
 function drawHeavenStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   const trace = (dx, dy) => {
     context.beginPath();
@@ -1398,13 +1390,13 @@ function drawHeavenStar(context, x, y, radius, color, alpha = 1, rotation = 0) {
   context.save();
   context.translate(x, y); context.rotate(rotation);
   context.globalAlpha = Math.max(0, alpha);
-  trace(1.5, 2); context.fillStyle = 'rgba(11, 12, 24, .32)'; context.fill();
+  trace(1.5, 2); context.fillStyle = 'rgba(8, 10, 20, .42)'; context.fill();
   trace(0, 0); context.fillStyle = color; context.fill();
   context.restore();
 }
 
-// HeavenStudio AceStarParticle: acecolors.png + AceColorCycle.shader. The
-// shader scrolls the gradient at _Speed / 4 = 2.5 cycles/sec.
+// AceStarParticle.mat uses AceColorCycle.shader with _Speed=10.  Its shader
+// samples acecolors.png at (particle grayscale + 2.5 * global seconds) % 1.
 const HEAVEN_ACE_COLORS = ['#ef10df', '#bb1cff', '#5857ff', '#00d9ff', '#00f0cb', '#64ff35', '#d8ff18', '#ffe70a'];
 const HEAVEN_PIXELS_PER_UNIT = 26;
 
@@ -1413,10 +1405,6 @@ function heavenAceColor(phase) {
   return HEAVEN_ACE_COLORS[Math.floor(wrapped * HEAVEN_ACE_COLORS.length) % HEAVEN_ACE_COLORS.length];
 }
 
-// TimingAccuracyDisplay plays Just00 for a perfect hit.  Its orbitalZ curve
-// is the source's angular orbit around the system origin; radial is the
-// independent outward velocity.  Just01 is the separate OK-rating object and
-// must never be mixed into the perfect effect.
 function heavenCurve(t, points) {
   if (t <= points[0][0]) return points[0][1];
   for (let i = 1; i < points.length; i++) {
@@ -1457,42 +1445,64 @@ function heavenParticlePosition(star, age) {
   return { radius: radius * star.parentScale * HEAVEN_PIXELS_PER_UNIT, angle, rotation };
 }
 
-function heavenMainAlpha(t) {
-  // ColorModule alpha keys: 0→.5454 opaque, fade out by .8512.
-  return t <= .545 ? 1 : Math.max(0, 1 - (t - .545) / (.851 - .545));
+function heavenMainAlpha(t, variant) {
+  // Just00 ColorModule alpha keys are .5454 and .8512. Just01's two-gradient
+  // module differs slightly per particle; the visible source envelope is kept.
+  const hold = variant === 'Just01' ? .60 : .5454;
+  const end = variant === 'Just01' ? .89 : .8512;
+  return t <= hold ? 1 : Math.max(0, 1 - (t - hold) / (end - hold));
 }
 
-function heavenMinorAlpha(t) {
-  // Just01: fade in to .0952, keep through .6, fade by the end.
-  if (t < .095) return t / .095;
-  if (t <= .6) return 1;
-  return Math.max(0, 1 - (t - .6) / .4);
+function heavenSize(t) {
+  return heavenCurve(t, [[0, 1, 0, 0], [.40679932, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]]);
 }
 
-function createHeavenJustParticles() {
+function createHeavenAccuracyParticles(variant) {
+  // Just00 (Ace): .45 s, speed 5, radius .1, 10 stars, orbital Z curve ×6.
+  // Just01 (OK): .40 s, speed 4, parent scale .6851956, radius .25, 10 stars.
+  // Both Circle Shape modules use Arc=360 / Loop, which yields a single ring
+  // with evenly distributed emissions rather than independently random points.
+  const ace = variant === 'Just00';
+  const life = ace ? .45 : .4;
+  const speed = ace ? 5 : 4;
+  const parentScale = ace ? 1 : .6851956;
+  const spawnRadius = ace ? .1 : .25;
+  const orbitalScale = ace ? 6 : 1;
+  const orbitalCurve = ace
+    ? [[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]]
+    : [[0, 1, 0, 0], [1, 1, 0, 0]];
+  const radialCurve = [[.25, 1, -.06833042, -.06833042], [.75, .2, -4.021868, -4.021868]];
   const stars = [];
-  const emit = (count, life, speed, parentScale, size, spawnRadius,
-    orbitalScale, orbitalCurve, radialScale, radialCurve, spinScale, spinCurve, child) => {
-    const phase = Math.random() * Math.PI * 2;
-    for (let i = 0; i < count; i++) {
-      // ShapeModule type 10 / arc 360 creates the ring.  A single random
-      // phase changes the ring's orientation per hit; it never randomises
-      // each star's position independently.
-      const angle = phase + i * Math.PI * 2 / count;
-      stars.push({ angle, speed, parentScale, spawnRadius,
-        life, size: size * parentScale * 17, orbitalScale, orbitalCurve,
-        radialScale, radialCurve, spinScale, spinCurve,
-        colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
-        child });
-    }
-  };
-  // TimingAccuracyDisplay.MakeAccuracyVfx() calls Play() on Just00 only.
-  // These are its exact particle count/lifetime/speed/shape curve values.
-  emit(10, .45, 5, 1, .7, .1, 6,
-    [[0, -.19677734, 0, Infinity], [.1, -.8, -3.91192, -3.91192], [.25, -1, 0, 0]], 2,
-    [[.25, 1, -.06833042, -.06833042], [.75, .2, -4.021868, -4.021868]], .43633232,
-    [[0, 1, 0, 0], [1, 1, 0, 0]], true);                     // Just00
-  return { stars };
+  const phase = Math.random() * Math.PI * 2;
+  for (let i = 0; i < 10; i++) {
+    stars.push({
+      angle: phase + i * Math.PI * 2 / 10,
+      speed, parentScale, spawnRadius, life, size: .7 * parentScale * 17,
+      orbitalScale, orbitalCurve, radialScale: 2, radialCurve,
+      // RotationModule z = .43633232 for Just00.  Just01 is randomized but
+      // has no orbit-driven global rotation, matching its quieter OK burst.
+      spinScale: ace ? .43633232 : .7853982 + Math.random() * 8.0219878,
+      spinCurve: [[0, 1, 0, 0], [1, 1, 0, 0]],
+      colorPhase: ace ? Math.random() : .145 + Math.random() * .07,
+      rotation: Math.random() * Math.PI * 2,
+      variant
+    });
+  }
+  return { variant, stars };
+}
+
+function heavenTimingMeterHit(kind, offsetFrames) {
+  const x = TOUCH_W / 2;
+  const y = TOUCH_H / 2;
+  if (!Number.isFinite(offsetFrames) || !['perfect', 'normal'].includes(kind)) return { x, y };
+  // Source: barTransform scale Y=2.8, Just child scale Y=.111.  For Ace
+  // timings MakeAccuracyVfx maps AceEarly..AceLate onto this 11.1% band.
+  const perfectWindow = Math.max(1, mode === 'tweezers' ? 4 : 3);
+  if (kind === 'perfect') return { x, y: y + Math.max(-1, Math.min(1, offsetFrames / perfectWindow)) * 4.05 };
+  // Just01 is positioned in the adjacent OK section of the same bar.
+  const side = offsetFrames < 0 ? -1 : 1;
+  const magnitude = Math.min(1, Math.max(0, (Math.abs(offsetFrames) - perfectWindow) / Math.max(1, perfectWindow)));
+  return { x, y: y + side * (11 + magnitude * 16) };
 }
 
 // 命中反馈的持续时间（约 28 帧）。
@@ -1532,6 +1542,25 @@ function drawTouchScreen() {
   touchCtx.fillStyle = '#050509'; touchCtx.font = '700 45px sans-serif';
   for (const [col, row] of noteCells) touchCtx.fillText('♪', left + col * (cellW + gap) + 12, top + row * (cellH + gap) + 54);
   touchCtx.fillStyle = '#f4f3f4'; touchCtx.font = '600 22px sans-serif'; touchCtx.textAlign = 'right'; touchCtx.fillText('TOUCH', w - 26, h - 25); touchCtx.textAlign = 'left';
+  // One central copy of HeavenStudio's TimingAccuracy metre.  The source
+  // prefab's barTransform is (.32, 2.8); the two white arrow cels belong to
+  // arrowTransform and stay at its centre.  We retain that geometry while
+  // moving the otherwise side-mounted overlay into this lower display.
+  const meterX = w / 2, meterY = h / 2, meterW = 14, meterH = 146;
+  touchCtx.save();
+  touchCtx.fillStyle = '#060609';
+  touchCtx.beginPath(); touchCtx.roundRect(meterX - meterW / 2, meterY - meterH / 2, meterW, meterH, 4); touchCtx.fill();
+  touchCtx.fillStyle = '#202027'; touchCtx.fillRect(meterX - 3, meterY - meterH / 2 + 7, 6, meterH - 14);
+  touchCtx.fillStyle = '#08080d'; touchCtx.fillRect(meterX - 1.5, meterY - meterH / 2 + 7, 3, meterH - 14);
+  touchCtx.fillStyle = '#fbfbff';
+  for (const direction of [-1, 1]) {
+    touchCtx.beginPath();
+    touchCtx.moveTo(meterX + direction * (meterW / 2 + 3), meterY);
+    touchCtx.lineTo(meterX + direction * (meterW / 2 + 10), meterY - 6);
+    touchCtx.lineTo(meterX + direction * (meterW / 2 + 10), meterY + 6);
+    touchCtx.closePath(); touchCtx.fill();
+  }
+  touchCtx.restore();
   for (const fx of touchFx) {
     // Result animations last ~28 rendered frames in the reference capture and
     // must not speed up on a 120 Hz display, so their age comes from the shared
@@ -1541,15 +1570,7 @@ function drawTouchScreen() {
     const life = 1 - (audioClock() - fx.startedAt) / (fx.totalLife ?? TOUCH_FX_SECONDS);
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
-    if (fx.kind === 'perfect') {
-      // TimingAccuracy's faint yellow centre sprite (alpha .09411765).
-      touchCtx.save();
-      touchCtx.globalAlpha = Math.max(0, life) * 0.094;
-      touchCtx.fillStyle = '#FFFF00';
-      touchCtx.beginPath();
-      touchCtx.ellipse(cx, cy, 44 * (1 + progress * .4), 44 * 0.111 * (1 + progress * .4), 0, 0, Math.PI * 2);
-      touchCtx.fill();
-      touchCtx.restore();
+    if (fx.kind === 'perfect' || fx.kind === 'normal') {
       const age = audioClock() - fx.startedAt;
       for (const star of (fx.heavenParticles?.stars ?? [])) {
         const elapsed = Math.min(age, star.life);
@@ -1557,27 +1578,18 @@ function drawTouchScreen() {
         const x = cx + Math.cos(particle.angle) * particle.radius;
         const y = cy + Math.sin(particle.angle) * particle.radius;
         if (age < star.life) {
-          // AceStarParticle's shader offsets every particle's grayscale seed
-          // by (_Speed / 4) * _Time, preserving its relative palette position.
-          const color = heavenAceColor(star.colorPhase + age * 2.5);
+          // Just00 uses AceStarParticle's scrolling palette; Just01 uses
+          // StarParticle, whose source gradient is yellow.  The material
+          // choice is part of the prefabs, not a judgement-specific redesign.
+          const color = star.variant === 'Just00'
+            ? heavenAceColor(star.colorPhase + age * 2.5)
+            : '#ffe500';
           const t = age / star.life;
-          const fade = star.child ? heavenMainAlpha(t) : heavenMinorAlpha(t);
-          // Source SizeModule is 1 through .5, then falls to .5 by .9.
-          const sizeCurve = star.child
-            ? [[0, 1, 0, 0], [.40679932, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]]
-            : [[0, 1, 0, 0], [.5, 1, -.04255247, -.04255247], [.9, .5, -.46848804, -.46848804]];
-          const shrink = heavenCurve(t, sizeCurve);
+          const fade = heavenMainAlpha(t, star.variant);
+          const shrink = heavenSize(t);
           drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + particle.rotation);
         }
       }
-    } else if (fx.kind === 'normal') {
-      // 普通命中：白色星 + 白色圆环（比 perfect 小、无变色）。
-      const travel = Math.min(1, progress / .72), ease = 1 - Math.pow(1 - travel, 3);
-      drawGlowStar(touchCtx, cx, cy, 18 * (1 - travel * .4), null, Math.max(0, life), 0);
-      touchCtx.save(); touchCtx.globalAlpha = Math.max(0, life) * (1 - travel);
-      touchCtx.strokeStyle = '#ffffff'; touchCtx.lineWidth = 3;
-      touchCtx.beginPath(); touchCtx.arc(cx, cy, 16 + ease * 58, 0, Math.PI * 2); touchCtx.stroke();
-      touchCtx.restore();
     } else if (fx.kind === 'empty') {
       // 空挥：单颗白色小星。
       const pop = progress < .2 ? .7 + progress * 2.2 : 1.14 - (progress - .2) * .5;
