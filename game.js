@@ -1130,7 +1130,7 @@ function createImpact(kind) {
     fx.x = TOUCH_W / 2;
     fx.y = TOUCH_H / 2;
     fx.totalLife = .75;
-    fx.heavenStars = createHeavenJustParticles();
+    fx.heavenParticles = createHeavenJustParticles();
   }
   touchFx.push(fx);
 }
@@ -1413,21 +1413,37 @@ function heavenAceColor(phase) {
   return HEAVEN_ACE_COLORS[Math.floor(wrapped * HEAVEN_ACE_COLORS.length) % HEAVEN_ACE_COLORS.length];
 }
 
-// Integrates TimingAccuracy's VelocityModule.orbitalZ curve.  Just00 uses
-// scalar 6 and Just01 scalar 1; its -0.1968 → -0.8 → -1 curve is what makes
-// the expanding ring wind like a small galaxy rather than merely grow.
-function heavenOrbitIntegral(t) {
-  if (t <= 0) return 0;
-  if (t < .1) {
-    const u = t / .1;
-    return .1 * ((-.19677734 * u) + ((-.8 + .19677734) * u * u / 2));
+// The source's VelocityModule values are *linear* orbital/radial velocities,
+// not a direct "radians per second" ring rotation.  Unity applies orbitalZ
+// tangentially around the particle-system origin, so its visible angular speed
+// falls as the particle gets farther away.  Treating it as a raw angle was the
+// cause of the over-spinning web effect.
+function heavenCurve(t, points) {
+  if (t <= points[0][0]) return points[0][1];
+  for (let i = 1; i < points.length; i++) {
+    if (t <= points[i][0]) {
+      const [t0, v0] = points[i - 1], [t1, v1] = points[i];
+      return v0 + (v1 - v0) * (t - t0) / (t1 - t0);
+    }
   }
-  const first = .1 * (-.19677734 - .8) / 2;
-  if (t < .25) {
-    const u = (t - .1) / .15;
-    return first + .15 * ((-.8 * u) + ((-.2) * u * u / 2));
+  return points[points.length - 1][1];
+}
+
+function heavenParticlePosition(star, age) {
+  const elapsed = Math.max(0, Math.min(age, star.life));
+  // Integrate in the prefab's units.  240 Hz makes this deterministic across
+  // browser refresh rates while accurately preserving the short initial curl.
+  const steps = Math.max(1, Math.ceil(elapsed * 240));
+  const dt = elapsed / steps;
+  let radius = star.spawnRadius, angle = star.angle;
+  for (let i = 0; i < steps; i++) {
+    const t = ((i + .5) * dt) / star.life;
+    const radial = star.radialScale * heavenCurve(t, star.radialCurve);
+    radius = Math.max(.0001, radius + (star.speed + radial) * dt);
+    const orbital = star.orbitalScale * heavenCurve(t, star.orbitalCurve);
+    angle += orbital * dt / radius;
   }
-  return first + .15 * (-.8 - 1) / 2 - (t - .25);
+  return { radius: radius * star.parentScale * HEAVEN_PIXELS_PER_UNIT, angle };
 }
 
 function heavenMainAlpha(t) {
@@ -1451,23 +1467,38 @@ function heavenSubAlpha(t) {
 
 function createHeavenJustParticles() {
   const stars = [];
-  const emit = (count, life, speed, parentScale, size, spawnRadius, orbitalScale, spin, child) => {
+  const emit = (count, life, speed, parentScale, size, spawnRadius,
+    orbitalScale, orbitalCurve, radialScale, radialCurve, spin, child) => {
     const phase = Math.random() * Math.PI * 2;
     for (let i = 0; i < count; i++) {
       // ShapeModule type 10 / arc 360 creates the ring.  A single random
       // phase changes the ring's orientation per hit; it never randomises
       // each star's position independently.
       const angle = phase + i * Math.PI * 2 / count;
-      stars.push({ angle, velocity: speed * parentScale * HEAVEN_PIXELS_PER_UNIT,
-        spawnRadius: spawnRadius * parentScale * HEAVEN_PIXELS_PER_UNIT,
-        life, size: size * parentScale * 17, orbitalScale, spin,
+      stars.push({ angle, speed, parentScale, spawnRadius,
+        life, size: size * parentScale * 17, orbitalScale, orbitalCurve,
+        radialScale, radialCurve, spin,
         colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2,
         child });
     }
   };
-  emit(10, .45, 5, 1, .7, .1, 6, .43633232, true);          // Just00
-  emit(10, .40, 4, .6851956, .7, .25, 1, 8.807386, false); // Just01
-  return stars;
+  // Exact normalized source curve knots from TimingAccuracy.prefab.
+  emit(10, .45, 5, 1, .7, .1, 6,
+    [[0, -.19677734], [.1, -.8], [.25, -1]], 2,
+    [[.25, 1], [.75, .2]], .43633232, true);                 // Just00
+  emit(10, .40, 4, .6851956, .7, .25, 1,
+    [[0, 0], [.1, -.8], [.25, -1]], 2,
+    [[.22450256, 1], [.683319, .24618271]], 8.807386, false); // Just01
+  // Just00's SubModule is type 0 (Unity ParticleSystemSubEmitterType.Birth),
+  // so its delayed .45s one-particle burst starts at the parent *birth*
+  // position.  Ten parent particles therefore yield one compact 10-star
+  // central after-layer, not ten explosions at the outer ring's endpoints.
+  const subPhase = Math.random() * Math.PI * 2;
+  const subStars = Array.from({ length: 10 }, (_, i) => ({
+    angle: subPhase + i * Math.PI * 2 / 10,
+    colorPhase: Math.random(), rotation: Math.random() * Math.PI * 2
+  }));
+  return { stars, subStars };
 }
 
 // 命中反馈的持续时间（约 28 帧）。
@@ -1511,7 +1542,9 @@ function drawTouchScreen() {
     // Result animations last ~28 rendered frames in the reference capture and
     // must not speed up on a 120 Hz display, so their age comes from the shared
     // clock instead of one step per animation frame.
-    const life = 1 - (audioClock() - fx.startedAt) / TOUCH_FX_SECONDS;
+    // Perfect uses the complete Just00 (.45s) + JustSub (.3s) lifecycle;
+    // ordinary effects retain the original short feedback duration.
+    const life = 1 - (audioClock() - fx.startedAt) / (fx.totalLife ?? TOUCH_FX_SECONDS);
     if (life <= 0) continue;
     const progress = 1 - life, cx = fx.x, cy = fx.y;
     if (fx.kind === 'perfect') {
@@ -1524,13 +1557,11 @@ function drawTouchScreen() {
       touchCtx.fill();
       touchCtx.restore();
       const age = audioClock() - fx.startedAt;
-      for (const star of (fx.heavenStars ?? [])) {
+      for (const star of (fx.heavenParticles?.stars ?? [])) {
         const elapsed = Math.min(age, star.life);
-        const dist = star.spawnRadius + star.velocity * elapsed;
-        const orbit = star.orbitalScale * star.life * heavenOrbitIntegral(elapsed / star.life);
-        const ringAngle = star.angle + orbit;
-        const x = cx + Math.cos(ringAngle) * dist;
-        const y = cy + Math.sin(ringAngle) * dist;
+        const particle = heavenParticlePosition(star, elapsed);
+        const x = cx + Math.cos(particle.angle) * particle.radius;
+        const y = cy + Math.sin(particle.angle) * particle.radius;
         if (age < star.life) {
           // AceColorCycle maps a random grayscale seed through acecolors.png.
           const color = heavenAceColor(star.colorPhase + age * 2.5);
@@ -1539,14 +1570,17 @@ function drawTouchScreen() {
           // Source SizeModule is 1 through .5, then falls to .5 by .9.
           const shrink = t < .5 ? 1 : Math.max(.5, 1 - (t - .5) * 1.25);
           drawHeavenStar(touchCtx, x, y, star.size * shrink, color, fade, star.rotation + star.spin * elapsed);
-        } else if (star.child && age < star.life + .3) {
-          // JustSub inherits the parent particle properties (SubModule flags
-          // = 7), so it keeps the animated AceColorCycle colour rather than
-          // changing into a white star at the end.
-          const childAge = age - star.life;
-          const childT = childAge / .3;
-          drawHeavenStar(touchCtx, x, y, 10.2, heavenAceColor(star.colorPhase + age * 2.5),
-            heavenSubAlpha(childT), star.rotation + star.spin * star.life);
+        }
+      }
+      if (age >= .45 && age < .75) {
+        // JustSub: life=.3, speed=0, size=.6, delayed burst=.45.  It keeps
+        // AceStarParticle's colour cycle; there is no white end-state.
+        const childT = (age - .45) / .3;
+        for (const star of (fx.heavenParticles?.subStars ?? [])) {
+          const r = 3.5;
+          drawHeavenStar(touchCtx, cx + Math.cos(star.angle) * r,
+            cy + Math.sin(star.angle) * r, 10.2,
+            heavenAceColor(star.colorPhase + age * 2.5), heavenSubAlpha(childT), star.rotation);
         }
       }
     } else if (fx.kind === 'normal') {

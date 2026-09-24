@@ -46,10 +46,10 @@ check(game.includes('new URLSearchParams(location.search).has(\'auditSweep\')') 
 // HeavenStudio's TimingAccuracy Just effect is two 360-degree ShapeModule
 // particle rings. Keep the source count, lifetime, speed, scale and spawn
 // radius explicit so a later edit cannot turn the ring into loose dots.
-check(game.includes('emit(10, .45, 5, 1, .7, .1, 6, .43633232, true)'), 'touch VFX: HeavenStudio Just00 parameters drifted');
-check(game.includes('emit(10, .40, 4, .6851956, .7, .25, 1, 8.807386, false)'), 'touch VFX: HeavenStudio Just01 parameters drifted');
-check(game.includes('function heavenOrbitIntegral') && game.includes('VelocityModule.orbitalZ'), 'touch VFX: HeavenStudio galaxy orbit curve missing');
-check(game.includes('function heavenSubAlpha') && game.includes('SubModule flags'), 'touch VFX: JustSub colour/alpha lifecycle missing');
+check(game.includes('emit(10, .45, 5, 1, .7, .1, 6,') && game.includes('[[0, -.19677734], [.1, -.8], [.25, -1]]'), 'touch VFX: HeavenStudio Just00 parameters drifted');
+check(game.includes('emit(10, .40, 4, .6851956, .7, .25, 1,') && game.includes('[[0, 0], [.1, -.8], [.25, -1]]'), 'touch VFX: HeavenStudio Just01 parameters drifted');
+check(game.includes('function heavenParticlePosition') && game.includes('orbital * dt / radius') && game.includes('radialScale * heavenCurve'), 'touch VFX: source orbital/radial velocity integration missing');
+check(game.includes('function heavenSubAlpha') && game.includes('ParticleSystemSubEmitterType.Birth') && game.includes('age >= .45 && age < .75'), 'touch VFX: JustSub birth/lifecycle mapping missing');
 check(game.includes('const HEAVEN_ACE_COLORS') && game.includes('age * 2.5'), 'touch VFX: AceColorCycle palette scroll missing');
 check(game.includes('i * Math.PI * 2 / count'), 'touch VFX: 360-degree star-ring placement missing');
 
